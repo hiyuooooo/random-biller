@@ -27,6 +27,26 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Wrapper component to handle account-dependent contexts
+const AccountDependentProviders = ({ children }: { children: React.ReactNode }) => {
+  const { activeAccount } = useAccount();
+
+  // Use account ID as key to force re-mount when account changes
+  const accountKey = activeAccount?.id || 'no-account';
+
+  return (
+    <StockProvider key={`stock-${accountKey}`}>
+      <TransactionProvider key={`transaction-${accountKey}`}>
+        <CustomerProvider key={`customer-${accountKey}`}>
+          <BillProvider key={`bill-${accountKey}`}>
+            {children}
+          </BillProvider>
+        </CustomerProvider>
+      </TransactionProvider>
+    </StockProvider>
+  );
+};
+
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     // Check if user was previously logged in
@@ -47,37 +67,31 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AccountProvider>
-          <StockProvider>
-            <TransactionProvider>
-              <CustomerProvider>
-                <BillProvider>
-                  <Toaster />
-                  <Sonner />
-                  {!isLoggedIn ? (
-                    <Login onLogin={handleLogin} />
-                  ) : (
-                    <BrowserRouter>
-                      <Routes>
-                        <Route path="/" element={<Index />} />
-                        <Route
-                          path="/transactions"
-                          element={<Transactions />}
-                        />
-                        <Route path="/bills" element={<Bills />} />
-                        <Route path="/bill-blocker" element={<BillBlocker />} />
-                        <Route path="/stock" element={<Stock />} />
-                        <Route path="/customers" element={<Customers />} />
-                        <Route path="/reports" element={<Reports />} />
-                        <Route path="/analytics" element={<Analytics />} />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                  )}
-                </BillProvider>
-              </CustomerProvider>
-            </TransactionProvider>
-          </StockProvider>
+          <AccountDependentProviders>
+            <Toaster />
+            <Sonner />
+            {!isLoggedIn ? (
+              <Login onLogin={handleLogin} />
+            ) : (
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route
+                    path="/transactions"
+                    element={<Transactions />}
+                  />
+                  <Route path="/bills" element={<Bills />} />
+                  <Route path="/bill-blocker" element={<BillBlocker />} />
+                  <Route path="/stock" element={<Stock />} />
+                  <Route path="/customers" element={<Customers />} />
+                  <Route path="/reports" element={<Reports />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            )}
+          </AccountDependentProviders>
         </AccountProvider>
       </TooltipProvider>
     </QueryClientProvider>
