@@ -27,22 +27,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Wrapper component to handle account-dependent contexts
-const AccountDependentProviders = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
-  return (
-    <StockProvider>
-      <TransactionProvider>
-        <CustomerProvider>
-          <BillProvider>{children}</BillProvider>
-        </CustomerProvider>
-      </TransactionProvider>
-    </StockProvider>
-  );
-};
+
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
