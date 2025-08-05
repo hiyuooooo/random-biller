@@ -418,7 +418,7 @@ export default function Settings() {
         // Automatically refresh page to reload imported data
         setTimeout(() => {
           window.location.reload();
-        }, 1500);
+        }, 1000);
       } catch (error) {
         console.error("Import failed:", error);
         toast({
