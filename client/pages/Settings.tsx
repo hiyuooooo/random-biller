@@ -268,6 +268,15 @@ export default function Settings() {
         },
       };
 
+      // Debug log
+      console.log("Exporting backup data:", {
+        billsCount: bills.length,
+        customersCount: customers.length,
+        stockItemsCount: stockItems.length,
+        accountId: activeAccount.id,
+        accountName: activeAccount.name
+      });
+
       // Create and download the backup file
       const dataStr = JSON.stringify(backupData, null, 2);
       const dataBlob = new Blob([dataStr], { type: "application/json" });
