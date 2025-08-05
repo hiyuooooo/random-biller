@@ -1025,6 +1025,15 @@ export default function Settings() {
                       </Button>
                       <Button
                         variant="outline"
+                        className="w-full justify-start"
+                        onClick={generateTestData}
+                        disabled={!activeAccount}
+                      >
+                        <Database className="h-4 w-4 mr-2" />
+                        Generate Test Data
+                      </Button>
+                      <Button
+                        variant="outline"
                         className="w-full justify-start text-destructive hover:text-destructive"
                         onClick={clearCache}
                       >
