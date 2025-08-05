@@ -1,0 +1,1553 @@
+import React, { useState, useMemo } from "react";
+import { Layout } from "@/components/Layout";
+import { useBill } from "@/components/BillContext";
+import { useStock } from "@/components/StockContext";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Plus,
+  Edit2,
+  Eye,
+  Download,
+  FileText,
+  Search,
+  Calendar,
+  User,
+  Calculator,
+  Package,
+  CreditCard,
+  Trash2,
+  Save,
+  RefreshCw,
+  Upload,
+  Settings,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+
+// Mock stock data
+const mockStock = [
+  { id: 1, name: "Rice (1kg)", price: 80, availableQuantity: 150 },
+  { id: 2, name: "Wheat Flour (1kg)", price: 45, availableQuantity: 200 },
+  { id: 3, name: "Sugar (1kg)", price: 60, availableQuantity: 100 },
+  { id: 4, name: "Cooking Oil (1L)", price: 120, availableQuantity: 80 },
+  { id: 5, name: "Pulses (1kg)", price: 95, availableQuantity: 120 },
+  { id: 6, name: "Tea (250g)", price: 180, availableQuantity: 60 },
+  { id: 7, name: "Salt (1kg)", price: 25, availableQuantity: 300 },
+  { id: 8, name: "Spices Mix (100g)", price: 40, availableQuantity: 90 },
+  { id: 9, name: "Biscuits (Pack)", price: 35, availableQuantity: 150 },
+  { id: 10, name: "Soap (100g)", price: 30, availableQuantity: 200 },
+];
+
+// Mock bills data
+const mockBills = [
+  {
+    id: "BILL-001",
+    billNumber: 1001,
+    date: "15-01-2024",
+    customerName: "Rajesh Kumar",
+    items: [
+      { id: 1, name: "Rice (1kg)", price: 80, quantity: 2, total: 160 },
+      { id: 2, name: "Cooking Oil (1L)", price: 120, quantity: 1, total: 120 },
+      { id: 3, name: "Sugar (1kg)", price: 60, quantity: 1, total: 60 },
+    ],
+    subTotal: 340,
+    paymentMode: "GPay" as const,
+    status: "generated" as const,
+  },
+  {
+    id: "BILL-002",
+    billNumber: 1002,
+    date: "15-01-2024",
+    customerName: "Priya Sharma",
+    items: [
+      { id: 1, name: "Wheat Flour (1kg)", price: 45, quantity: 3, total: 135 },
+      { id: 2, name: "Pulses (1kg)", price: 95, quantity: 1, total: 95 },
+    ],
+    subTotal: 230,
+    paymentMode: "Cash" as const,
+    status: "draft" as const,
+  },
+];
+
+interface StockItem {
+  id: number;
+  name: string;
+  price: number;
+  availableQuantity: number;
+}
+
+interface BillItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  total: number;
+}
+
+interface Bill {
+  id: string;
+  billNumber: number;
+  date: string;
+  customerName: string;
+  items: BillItem[];
+  subTotal: number;
+  paymentMode: "Cash" | "GPay";
+  status: "draft" | "generated";
+}
+
+export default function Bills() {
+  const { bills, addBill, updateBill, deleteBill } = useBill();
+
+  const handleDeleteBill = (billId: string) => {
+    if (
+      confirm(
+        "Are you sure you want to delete this bill? This action cannot be undone.",
+      )
+    ) {
+      deleteBill(billId);
+    }
+  };
+
+  const startEditBill = (bill: any) => {
+    setEditingBill({ ...bill });
+    setEditItems([...bill.items]);
+    setIsEditDialogOpen(true);
+  };
+
+  const saveEditBill = () => {
+    if (!editingBill) return;
+
+    const updatedBill = {
+      ...editingBill,
+      items: editItems,
+      subTotal: editItems.reduce((sum, item) => sum + item.total, 0),
+    };
+
+    updateBill(editingBill.id, updatedBill);
+    setIsEditDialogOpen(false);
+    setEditingBill(null);
+    setEditItems([]);
+  };
+
+  const updateEditItem = (index: number, field: string, value: any) => {
+    setEditItems((prev) =>
+      prev.map((item, i) => {
+        if (i === index) {
+          const updated = { ...item, [field]: value };
+          if (field === "price" || field === "quantity") {
+            updated.total = updated.price * updated.quantity;
+          }
+          return updated;
+        }
+        return item;
+      }),
+    );
+  };
+
+  const removeEditItem = (index: number) => {
+    setEditItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const addManualItem = () => {
+    const stockItem = stockItems.find(
+      (item) => item.id === parseInt(itemToAdd.stockItemId),
+    );
+    if (!stockItem) return;
+
+    const price = itemToAdd.customPrice
+      ? parseFloat(itemToAdd.customPrice)
+      : stockItem.price;
+    const total = price * itemToAdd.quantity;
+
+    const newItem: BillItem = {
+      id: stockItem.id,
+      name: stockItem.itemName,
+      price: price,
+      quantity: itemToAdd.quantity,
+      total: total,
+    };
+
+    setSelectedItems((prev) => [...prev, newItem]);
+    setItemToAdd({ stockItemId: "", quantity: 1, customPrice: "" });
+  };
+
+  const removeSelectedItem = (index: number) => {
+    setSelectedItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const updateSelectedItem = (index: number, field: string, value: any) => {
+    setSelectedItems((prev) =>
+      prev.map((item, i) => {
+        if (i === index) {
+          const updated = { ...item, [field]: value };
+          if (field === "price" || field === "quantity") {
+            updated.total = updated.price * updated.quantity;
+          }
+          return updated;
+        }
+        return item;
+      }),
+    );
+  };
+
+  const resetCreateBillForm = () => {
+    setSelectedItems([]);
+    setNewBill({
+      billNumber: "",
+      date: new Date().toISOString().split("T")[0],
+      customerName: "",
+      targetTotal: "",
+      paymentMode: "GPay",
+    });
+    setItemToAdd({ stockItemId: "", quantity: 1, customPrice: "" });
+  };
+
+  const switchMode = (mode: boolean) => {
+    setManualMode(mode);
+    setSelectedItems([]); // Clear items when switching modes
+  };
+  const { stockItems, reduceStock } = useStock();
+  const [activeTab, setActiveTab] = useState("view");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingBill, setEditingBill] = useState<any>(null);
+  const [editItems, setEditItems] = useState<any[]>([]);
+
+  // New bill form state
+  const [newBill, setNewBill] = useState({
+    billNumber: "",
+    date: new Date().toISOString().split("T")[0],
+    customerName: "",
+    targetTotal: "",
+    paymentMode: "GPay" as "Cash" | "GPay",
+  });
+
+  const [selectedItems, setSelectedItems] = useState<BillItem[]>([]);
+  const [manualMode, setManualMode] = useState(false);
+  const [itemToAdd, setItemToAdd] = useState({
+    stockItemId: "",
+    quantity: 1,
+    customPrice: "",
+  });
+
+  // Filter bills based on search and status
+  const filteredBills = useMemo(() => {
+    return bills.filter((bill) => {
+      const matchesSearch =
+        bill.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bill.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        bill.billNumber.toString().includes(searchTerm);
+
+      const matchesStatus =
+        filterStatus === "all" || bill.status === filterStatus;
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [bills, searchTerm, filterStatus]);
+
+  // Determine payment mode based on customer name
+  const getPaymentMode = (customerName: string): "Cash" | "GPay" => {
+    const lowerName = customerName.toLowerCase();
+    return lowerName === "cash" || lowerName.endsWith("_c") ? "Cash" : "GPay";
+  };
+
+  // Clean customer name for display
+  const cleanCustomerName = (name: string): string => {
+    return name.endsWith("_c") ? name.slice(0, -2) : name;
+  };
+
+  // Auto-select items based on target total (simplified algorithm)
+  const autoSelectItems = (targetTotal: number) => {
+    const available = stockItems.filter((item) => item.availableQuantity > 0);
+    const selected: BillItem[] = [];
+    let currentTotal = 0;
+    const tolerance = 30;
+
+    // Simple greedy algorithm to approximate target total
+    for (
+      let i = 0;
+      i < Math.min(7, available.length) &&
+      currentTotal < targetTotal - tolerance;
+      i++
+    ) {
+      const item = available[i];
+      const maxQuantity = Math.min(
+        item.availableQuantity,
+        Math.floor((targetTotal - currentTotal) / item.price),
+      );
+      const quantity = Math.max(
+        1,
+        Math.min(
+          maxQuantity,
+          Math.ceil((targetTotal - currentTotal) / item.price / 2),
+        ),
+      );
+
+      if (quantity > 0) {
+        const billItem: BillItem = {
+          id: item.id,
+          name: item.itemName,
+          price: item.price,
+          quantity,
+          total: item.price * quantity,
+        };
+        selected.push(billItem);
+        currentTotal += billItem.total;
+      }
+    }
+
+    setSelectedItems(selected);
+  };
+
+  const handleCreateBill = () => {
+    const paymentMode = getPaymentMode(newBill.customerName);
+    const displayName = cleanCustomerName(newBill.customerName);
+
+    const bill: any = {
+      id: `BILL-${String(bills.length + 1).padStart(3, "0")}`,
+      billNumber:
+        parseInt(newBill.billNumber) ||
+        Math.max(...bills.map((b) => b.billNumber)) + 1,
+      date: new Date(newBill.date).toLocaleDateString("en-GB"),
+      customerName: displayName,
+      items: selectedItems,
+      subTotal: selectedItems.reduce((sum, item) => sum + item.total, 0),
+      expectedTotal:
+        parseFloat(newBill.targetTotal) ||
+        selectedItems.reduce((sum, item) => sum + item.total, 0),
+      paymentMode,
+      status: "draft",
+      difference:
+        (parseFloat(newBill.targetTotal) ||
+          selectedItems.reduce((sum, item) => sum + item.total, 0)) -
+        selectedItems.reduce((sum, item) => sum + item.total, 0),
+      tolerance: 0,
+      headerInfo: {
+        agencyName: "Sadhana Agency",
+        address: "Harsila (Dewalchaura), Bageshwar, Uttarakhand",
+      },
+      footerInfo: {
+        declaration:
+          "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
+        signature: "Authorized Signature",
+      },
+    };
+
+    addBill(bill);
+
+    // Update stock quantities
+    selectedItems.forEach((billItem) => {
+      reduceStock(billItem.id, billItem.quantity);
+    });
+
+    // Reset form
+    setNewBill({
+      billNumber: "",
+      date: new Date().toISOString().split("T")[0],
+      customerName: "",
+      targetTotal: "",
+      paymentMode: "GPay",
+    });
+    setSelectedItems([]);
+    setIsCreateDialogOpen(false);
+    setActiveTab("view");
+  };
+
+  const generatePDF = async (bill: any) => {
+    try {
+      // Create HTML content for the bill
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Bill ${bill.billNumber}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 40px;
+              color: #333;
+              line-height: 1.6;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+            }
+            .header h1 {
+              margin: 0 0 10px 0;
+              font-size: 24px;
+              color: #333;
+            }
+            .header h2 {
+              margin: 0 0 5px 0;
+              font-size: 18px;
+              color: #666;
+            }
+            .header p {
+              margin: 0;
+              color: #888;
+              font-size: 14px;
+            }
+            .bill-info {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin: 30px 0;
+              padding: 20px;
+              background-color: #f9f9f9;
+              border-radius: 8px;
+            }
+            .bill-info div {
+              margin: 5px 0;
+            }
+            .bill-info strong {
+              color: #333;
+            }
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 30px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .items-table th, .items-table td {
+              border: 1px solid #ddd;
+              padding: 12px 8px;
+              text-align: left;
+            }
+            .items-table th {
+              background-color: #f8f9fa;
+              font-weight: bold;
+              color: #333;
+            }
+            .items-table tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .total-row {
+              background-color: #e9ecef !important;
+              font-weight: bold;
+              font-size: 16px;
+            }
+            .footer {
+              margin-top: 60px;
+              padding-top: 20px;
+              border-top: 1px solid #ddd;
+              font-size: 12px;
+              color: #666;
+            }
+            .signature {
+              text-align: center;
+              margin-top: 40px;
+              font-weight: bold;
+            }
+            @media print {
+              body { margin: 0; }
+              .header {
+                page-break-inside: avoid;
+                page-break-after: avoid;
+              }
+              .items-table {
+                page-break-inside: avoid;
+                page-break-before: avoid;
+                page-break-after: avoid;
+              }
+              .bill-info {
+                page-break-inside: avoid;
+                page-break-after: avoid;
+              }
+              .footer {
+                page-break-before: avoid;
+                page-break-inside: avoid;
+              }
+              /* Prevent all page breaks for single bill */
+              * {
+                page-break-after: avoid !important;
+                page-break-before: avoid !important;
+                page-break-inside: avoid !important;
+                break-after: avoid !important;
+                break-before: avoid !important;
+                break-inside: avoid !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Bill of Supply</h1>
+            <h2>${bill.headerInfo?.agencyName || "Sadhana Agency"}</h2>
+            <p>${bill.headerInfo?.address || "Harsila (Dewalchaura), Bageshwar, Uttarakhand"}</p>
+          </div>
+
+          <div class="bill-info">
+            <div><strong>Bill No:</strong> ${bill.billNumber}</div>
+            <div><strong>Date:</strong> ${bill.date}</div>
+            <div><strong>Customer:</strong> ${bill.customerName}</div>
+            <div><strong>Payment Mode:</strong> ${bill.paymentMode}</div>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Sr. No.</th>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bill.items
+                .map(
+                  (item: any, index: number) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${item.name}</td>
+                  <td>${item.quantity}</td>
+                  <td>₹${item.price}</td>
+                  <td>₹${item.total}</td>
+                </tr>
+              `,
+                )
+                .join("")}
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="4"><strong>Sub Total:</strong></td>
+                <td><strong>₹${bill.subTotal}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="footer">
+            <p>${bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
+            <div class="signature">${bill.footerInfo?.signature || "Authorized Signature"}</div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Create a new window for printing
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+
+        // Wait for content to load then trigger print dialog
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 500);
+        };
+      } else {
+        // Fallback: create blob and download
+        const blob = new Blob([htmlContent], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Bill_${bill.billNumber}_${bill.customerName.replace(/\s+/g, "_")}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      alert("Error generating PDF. Please try again.");
+    }
+  };
+
+  const generateMegaReport = async (format: "pdf" | "excel") => {
+    const generatedBills = bills.filter((b) => b.status === "generated");
+
+    if (generatedBills.length === 0) {
+      alert("No generated bills found for report.");
+      return;
+    }
+
+    if (format === "excel") {
+      // Excel export
+      const reportData = generatedBills.map((bill) => ({
+        Date: bill.date,
+        "Bill Number": bill.billNumber,
+        "Customer Name": bill.customerName,
+        "Bill Total": bill.subTotal,
+      }));
+
+      // Add total sum row
+      const totalSum = generatedBills.reduce(
+        (sum, bill) => sum + bill.subTotal,
+        0,
+      );
+      reportData.push({
+        Date: "",
+        "Bill Number": "",
+        "Customer Name": "TOTAL",
+        "Bill Total": totalSum,
+      });
+
+      const XLSX = await import("xlsx");
+      const worksheet = XLSX.utils.json_to_sheet(reportData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Bill Report");
+      XLSX.writeFile(
+        workbook,
+        `Bill_Report_${new Date().toISOString().split("T")[0]}.xlsx`,
+      );
+    } else {
+      // PDF export using HTML
+      const totalSum = generatedBills.reduce(
+        (sum, bill) => sum + bill.subTotal,
+        0,
+      );
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Mega Bill Report</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 40px;
+              color: #333;
+              line-height: 1.6;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+            }
+            .header h1 {
+              margin: 0 0 10px 0;
+              font-size: 24px;
+              color: #333;
+            }
+            .header h2 {
+              margin: 0 0 5px 0;
+              font-size: 18px;
+              color: #666;
+            }
+            .header p {
+              margin: 0;
+              color: #888;
+              font-size: 14px;
+            }
+            .report-info {
+              text-align: center;
+              margin: 20px 0;
+              padding: 15px;
+              background-color: #f8f9fa;
+              border-radius: 8px;
+            }
+            .report-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 30px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .report-table th, .report-table td {
+              border: 1px solid #ddd;
+              padding: 12px 8px;
+              text-align: left;
+            }
+            .report-table th {
+              background-color: #f8f9fa;
+              font-weight: bold;
+              color: #333;
+            }
+            .report-table tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .total-row {
+              background-color: #e9ecef !important;
+              font-weight: bold;
+              font-size: 16px;
+            }
+            .footer {
+              margin-top: 60px;
+              padding-top: 20px;
+              border-top: 1px solid #ddd;
+              text-align: center;
+              font-size: 12px;
+              color: #666;
+            }
+            @media print {
+              body { margin: 0; }
+              .header {
+                page-break-inside: avoid;
+                page-break-after: avoid;
+              }
+              .report-table {
+                page-break-inside: avoid;
+                page-break-before: avoid;
+                page-break-after: avoid;
+              }
+              .report-info {
+                page-break-inside: avoid;
+                page-break-after: avoid;
+              }
+              .footer {
+                page-break-before: avoid;
+                page-break-inside: avoid;
+              }
+              /* Prevent page breaks for mega report */
+              * {
+                page-break-after: avoid !important;
+                page-break-before: avoid !important;
+                page-break-inside: avoid !important;
+                break-after: avoid !important;
+                break-before: avoid !important;
+                break-inside: avoid !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Mega Bill Report</h1>
+            <h2>Sadhana Agency</h2>
+            <p>Harsila (Dewalchaura), Bageshwar, Uttarakhand</p>
+          </div>
+
+          <div class="report-info">
+            <p><strong>Report Generated:</strong> ${new Date().toLocaleDateString()}</p>
+            <p><strong>Total Bills:</strong> ${generatedBills.length}</p>
+            <p><strong>Period:</strong> ${generatedBills.length > 0 ? `${generatedBills[0].date} to ${generatedBills[generatedBills.length - 1].date}` : "N/A"}</p>
+          </div>
+
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Customer Name</th>
+                <th>Bill Number</th>
+                <th>Bill Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${generatedBills
+                .map(
+                  (bill) => `
+                <tr>
+                  <td>${bill.date}</td>
+                  <td>${bill.customerName}</td>
+                  <td>${bill.billNumber}</td>
+                  <td>₹${bill.subTotal.toLocaleString()}</td>
+                </tr>
+              `,
+                )
+                .join("")}
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="3"><strong>TOTAL:</strong></td>
+                <td><strong>₹${totalSum.toLocaleString()}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="footer">
+            <p>Generated on ${new Date().toLocaleString()}</p>
+            <p>© Sadhana Agency - All rights reserved</p>
+            <p>This is a computer-generated report</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Create a new window for printing
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+
+        // Wait for content to load then trigger print dialog
+        printWindow.onload = () => {
+          setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+          }, 500);
+        };
+      } else {
+        // Fallback: create blob and download
+        const blob = new Blob([htmlContent], { type: "text/html" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `Mega_Bill_Report_${new Date().toISOString().split("T")[0]}.html`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    }
+  };
+
+  return (
+    <Layout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold">Bills Management</h1>
+            <p className="text-muted-foreground">
+              Create, edit, and manage customer bills with automatic item
+              selection
+            </p>
+          </div>
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={() => generateMegaReport("pdf")}>
+              <FileText className="h-4 w-4 mr-2" />
+              Mega Report PDF
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => generateMegaReport("excel")}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Mega Report Excel
+            </Button>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Bill
+            </Button>
+          </div>
+        </div>
+
+        {/* Statistics */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <FileText className="h-4 w-4 text-blue-500" />
+                <div>
+                  <p className="text-sm font-medium">Total Bills</p>
+                  <p className="text-2xl font-bold">{bills.length}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Calculator className="h-4 w-4 text-green-500" />
+                <div>
+                  <p className="text-sm font-medium">Total Revenue</p>
+                  <p className="text-2xl font-bold">
+                    ₹
+                    {bills
+                      .reduce((sum, bill) => sum + bill.subTotal, 0)
+                      .toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Package className="h-4 w-4 text-purple-500" />
+                <div>
+                  <p className="text-sm font-medium">Items in Stock</p>
+                  <p className="text-2xl font-bold">
+                    {stockItems.filter((s) => s.availableQuantity > 0).length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <RefreshCw className="h-4 w-4 text-orange-500" />
+                <div>
+                  <p className="text-sm font-medium">Draft Bills</p>
+                  <p className="text-2xl font-bold">
+                    {bills.filter((b) => b.status === "draft").length}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Search and Filters */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search bills by customer, ID, or bill number..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="generated">Generated</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Bills Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Bills List</CardTitle>
+            <CardDescription>
+              Manage all customer bills. Click actions to view, edit, or
+              generate PDFs.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-3 font-medium">Bill #</th>
+                    <th className="text-left p-3 font-medium">Date</th>
+                    <th className="text-left p-3 font-medium">Customer</th>
+                    <th className="text-left p-3 font-medium">Items</th>
+                    <th className="text-left p-3 font-medium">Total</th>
+                    <th className="text-left p-3 font-medium">Payment</th>
+                    <th className="text-left p-3 font-medium">Status</th>
+                    <th className="text-left p-3 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredBills.map((bill) => (
+                    <tr
+                      key={bill.id}
+                      className="border-b hover:bg-accent/50 transition-colors"
+                    >
+                      <td className="p-3 font-medium">{bill.billNumber}</td>
+                      <td className="p-3">{bill.date}</td>
+                      <td className="p-3">{bill.customerName}</td>
+                      <td className="p-3">{bill.items.length} items</td>
+                      <td className="p-3 font-medium">
+                        ₹{bill.subTotal.toLocaleString()}
+                      </td>
+                      <td className="p-3">
+                        <Badge
+                          variant={
+                            bill.paymentMode === "GPay"
+                              ? "default"
+                              : "secondary"
+                          }
+                        >
+                          {bill.paymentMode}
+                        </Badge>
+                      </td>
+                      <td className="p-3">
+                        <Badge
+                          variant={
+                            bill.status === "generated"
+                              ? "default"
+                              : "secondary"
+                          }
+                          className={
+                            bill.status === "generated"
+                              ? "bg-green-500"
+                              : "bg-yellow-500"
+                          }
+                        >
+                          {bill.status}
+                        </Badge>
+                      </td>
+                      <td className="p-3">
+                        <div className="flex space-x-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedBill(bill)}
+                          >
+                            <Eye className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => startEditBill(bill)}
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => generatePDF(bill)}
+                          >
+                            <Download className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteBill(bill.id)}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Create Bill Dialog */}
+        <Dialog
+          open={isCreateDialogOpen}
+          onOpenChange={(open) => {
+            setIsCreateDialogOpen(open);
+            if (!open) resetCreateBillForm();
+          }}
+        >
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Create New Bill</DialogTitle>
+              <DialogDescription>
+                {manualMode
+                  ? "Manually select items and set quantities/prices"
+                  : "Enter customer details and the system will auto-select items to match the target total"}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="flex items-center space-x-2 border-b pb-4">
+              <Label>Creation Mode:</Label>
+              <Button
+                variant={!manualMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => switchMode(false)}
+              >
+                Auto Mode
+              </Button>
+              <Button
+                variant={manualMode ? "default" : "outline"}
+                size="sm"
+                onClick={() => switchMode(true)}
+              >
+                Manual Mode
+              </Button>
+            </div>
+
+            <div className="space-y-6">
+              {/* Bill Details Form */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Bill Number</Label>
+                  <Input
+                    value={newBill.billNumber}
+                    onChange={(e) =>
+                      setNewBill((prev) => ({
+                        ...prev,
+                        billNumber: e.target.value,
+                      }))
+                    }
+                    placeholder="Auto-generated if empty"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Input
+                    type="date"
+                    value={newBill.date}
+                    onChange={(e) =>
+                      setNewBill((prev) => ({ ...prev, date: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Customer Name</Label>
+                  <Input
+                    value={newBill.customerName}
+                    onChange={(e) => {
+                      const name = e.target.value;
+                      setNewBill((prev) => ({
+                        ...prev,
+                        customerName: name,
+                        paymentMode: getPaymentMode(name),
+                      }));
+                    }}
+                    placeholder="Enter customer name (use _c suffix for cash)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Target Total (₹)</Label>
+                  <Input
+                    value={newBill.targetTotal}
+                    onChange={(e) =>
+                      setNewBill((prev) => ({
+                        ...prev,
+                        targetTotal: e.target.value,
+                      }))
+                    }
+                    placeholder="Target amount to approximate"
+                    type="number"
+                  />
+                </div>
+              </div>
+
+              {!manualMode ? (
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={() => autoSelectItems(Number(newBill.targetTotal))}
+                    disabled={!newBill.targetTotal}
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Auto Select Items
+                  </Button>
+                  <Badge variant="outline">
+                    Payment Mode: {newBill.paymentMode}
+                  </Badge>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-4 gap-2">
+                    <div className="space-y-2">
+                      <Label>Item</Label>
+                      <Select
+                        value={itemToAdd.stockItemId}
+                        onValueChange={(value) =>
+                          setItemToAdd((prev) => ({
+                            ...prev,
+                            stockItemId: value,
+                          }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select item..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {stockItems.map((item) => (
+                            <SelectItem
+                              key={item.id}
+                              value={item.id.toString()}
+                            >
+                              {item.itemName} - ₹{item.price}{" "}
+                              {item.blocked && "(Blocked)"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Quantity</Label>
+                      <Input
+                        type="number"
+                        value={itemToAdd.quantity}
+                        onChange={(e) =>
+                          setItemToAdd((prev) => ({
+                            ...prev,
+                            quantity: parseInt(e.target.value) || 1,
+                          }))
+                        }
+                        min="1"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Custom Price (optional)</Label>
+                      <Input
+                        type="number"
+                        value={itemToAdd.customPrice}
+                        onChange={(e) =>
+                          setItemToAdd((prev) => ({
+                            ...prev,
+                            customPrice: e.target.value,
+                          }))
+                        }
+                        placeholder="Leave empty for default"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>&nbsp;</Label>
+                      <Button
+                        onClick={addManualItem}
+                        disabled={!itemToAdd.stockItemId}
+                        className="w-full"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Item
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Selected Items */}
+              {selectedItems.length > 0 && (
+                <div className="space-y-2">
+                  <Label>Selected Items</Label>
+                  <div className="border rounded-lg">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-muted/20">
+                          <th className="text-left p-3 font-medium">Item</th>
+                          <th className="text-left p-3 font-medium">
+                            Quantity
+                          </th>
+                          <th className="text-left p-3 font-medium">Price</th>
+                          <th className="text-left p-3 font-medium">Total</th>
+                          <th className="text-left p-3 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedItems.map((item, index) => (
+                          <tr key={index} className="border-b">
+                            <td className="p-3">{item.name}</td>
+                            <td className="p-3">
+                              {manualMode ? (
+                                <Input
+                                  type="number"
+                                  value={item.quantity}
+                                  onChange={(e) =>
+                                    updateSelectedItem(
+                                      index,
+                                      "quantity",
+                                      parseInt(e.target.value) || 0,
+                                    )
+                                  }
+                                  className="w-20"
+                                />
+                              ) : (
+                                item.quantity
+                              )}
+                            </td>
+                            <td className="p-3">
+                              {manualMode ? (
+                                <Input
+                                  type="number"
+                                  value={item.price}
+                                  onChange={(e) =>
+                                    updateSelectedItem(
+                                      index,
+                                      "price",
+                                      parseFloat(e.target.value) || 0,
+                                    )
+                                  }
+                                  className="w-24"
+                                />
+                              ) : (
+                                `₹${item.price}`
+                              )}
+                            </td>
+                            <td className="p-3">₹{item.total}</td>
+                            <td className="p-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => removeSelectedItem(index)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-muted/20 font-bold">
+                          <td colSpan={3} className="p-3">
+                            Total:
+                          </td>
+                          <td className="p-3">
+                            ₹
+                            {selectedItems.reduce(
+                              (sum, item) => sum + item.total,
+                              0,
+                            )}
+                          </td>
+                          <td className="p-3"></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateBill}
+                  disabled={!newBill.customerName || selectedItems.length === 0}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Create Bill
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Bill Details View */}
+        {selectedBill && !isEditDialogOpen && (
+          <Dialog
+            open={!!selectedBill}
+            onOpenChange={() => setSelectedBill(null)}
+          >
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Bill Details - {selectedBill.id}</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Bill Number</Label>
+                    <p className="font-medium">{selectedBill.billNumber}</p>
+                  </div>
+                  <div>
+                    <Label>Date</Label>
+                    <p className="font-medium">{selectedBill.date}</p>
+                  </div>
+                  <div>
+                    <Label>Customer</Label>
+                    <p className="font-medium">{selectedBill.customerName}</p>
+                  </div>
+                  <div>
+                    <Label>Payment Mode</Label>
+                    <Badge
+                      variant={
+                        selectedBill.paymentMode === "GPay"
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
+                      {selectedBill.paymentMode}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Items</Label>
+                  <div className="border rounded-lg">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-muted/20">
+                          <th className="text-left p-3 font-medium">Item</th>
+                          <th className="text-left p-3 font-medium">
+                            Quantity
+                          </th>
+                          <th className="text-left p-3 font-medium">Price</th>
+                          <th className="text-left p-3 font-medium">Total</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {selectedBill.items.map((item, index) => (
+                          <tr key={index} className="border-b">
+                            <td className="p-3">{item.name}</td>
+                            <td className="p-3">{item.quantity}</td>
+                            <td className="p-3">₹{item.price}</td>
+                            <td className="p-3">₹{item.total}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-muted/20 font-bold">
+                          <td colSpan={3} className="p-3">
+                            Sub Total:
+                          </td>
+                          <td className="p-3">₹{selectedBill.subTotal}</td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Edit Bill Dialog */}
+        {editingBill && (
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-4xl">
+              <DialogHeader>
+                <DialogTitle>Edit Bill - {editingBill.billNumber}</DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Customer Name</Label>
+                    <Input
+                      value={editingBill.customerName}
+                      onChange={(e) =>
+                        setEditingBill((prev) => ({
+                          ...prev,
+                          customerName: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label>Payment Mode</Label>
+                    <Select
+                      value={editingBill.paymentMode}
+                      onValueChange={(value) =>
+                        setEditingBill((prev) => ({
+                          ...prev,
+                          paymentMode: value,
+                        }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="GPay">GPay</SelectItem>
+                        <SelectItem value="Bank">Bank</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div>
+                  <Label>Items</Label>
+                  <div className="border rounded-lg">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-b bg-muted/20">
+                          <th className="text-left p-3 font-medium">Item</th>
+                          <th className="text-left p-3 font-medium">
+                            Quantity
+                          </th>
+                          <th className="text-left p-3 font-medium">Price</th>
+                          <th className="text-left p-3 font-medium">Total</th>
+                          <th className="text-left p-3 font-medium">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {editItems.map((item, index) => (
+                          <tr key={index} className="border-b">
+                            <td className="p-3">{item.name}</td>
+                            <td className="p-3">
+                              <Input
+                                type="number"
+                                value={item.quantity}
+                                onChange={(e) =>
+                                  updateEditItem(
+                                    index,
+                                    "quantity",
+                                    parseInt(e.target.value) || 0,
+                                  )
+                                }
+                                className="w-20"
+                              />
+                            </td>
+                            <td className="p-3">
+                              <Input
+                                type="number"
+                                value={item.price}
+                                onChange={(e) =>
+                                  updateEditItem(
+                                    index,
+                                    "price",
+                                    parseFloat(e.target.value) || 0,
+                                  )
+                                }
+                                className="w-24"
+                              />
+                            </td>
+                            <td className="p-3">₹{item.total}</td>
+                            <td className="p-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => removeEditItem(index)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="bg-muted/20 font-bold">
+                          <td colSpan={3} className="p-3">
+                            Sub Total:
+                          </td>
+                          <td className="p-3">
+                            ₹
+                            {editItems.reduce(
+                              (sum, item) => sum + item.total,
+                              0,
+                            )}
+                          </td>
+                          <td className="p-3"></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsEditDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={saveEditBill}>
+                    <Save className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
+      </div>
+    </Layout>
+  );
+}
