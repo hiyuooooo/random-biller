@@ -31,7 +31,12 @@ import {
 } from "lucide-react";
 
 export default function Settings() {
-  const { activeAccount } = useAccount();
+  const { activeAccount, accounts } = useAccount();
+  const { bills } = useBill();
+  const { customers } = useCustomer();
+  const { stockItems } = useStock();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [notifications, setNotifications] = useState(() => {
     if (!activeAccount)
