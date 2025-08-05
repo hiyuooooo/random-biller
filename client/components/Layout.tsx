@@ -42,7 +42,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const { activeAccount } = useAccount();
+  const { activeAccount, accounts, setActiveAccount } = useAccount();
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
