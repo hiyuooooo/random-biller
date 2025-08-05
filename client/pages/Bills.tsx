@@ -1285,7 +1285,16 @@ export default function Bills() {
               {/* Selected Items */}
               {selectedItems.length > 0 && (
                 <div className="space-y-2">
-                  <Label>Selected Items</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Selected Items</Label>
+                    {!manualMode && newBill.targetTotal && (
+                      <div className="text-sm text-muted-foreground">
+                        Target: ₹{newBill.targetTotal} |
+                        Actual: ₹{selectedItems.reduce((sum, item) => sum + item.total, 0)} |
+                        Difference: ₹{Math.abs(Number(newBill.targetTotal) - selectedItems.reduce((sum, item) => sum + item.total, 0))}
+                      </div>
+                    )}
+                  </div>
                   <div className="border rounded-lg">
                     <table className="w-full">
                       <thead>
