@@ -233,6 +233,195 @@ export default function Settings() {
     }
   }, [activeAccount?.id]);
 
+  // Export all data function
+  const exportAllData = () => {
+    try {
+      if (!activeAccount) {
+        toast({
+          title: "No Active Account",
+          description: "Please select an account before exporting data.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Gather all data for the active account
+      const backupData = {
+        version: "1.0.0",
+        timestamp: new Date().toISOString(),
+        accountId: activeAccount.id,
+        accountName: activeAccount.name,
+        data: {
+          // Account data
+          accounts: accounts,
+          activeAccountId: activeAccount.id,
+
+          // Business data
+          bills: bills,
+          customers: customers,
+          stockItems: stockItems,
+
+          // Settings data
+          notifications: notifications,
+          preferences: preferences,
+          invoiceSettings: invoiceSettings,
+        },
+      };
+
+      // Create and download the backup file
+      const dataStr = JSON.stringify(backupData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `backup_${activeAccount.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Successful",
+        description: `Data backup exported successfully for ${activeAccount.name}.`,
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Import data function
+  const importData = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const backupData = JSON.parse(content);
+
+        // Validate backup data structure
+        if (!backupData.version || !backupData.data) {
+          throw new Error("Invalid backup file format");
+        }
+
+        if (!activeAccount) {
+          toast({
+            title: "No Active Account",
+            description: "Please select an account before importing data.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Confirm import with user
+        const confirmed = window.confirm(
+          `Import data from backup created on ${new Date(backupData.timestamp).toLocaleDateString()}?\n\nThis will replace current data for the active account. This action cannot be undone.`
+        );
+
+        if (!confirmed) return;
+
+        // Store data in localStorage for the active account
+        const accountId = activeAccount.id;
+
+        // Import business data
+        if (backupData.data.bills) {
+          localStorage.setItem(`bills_${accountId}`, JSON.stringify(backupData.data.bills));
+        }
+
+        if (backupData.data.customers) {
+          localStorage.setItem(`customers_${accountId}`, JSON.stringify(backupData.data.customers));
+        }
+
+        if (backupData.data.stockItems) {
+          localStorage.setItem(`stockItems_${accountId}`, JSON.stringify(backupData.data.stockItems));
+        }
+
+        // Import settings data
+        if (backupData.data.notifications) {
+          localStorage.setItem(`settings_notifications_${accountId}`, JSON.stringify(backupData.data.notifications));
+          setNotifications(backupData.data.notifications);
+        }
+
+        if (backupData.data.preferences) {
+          localStorage.setItem(`settings_preferences_${accountId}`, JSON.stringify(backupData.data.preferences));
+          setPreferences(backupData.data.preferences);
+        }
+
+        if (backupData.data.invoiceSettings) {
+          localStorage.setItem(`settings_invoice_${accountId}`, JSON.stringify(backupData.data.invoiceSettings));
+          setInvoiceSettings(backupData.data.invoiceSettings);
+        }
+
+        toast({
+          title: "Import Successful",
+          description: "Data has been imported successfully. Please refresh the page to see changes.",
+        });
+
+        // Suggest page refresh for complete data reload
+        setTimeout(() => {
+          if (window.confirm("Refresh the page now to load imported data?")) {
+            window.location.reload();
+          }
+        }, 2000);
+
+      } catch (error) {
+        console.error("Import failed:", error);
+        toast({
+          title: "Import Failed",
+          description: "Failed to import data. Please check the file format and try again.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    reader.readAsText(file);
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Clear cache function
+  const clearCache = () => {
+    const confirmed = window.confirm(
+      "Clear all cached data? This will remove all stored information and reset the application."
+    );
+
+    if (confirmed) {
+      try {
+        localStorage.clear();
+        toast({
+          title: "Cache Cleared",
+          description: "All cached data has been cleared. Please refresh the page.",
+        });
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } catch (error) {
+        console.error("Failed to clear cache:", error);
+        toast({
+          title: "Clear Failed",
+          description: "Failed to clear cache. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
