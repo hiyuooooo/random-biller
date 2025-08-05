@@ -140,6 +140,11 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       prev.map((acc) => ({ ...acc, isActive: acc.id === account.id })),
     );
     setActiveAccountState(account);
+
+    // Force reload of page to ensure all contexts reload their data
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   const addAccount = (accountData: Omit<Account, "id" | "isActive">) => {
