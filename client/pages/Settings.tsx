@@ -441,6 +441,99 @@ export default function Settings() {
     }
   };
 
+  // Test function to generate sample data
+  const generateTestData = () => {
+    if (!activeAccount) {
+      toast({
+        title: "No Active Account",
+        description: "Please select an account before generating test data.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const accountId = activeAccount.id;
+
+      // Generate test bills
+      const testBills = [
+        {
+          id: "BILL-001",
+          billNumber: 1001,
+          date: new Date().toISOString().split('T')[0],
+          customerName: "Test Customer 1",
+          items: [
+            { id: 1, name: "Rice (1kg)", price: 80, quantity: 2, total: 160 }
+          ],
+          subTotal: 160,
+          expectedTotal: 160,
+          paymentMode: "Cash",
+          status: "generated",
+          difference: 0,
+          tolerance: 0,
+          headerInfo: { agencyName: activeAccount.name, address: activeAccount.address },
+          footerInfo: { declaration: "Test declaration" }
+        }
+      ];
+
+      // Generate test customers
+      const testCustomers = [
+        {
+          id: 1,
+          name: "Test Customer 1",
+          phone: "+91 9876543210",
+          email: "test@example.com",
+          address: "Test Address",
+          preferredPayment: "Cash",
+          totalTransactions: 1,
+          totalAmount: 160,
+          lastTransaction: new Date().toISOString().split('T')[0],
+          transactions: []
+        }
+      ];
+
+      // Generate test stock items
+      const testStockItems = [
+        {
+          id: 1,
+          itemName: "Rice (1kg)",
+          price: 80,
+          availableQuantity: 100,
+          lowStockThreshold: 10
+        },
+        {
+          id: 2,
+          itemName: "Wheat Flour (1kg)",
+          price: 45,
+          availableQuantity: 150,
+          lowStockThreshold: 15
+        }
+      ];
+
+      // Save test data
+      localStorage.setItem(`bills_${accountId}`, JSON.stringify(testBills));
+      localStorage.setItem(`customers_${accountId}`, JSON.stringify(testCustomers));
+      localStorage.setItem(`stockItems_${accountId}`, JSON.stringify(testStockItems));
+
+      toast({
+        title: "Test Data Generated",
+        description: "Sample data has been created. Refreshing to load the data...",
+      });
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (error) {
+      console.error("Failed to generate test data:", error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate test data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
