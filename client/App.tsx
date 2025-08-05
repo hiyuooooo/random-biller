@@ -27,8 +27,6 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-
-
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     // Check if user was previously logged in
@@ -61,7 +59,10 @@ const App = () => {
                     <BrowserRouter>
                       <Routes>
                         <Route path="/" element={<Index />} />
-                        <Route path="/transactions" element={<Transactions />} />
+                        <Route
+                          path="/transactions"
+                          element={<Transactions />}
+                        />
                         <Route path="/bills" element={<Bills />} />
                         <Route path="/bill-blocker" element={<BillBlocker />} />
                         <Route path="/stock" element={<Stock />} />
