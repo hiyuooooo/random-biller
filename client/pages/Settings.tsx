@@ -344,17 +344,29 @@ export default function Settings() {
         // Store data in localStorage for the active account
         const accountId = activeAccount.id;
 
+        // Debug log
+        console.log("Importing backup data:", {
+          billsCount: backupData.data.bills?.length || 0,
+          customersCount: backupData.data.customers?.length || 0,
+          stockItemsCount: backupData.data.stockItems?.length || 0,
+          accountId: accountId,
+          backupAccountId: backupData.accountId
+        });
+
         // Import business data
         if (backupData.data.bills) {
           localStorage.setItem(`bills_${accountId}`, JSON.stringify(backupData.data.bills));
+          console.log(`Saved ${backupData.data.bills.length} bills to bills_${accountId}`);
         }
 
         if (backupData.data.customers) {
           localStorage.setItem(`customers_${accountId}`, JSON.stringify(backupData.data.customers));
+          console.log(`Saved ${backupData.data.customers.length} customers to customers_${accountId}`);
         }
 
         if (backupData.data.stockItems) {
           localStorage.setItem(`stockItems_${accountId}`, JSON.stringify(backupData.data.stockItems));
+          console.log(`Saved ${backupData.data.stockItems.length} stock items to stockItems_${accountId}`);
         }
 
         // Import settings data
