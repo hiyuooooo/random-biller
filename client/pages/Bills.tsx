@@ -288,47 +288,99 @@ export default function Bills() {
     return name.endsWith("_c") ? name.slice(0, -2) : name;
   };
 
-  // Auto-select items based on target total (simplified algorithm)
-  const autoSelectItems = (targetTotal: number) => {
-    const available = stockItems.filter((item) => item.availableQuantity > 0);
-    const selected: BillItem[] = [];
-    let currentTotal = 0;
-    const tolerance = 30;
+  // Enhanced bill generator with improved constraints
+  const generateOptimalBillItems = (targetTotal: number, previousItems: string[] = []): { items: BillItem[], total: number } => {
+    let bestMatch: { items: BillItem[], total: number } | null = null;
+    let closestDiff = Infinity;
 
-    // Simple greedy algorithm to approximate target total
-    for (
-      let i = 0;
-      i < Math.min(7, available.length) &&
-      currentTotal < targetTotal - tolerance;
-      i++
-    ) {
-      const item = available[i];
-      const maxQuantity = Math.min(
-        item.availableQuantity,
-        Math.floor((targetTotal - currentTotal) / item.price),
-      );
-      const quantity = Math.max(
-        1,
-        Math.min(
-          maxQuantity,
-          Math.ceil((targetTotal - currentTotal) / item.price / 2),
-        ),
+    // Try different tolerance levels from 0 to 30
+    for (let tolerance = 0; tolerance <= 30; tolerance++) {
+      const attemptItems: BillItem[] = [];
+      let currentTotal = 0;
+
+      // Get available items that aren't in previous bill
+      const availableItems = stockItems.filter(item =>
+        item.availableQuantity > 0 &&
+        !previousItems.includes(item.itemName)
       );
 
-      if (quantity > 0) {
-        const billItem: BillItem = {
-          id: item.id,
-          name: item.itemName,
-          price: item.price,
-          quantity,
-          total: item.price * quantity,
-        };
-        selected.push(billItem);
-        currentTotal += billItem.total;
+      if (availableItems.length === 0) {
+        // If no unique items available, allow repeats but prefer different ones
+        availableItems.push(...stockItems.filter(item => item.availableQuantity > 0));
+      }
+
+      // Shuffle available items for variety
+      const shuffledItems = [...availableItems].sort(() => Math.random() - 0.5);
+
+      // Try to build a bill with these constraints
+      for (const item of shuffledItems) {
+        if (attemptItems.length >= 7) break;
+
+        // Calculate how much we can add of this item
+        const maxQtyByStock = item.availableQuantity;
+        const maxQtyByBudget = Math.floor((targetTotal + tolerance - currentTotal) / item.price);
+        const maxQuantity = Math.min(maxQtyByStock, maxQtyByBudget, 2); // Max 2 of any item
+
+        if (maxQuantity <= 0) continue;
+
+        // Try different quantities (1 or 2)
+        for (let quantity = 1; quantity <= maxQuantity; quantity++) {
+          const itemTotal = item.price * quantity;
+
+          if (currentTotal + itemTotal > targetTotal + tolerance) {
+            break; // This quantity is too much
+          }
+
+          const billItem: BillItem = {
+            id: item.id,
+            name: item.itemName,
+            price: item.price,
+            quantity,
+            total: itemTotal,
+          };
+
+          attemptItems.push(billItem);
+          currentTotal += itemTotal;
+          break; // Only add this item once
+        }
+
+        // Check if we're close enough to target
+        if (currentTotal >= targetTotal - tolerance) {
+          break;
+        }
+      }
+
+      // Check if this attempt meets our constraints
+      const diff = Math.abs(currentTotal - targetTotal);
+      const hasMinItems = attemptItems.length >= 2;
+      const isWithinTolerance = diff <= tolerance;
+
+      if (hasMinItems && isWithinTolerance && diff < closestDiff) {
+        bestMatch = { items: attemptItems, total: currentTotal };
+        closestDiff = diff;
+
+        // If we found a very close match, we can stop
+        if (diff <= 1) break;
       }
     }
 
-    setSelectedItems(selected);
+    return bestMatch || { items: [], total: 0 };
+  };
+
+  // Get previous bill items to avoid repeats
+  const getPreviousBillItems = (): string[] => {
+    if (bills.length === 0) return [];
+
+    // Get the most recent bill's items
+    const lastBill = bills[bills.length - 1];
+    return lastBill.items.map(item => item.name);
+  };
+
+  // Auto-select items based on target total with enhanced algorithm
+  const autoSelectItems = (targetTotal: number) => {
+    const previousItems = getPreviousBillItems();
+    const result = generateOptimalBillItems(targetTotal, previousItems);
+    setSelectedItems(result.items);
   };
 
   const handleCreateBill = () => {
