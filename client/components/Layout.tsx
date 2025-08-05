@@ -65,13 +65,49 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
           <div className="ml-auto flex items-center space-x-4">
-            <div className="text-sm text-muted-foreground">
-              {activeAccount?.name || "No Account Selected"}
-            </div>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            {/* Account Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <Building2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">
+                    {activeAccount?.name || "Select Account"}
+                  </span>
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-64">
+                <div className="px-2 py-1.5 text-sm font-medium">
+                  Switch Account
+                </div>
+                <DropdownMenuSeparator />
+                {accounts.map((account) => (
+                  <DropdownMenuItem
+                    key={account.id}
+                    onClick={() => setActiveAccount(account)}
+                    className="flex items-center space-x-2 cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-2 flex-1">
+                      <Building2 className="h-4 w-4" />
+                      <div className="flex flex-col">
+                        <span className="font-medium">{account.name}</span>
+                        <span className="text-xs text-muted-foreground truncate">
+                          {account.address}
+                        </span>
+                      </div>
+                    </div>
+                    {activeAccount?.id === account.id && (
+                      <div className="h-2 w-2 rounded-full bg-primary" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
