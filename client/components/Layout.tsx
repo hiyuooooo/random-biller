@@ -68,16 +68,16 @@ export function Layout({ children }: LayoutProps) {
             {/* Account Switcher */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center space-x-2">
-                  <Building2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">
+                <Button variant="outline" className="flex items-center space-x-2 min-w-0">
+                  <Building2 className="h-4 w-4 flex-shrink-0" />
+                  <span className="hidden sm:inline truncate max-w-32">
                     {activeAccount?.name || "Select Account"}
                   </span>
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown className="h-4 w-4 flex-shrink-0" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-64">
-                <div className="px-2 py-1.5 text-sm font-medium">
+              <DropdownMenuContent align="end" className="w-72">
+                <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
                   Switch Account
                 </div>
                 <DropdownMenuSeparator />
@@ -85,19 +85,20 @@ export function Layout({ children }: LayoutProps) {
                   <DropdownMenuItem
                     key={account.id}
                     onClick={() => setActiveAccount(account)}
-                    className="flex items-center space-x-2 cursor-pointer"
+                    className={cn(
+                      "flex items-center space-x-3 cursor-pointer p-3",
+                      activeAccount?.id === account.id && "bg-accent"
+                    )}
                   >
-                    <div className="flex items-center space-x-2 flex-1">
-                      <Building2 className="h-4 w-4" />
-                      <div className="flex flex-col">
-                        <span className="font-medium">{account.name}</span>
-                        <span className="text-xs text-muted-foreground truncate">
-                          {account.address}
-                        </span>
-                      </div>
+                    <Building2 className="h-4 w-4 flex-shrink-0" />
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="font-medium truncate">{account.name}</span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {account.address}
+                      </span>
                     </div>
                     {activeAccount?.id === account.id && (
-                      <div className="h-2 w-2 rounded-full bg-primary" />
+                      <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
                     )}
                   </DropdownMenuItem>
                 ))}
