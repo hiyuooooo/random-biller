@@ -28,14 +28,16 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 // Wrapper component to handle account-dependent contexts
-const AccountDependentProviders = ({ children }: { children: React.ReactNode }) => {
+const AccountDependentProviders = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   return (
     <StockProvider>
       <TransactionProvider>
         <CustomerProvider>
-          <BillProvider>
-            {children}
-          </BillProvider>
+          <BillProvider>{children}</BillProvider>
         </CustomerProvider>
       </TransactionProvider>
     </StockProvider>
@@ -71,10 +73,7 @@ const App = () => {
               <BrowserRouter>
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  <Route
-                    path="/transactions"
-                    element={<Transactions />}
-                  />
+                  <Route path="/transactions" element={<Transactions />} />
                   <Route path="/bills" element={<Bills />} />
                   <Route path="/bill-blocker" element={<BillBlocker />} />
                   <Route path="/stock" element={<Stock />} />

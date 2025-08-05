@@ -274,7 +274,7 @@ export default function Settings() {
         customersCount: customers.length,
         stockItemsCount: stockItems.length,
         accountId: activeAccount.id,
-        accountName: activeAccount.name
+        accountName: activeAccount.name,
       });
 
       // Create and download the backup file
@@ -284,7 +284,7 @@ export default function Settings() {
 
       const link = document.createElement("a");
       link.href = url;
-      link.download = `backup_${activeAccount.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `backup_${activeAccount.name.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -336,7 +336,7 @@ export default function Settings() {
 
         // Confirm import with user
         const confirmed = window.confirm(
-          `Import data from backup created on ${new Date(backupData.timestamp).toLocaleDateString()}?\n\nThis will replace current data for the active account. This action cannot be undone.`
+          `Import data from backup created on ${new Date(backupData.timestamp).toLocaleDateString()}?\n\nThis will replace current data for the active account. This action cannot be undone.`,
         );
 
         if (!confirmed) return;
@@ -350,56 +350,81 @@ export default function Settings() {
           customersCount: backupData.data.customers?.length || 0,
           stockItemsCount: backupData.data.stockItems?.length || 0,
           accountId: accountId,
-          backupAccountId: backupData.accountId
+          backupAccountId: backupData.accountId,
         });
 
         // Import business data
         if (backupData.data.bills) {
-          localStorage.setItem(`bills_${accountId}`, JSON.stringify(backupData.data.bills));
-          console.log(`Saved ${backupData.data.bills.length} bills to bills_${accountId}`);
+          localStorage.setItem(
+            `bills_${accountId}`,
+            JSON.stringify(backupData.data.bills),
+          );
+          console.log(
+            `Saved ${backupData.data.bills.length} bills to bills_${accountId}`,
+          );
         }
 
         if (backupData.data.customers) {
-          localStorage.setItem(`customers_${accountId}`, JSON.stringify(backupData.data.customers));
-          console.log(`Saved ${backupData.data.customers.length} customers to customers_${accountId}`);
+          localStorage.setItem(
+            `customers_${accountId}`,
+            JSON.stringify(backupData.data.customers),
+          );
+          console.log(
+            `Saved ${backupData.data.customers.length} customers to customers_${accountId}`,
+          );
         }
 
         if (backupData.data.stockItems) {
-          localStorage.setItem(`stockItems_${accountId}`, JSON.stringify(backupData.data.stockItems));
-          console.log(`Saved ${backupData.data.stockItems.length} stock items to stockItems_${accountId}`);
+          localStorage.setItem(
+            `stockItems_${accountId}`,
+            JSON.stringify(backupData.data.stockItems),
+          );
+          console.log(
+            `Saved ${backupData.data.stockItems.length} stock items to stockItems_${accountId}`,
+          );
         }
 
         // Import settings data
         if (backupData.data.notifications) {
-          localStorage.setItem(`settings_notifications_${accountId}`, JSON.stringify(backupData.data.notifications));
+          localStorage.setItem(
+            `settings_notifications_${accountId}`,
+            JSON.stringify(backupData.data.notifications),
+          );
           setNotifications(backupData.data.notifications);
         }
 
         if (backupData.data.preferences) {
-          localStorage.setItem(`settings_preferences_${accountId}`, JSON.stringify(backupData.data.preferences));
+          localStorage.setItem(
+            `settings_preferences_${accountId}`,
+            JSON.stringify(backupData.data.preferences),
+          );
           setPreferences(backupData.data.preferences);
         }
 
         if (backupData.data.invoiceSettings) {
-          localStorage.setItem(`settings_invoice_${accountId}`, JSON.stringify(backupData.data.invoiceSettings));
+          localStorage.setItem(
+            `settings_invoice_${accountId}`,
+            JSON.stringify(backupData.data.invoiceSettings),
+          );
           setInvoiceSettings(backupData.data.invoiceSettings);
         }
 
         toast({
           title: "Import Successful",
-          description: "Data has been imported successfully. Refreshing to load imported data...",
+          description:
+            "Data has been imported successfully. Refreshing to load imported data...",
         });
 
         // Automatically refresh page to reload imported data
         setTimeout(() => {
           window.location.reload();
         }, 1500);
-
       } catch (error) {
         console.error("Import failed:", error);
         toast({
           title: "Import Failed",
-          description: "Failed to import data. Please check the file format and try again.",
+          description:
+            "Failed to import data. Please check the file format and try again.",
           variant: "destructive",
         });
       }
@@ -416,7 +441,7 @@ export default function Settings() {
   // Clear cache function
   const clearCache = () => {
     const confirmed = window.confirm(
-      "Clear all cached data? This will remove all stored information and reset the application."
+      "Clear all cached data? This will remove all stored information and reset the application.",
     );
 
     if (confirmed) {
@@ -424,7 +449,8 @@ export default function Settings() {
         localStorage.clear();
         toast({
           title: "Cache Cleared",
-          description: "All cached data has been cleared. Please refresh the page.",
+          description:
+            "All cached data has been cleared. Please refresh the page.",
         });
 
         setTimeout(() => {
@@ -460,10 +486,10 @@ export default function Settings() {
         {
           id: "BILL-001",
           billNumber: 1001,
-          date: new Date().toISOString().split('T')[0],
+          date: new Date().toISOString().split("T")[0],
           customerName: "Test Customer 1",
           items: [
-            { id: 1, name: "Rice (1kg)", price: 80, quantity: 2, total: 160 }
+            { id: 1, name: "Rice (1kg)", price: 80, quantity: 2, total: 160 },
           ],
           subTotal: 160,
           expectedTotal: 160,
@@ -471,9 +497,12 @@ export default function Settings() {
           status: "generated",
           difference: 0,
           tolerance: 0,
-          headerInfo: { agencyName: activeAccount.name, address: activeAccount.address },
-          footerInfo: { declaration: "Test declaration" }
-        }
+          headerInfo: {
+            agencyName: activeAccount.name,
+            address: activeAccount.address,
+          },
+          footerInfo: { declaration: "Test declaration" },
+        },
       ];
 
       // Generate test customers
@@ -487,9 +516,9 @@ export default function Settings() {
           preferredPayment: "Cash",
           totalTransactions: 1,
           totalAmount: 160,
-          lastTransaction: new Date().toISOString().split('T')[0],
-          transactions: []
-        }
+          lastTransaction: new Date().toISOString().split("T")[0],
+          transactions: [],
+        },
       ];
 
       // Generate test stock items
@@ -499,31 +528,37 @@ export default function Settings() {
           itemName: "Rice (1kg)",
           price: 80,
           availableQuantity: 100,
-          lowStockThreshold: 10
+          lowStockThreshold: 10,
         },
         {
           id: 2,
           itemName: "Wheat Flour (1kg)",
           price: 45,
           availableQuantity: 150,
-          lowStockThreshold: 15
-        }
+          lowStockThreshold: 15,
+        },
       ];
 
       // Save test data
       localStorage.setItem(`bills_${accountId}`, JSON.stringify(testBills));
-      localStorage.setItem(`customers_${accountId}`, JSON.stringify(testCustomers));
-      localStorage.setItem(`stockItems_${accountId}`, JSON.stringify(testStockItems));
+      localStorage.setItem(
+        `customers_${accountId}`,
+        JSON.stringify(testCustomers),
+      );
+      localStorage.setItem(
+        `stockItems_${accountId}`,
+        JSON.stringify(testStockItems),
+      );
 
       toast({
         title: "Test Data Generated",
-        description: "Sample data has been created. Refreshing to load the data...",
+        description:
+          "Sample data has been created. Refreshing to load the data...",
       });
 
       setTimeout(() => {
         window.location.reload();
       }, 1500);
-
     } catch (error) {
       console.error("Failed to generate test data:", error);
       toast({
@@ -1052,10 +1087,22 @@ export default function Settings() {
                     </div>
 
                     <div className="text-sm text-muted-foreground space-y-2 mt-4">
-                      <p><strong>Export:</strong> Creates a complete backup of all your data for the active account.</p>
-                      <p><strong>Import:</strong> Restores data from a previously exported backup file.</p>
-                      <p><strong>Generate Test Data:</strong> Creates sample data for testing the backup functionality.</p>
-                      <p><strong>Clear Cache:</strong> Removes all stored data and resets the application.</p>
+                      <p>
+                        <strong>Export:</strong> Creates a complete backup of
+                        all your data for the active account.
+                      </p>
+                      <p>
+                        <strong>Import:</strong> Restores data from a previously
+                        exported backup file.
+                      </p>
+                      <p>
+                        <strong>Generate Test Data:</strong> Creates sample data
+                        for testing the backup functionality.
+                      </p>
+                      <p>
+                        <strong>Clear Cache:</strong> Removes all stored data
+                        and resets the application.
+                      </p>
                     </div>
                   </div>
                 </div>

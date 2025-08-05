@@ -68,7 +68,10 @@ export function Layout({ children }: LayoutProps) {
             {/* Account Switcher */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center space-x-2 min-w-0">
+                <Button
+                  variant="outline"
+                  className="flex items-center space-x-2 min-w-0"
+                >
                   <Building2 className="h-4 w-4 flex-shrink-0" />
                   <span className="hidden sm:inline truncate max-w-32">
                     {activeAccount?.name || "Select Account"}
@@ -87,12 +90,14 @@ export function Layout({ children }: LayoutProps) {
                     onClick={() => setActiveAccount(account)}
                     className={cn(
                       "flex items-center space-x-3 cursor-pointer p-3",
-                      activeAccount?.id === account.id && "bg-accent"
+                      activeAccount?.id === account.id && "bg-accent",
                     )}
                   >
                     <Building2 className="h-4 w-4 flex-shrink-0" />
                     <div className="flex flex-col flex-1 min-w-0">
-                      <span className="font-medium truncate">{account.name}</span>
+                      <span className="font-medium truncate">
+                        {account.name}
+                      </span>
                       <span className="text-xs text-muted-foreground truncate">
                         {account.address}
                       </span>
@@ -103,7 +108,10 @@ export function Layout({ children }: LayoutProps) {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive">
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer text-destructive"
+                >
                   <LogOut className="h-4 w-4 mr-2" />
                   Logout
                 </DropdownMenuItem>
