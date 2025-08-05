@@ -98,9 +98,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     setBills((prev) => prev.filter((bill) => bill.id !== id));
   };
 
-  // Enhanced bill generator with strict tolerance enforcement
+  // Enhanced bill generator with intelligent combination finding
   const generateOptimalBillItems = (targetTotal: number, stockToUse: any[], previousItems: string[] = []): { items: BillItem[], total: number } => {
-    console.log('Generating optimal bill items for target:', targetTotal, 'Previous items:', previousItems);
+    console.log('Generating optimal bill items for target:', targetTotal, 'Stock available:', stockToUse.length);
 
     // Get available items that aren't in previous bill
     let availableItems = stockToUse.filter(item =>
@@ -112,8 +112,6 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       availableItems = [...stockToUse];
     }
 
-    console.log('Available items for generation:', availableItems.length);
-
     if (availableItems.length === 0) {
       return { items: [], total: 0 };
     }
@@ -121,9 +119,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     let bestMatch: { items: BillItem[], total: number } | null = null;
     let closestDiff = Infinity;
 
-    // Try different tolerance levels from 0 to 30
-    for (let tolerance = 0; tolerance <= 30; tolerance++) {
-      // Shuffle available items for variety
+    // Try multiple attempts with different strategies
+    for (let attempt = 0; attempt < 50; attempt++) {
+      // Shuffle items for variety
       const shuffledItems = [...availableItems];
       for (let i = shuffledItems.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -133,73 +131,122 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       const selectedItems: BillItem[] = [];
       let currentTotal = 0;
 
-      // Start with cheapest items to ensure we can add at least 2
-      const sortedByPrice = [...shuffledItems].sort((a, b) => a.price - b.price);
+      // Strategy: Try to build a bill close to target
+      const itemsToTry = shuffledItems.slice(0, 7); // Limit to 7 items
 
-      // Add items one by one, ensuring we don't exceed tolerance
-      for (const item of sortedByPrice) {
+      // Greedy approach: select items and quantities that get us close to target
+      for (const item of itemsToTry) {
         if (selectedItems.length >= 7) break;
 
-        // Try different quantities (1 or 2)
-        for (let qty = 1; qty <= 2; qty++) {
-          const itemTotal = item.price * qty;
-          const newTotal = currentTotal + itemTotal;
+        const remaining = targetTotal - currentTotal;
 
-          // Only add if within tolerance
-          if (newTotal <= targetTotal + tolerance) {
-            const billItem: BillItem = {
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              quantity: qty,
-              total: itemTotal,
-            };
+        // Calculate optimal quantity for this item
+        let bestQty = 0;
+        let bestQtyTotal = 0;
 
-            selectedItems.push(billItem);
-            currentTotal = newTotal;
-            break; // Only add this item once
+        // Try quantities 1, 2, 3
+        for (let qty = 1; qty <= 3; qty++) {
+          const itemCost = item.price * qty;
+
+          // Check if this gets us closer to target without going too far over
+          if (currentTotal + itemCost <= targetTotal + 30) {
+            if (Math.abs((currentTotal + itemCost) - targetTotal) < Math.abs((currentTotal + bestQtyTotal) - targetTotal)) {
+              bestQty = qty;
+              bestQtyTotal = itemCost;
+            }
           }
         }
 
-        // Stop if we're at least 2 items and close to target
-        if (selectedItems.length >= 2 && Math.abs(currentTotal - targetTotal) <= tolerance) {
+        // Add the item if we found a good quantity
+        if (bestQty > 0) {
+          const billItem: BillItem = {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: bestQty,
+            total: bestQtyTotal,
+          };
+
+          selectedItems.push(billItem);
+          currentTotal += bestQtyTotal;
+        }
+
+        // Stop if we're close enough and have minimum items
+        if (selectedItems.length >= 2 && Math.abs(currentTotal - targetTotal) <= 30) {
           break;
         }
       }
 
-      // Check if this attempt meets our constraints
-      const diff = Math.abs(currentTotal - targetTotal);
-      const hasMinItems = selectedItems.length >= 2;
-      const isWithinTolerance = diff <= tolerance;
+      // Ensure we have at least 2 items - add cheapest if needed
+      if (selectedItems.length < 2) {
+        const unusedItems = shuffledItems.filter(item =>
+          !selectedItems.some(selected => selected.name === item.name)
+        ).sort((a, b) => a.price - b.price);
 
-      if (hasMinItems && isWithinTolerance && diff < closestDiff) {
+        for (const item of unusedItems.slice(0, 2 - selectedItems.length)) {
+          if (currentTotal + item.price <= targetTotal + 30) {
+            const billItem: BillItem = {
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: 1,
+              total: item.price,
+            };
+            selectedItems.push(billItem);
+            currentTotal += item.price;
+          }
+        }
+      }
+
+      // Check if this is our best match so far
+      const diff = Math.abs(currentTotal - targetTotal);
+      if (selectedItems.length >= 2 && diff <= 30 && diff < closestDiff) {
         bestMatch = { items: selectedItems, total: currentTotal };
         closestDiff = diff;
 
-        // If we found a very close match, we can stop
-        if (diff <= 5) break;
+        // If very close, stop searching
+        if (diff <= 10) break;
       }
     }
 
-    // If no good match found within tolerance, reject this generation
-    if (!bestMatch || closestDiff > 30) {
-      console.warn('Could not generate bill within ±30 tolerance, closest diff:', closestDiff);
-      // Return a minimal valid bill rather than exceeding tolerance
-      const cheapestItems = availableItems.sort((a, b) => a.price - b.price).slice(0, 2);
-      const fallbackItems = cheapestItems.map((item, index) => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: 1,
-        total: item.price,
-      }));
-      const fallbackTotal = fallbackItems.reduce((sum, item) => sum + item.total, 0);
+    // If still no match, create a proportional bill
+    if (!bestMatch) {
+      console.log('No match found, creating proportional bill');
 
-      console.log('Using fallback with 2 cheapest items, total:', fallbackTotal);
-      return { items: fallbackItems, total: fallbackTotal };
+      // Calculate how to distribute target among available items
+      const selectedItems: BillItem[] = [];
+      let currentTotal = 0;
+
+      // Sort items by price and take 2-3 items
+      const sortedItems = availableItems.sort((a, b) => a.price - b.price);
+      const numItems = Math.min(3, sortedItems.length);
+      const targetPerItem = targetTotal / numItems;
+
+      for (let i = 0; i < numItems; i++) {
+        const item = sortedItems[i];
+        const qty = Math.max(1, Math.round(targetPerItem / item.price));
+        const clampedQty = Math.min(qty, Math.floor((targetTotal - currentTotal) / item.price) + 1);
+        const finalQty = Math.max(1, clampedQty);
+
+        const billItem: BillItem = {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: finalQty,
+          total: item.price * finalQty,
+        };
+
+        selectedItems.push(billItem);
+        currentTotal += billItem.total;
+
+        if (Math.abs(currentTotal - targetTotal) <= 30) break;
+      }
+
+      bestMatch = { items: selectedItems, total: currentTotal };
+      closestDiff = Math.abs(currentTotal - targetTotal);
     }
 
-    console.log('Final bill items:', bestMatch.items.length, 'Total:', bestMatch.total, 'Diff:', closestDiff);
+    console.log('Generated bill with', bestMatch.items.length, 'items, total:', bestMatch.total, 'difference:', closestDiff);
     return bestMatch;
   };
 
