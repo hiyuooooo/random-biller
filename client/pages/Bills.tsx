@@ -290,123 +290,98 @@ export default function Bills() {
 
   // Enhanced bill generator with improved constraints
   const generateOptimalBillItems = (targetTotal: number, previousItems: string[] = []): { items: BillItem[], total: number } => {
-    let bestMatch: { items: BillItem[], total: number } | null = null;
-    let closestDiff = Infinity;
+    console.log('Generating bill items for target:', targetTotal, 'Previous items:', previousItems);
 
-    // Try different tolerance levels from 0 to 30
-    for (let tolerance = 0; tolerance <= 30; tolerance++) {
-      const attemptItems: BillItem[] = [];
-      let currentTotal = 0;
+    // Get available items that aren't in previous bill
+    let availableItems = stockItems.filter(item =>
+      item.availableQuantity > 0 &&
+      !previousItems.includes(item.itemName)
+    );
 
-      // Get available items that aren't in previous bill
-      let availableItems = stockItems.filter(item =>
-        item.availableQuantity > 0 &&
-        !previousItems.includes(item.itemName)
-      );
-
-      if (availableItems.length < 2) {
-        // If not enough unique items available, use all available items
-        availableItems = stockItems.filter(item => item.availableQuantity > 0);
-      }
-
-      // Shuffle available items for variety using Fisher-Yates algorithm
-      const shuffledItems = [...availableItems];
-      for (let i = shuffledItems.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
-      }
-
-      // First pass: try to add items to reach minimum 2 items
-      for (const item of shuffledItems) {
-        if (attemptItems.length >= 7) break;
-
-        // Skip if item already added
-        if (attemptItems.some(billItem => billItem.name === item.itemName)) continue;
-
-        // Calculate the best quantity for this item
-        const maxQtyByStock = Math.min(item.availableQuantity, 2); // Max 2 of any item
-        let bestQty = 0;
-        let bestItemTotal = 0;
-
-        // Try quantities 1 and 2
-        for (let qty = 1; qty <= maxQtyByStock; qty++) {
-          const itemTotal = item.price * qty;
-
-          // Don't exceed target + tolerance
-          if (currentTotal + itemTotal <= targetTotal + tolerance) {
-            bestQty = qty;
-            bestItemTotal = itemTotal;
-          }
-        }
-
-        // Add the item if we found a valid quantity
-        if (bestQty > 0) {
-          const billItem: BillItem = {
-            id: item.id,
-            name: item.itemName,
-            price: item.price,
-            quantity: bestQty,
-            total: bestItemTotal,
-          };
-
-          attemptItems.push(billItem);
-          currentTotal += bestItemTotal;
-        }
-
-        // If we have at least 2 items and are within range, we can be selective
-        if (attemptItems.length >= 2 && currentTotal >= targetTotal - tolerance) {
-          break;
-        }
-      }
-
-      // Check if this attempt meets our constraints
-      const diff = Math.abs(currentTotal - targetTotal);
-      const hasMinItems = attemptItems.length >= 2;
-      const isWithinTolerance = currentTotal <= targetTotal + tolerance && currentTotal >= targetTotal - tolerance;
-
-      if (hasMinItems && isWithinTolerance && diff < closestDiff) {
-        bestMatch = { items: attemptItems, total: currentTotal };
-        closestDiff = diff;
-
-        // If we found a very close match, we can stop
-        if (diff <= 5) break;
-      }
+    if (availableItems.length < 2) {
+      // If not enough unique items available, use all available items
+      availableItems = stockItems.filter(item => item.availableQuantity > 0);
     }
 
-    // If no good match found, try a fallback with relaxed constraints
-    if (!bestMatch) {
-      const fallbackItems: BillItem[] = [];
-      let fallbackTotal = 0;
+    console.log('Available items:', availableItems.length);
 
-      const availableItems = stockItems.filter(item => item.availableQuantity > 0);
-      // Better randomization for fallback
-      const shuffledItems = [...availableItems];
-      for (let i = shuffledItems.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
-      }
+    if (availableItems.length === 0) {
+      return { items: [], total: 0 };
+    }
 
-      // Add exactly 2 items to meet minimum requirement
-      for (let i = 0; i < Math.min(2, shuffledItems.length); i++) {
-        const item = shuffledItems[i];
-        const quantity = Math.min(item.availableQuantity, 1); // Start with 1 quantity
+    // Shuffle available items for variety using Fisher-Yates algorithm
+    const shuffledItems = [...availableItems];
+    for (let i = shuffledItems.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
+    }
 
+    // Strategy: Always ensure minimum 2 items, then optimize
+    const selectedItems: BillItem[] = [];
+    let currentTotal = 0;
+
+    // Step 1: Add at least 2 items, starting with cheapest to leave room for optimization
+    const sortedByPrice = [...shuffledItems].sort((a, b) => a.price - b.price);
+
+    for (let i = 0; i < Math.min(2, sortedByPrice.length); i++) {
+      const item = sortedByPrice[i];
+      const quantity = 1; // Start with 1 quantity each
+
+      const billItem: BillItem = {
+        id: item.id,
+        name: item.itemName,
+        price: item.price,
+        quantity,
+        total: item.price * quantity,
+      };
+
+      selectedItems.push(billItem);
+      currentTotal += billItem.total;
+    }
+
+    console.log('Initial 2 items selected, total:', currentTotal);
+
+    // Step 2: Try to add more items or increase quantities to get closer to target
+    const remainingBudget = targetTotal - currentTotal;
+    const remainingItems = shuffledItems.filter(item =>
+      !selectedItems.some(selected => selected.name === item.itemName)
+    );
+
+    // Try to add more items within budget and tolerance
+    for (const item of remainingItems) {
+      if (selectedItems.length >= 7) break;
+
+      const itemCost = item.price;
+      if (currentTotal + itemCost <= targetTotal + 30) {
         const billItem: BillItem = {
           id: item.id,
           name: item.itemName,
           price: item.price,
-          quantity,
-          total: item.price * quantity,
+          quantity: 1,
+          total: itemCost,
         };
 
-        fallbackItems.push(billItem);
-        fallbackTotal += billItem.total;
+        selectedItems.push(billItem);
+        currentTotal += itemCost;
       }
-
-      bestMatch = { items: fallbackItems, total: fallbackTotal };
     }
 
-    return bestMatch;
+    // Step 3: Try to increase quantities of existing items if under target
+    if (currentTotal < targetTotal - 10) {
+      for (const billItem of selectedItems) {
+        if (billItem.quantity < 2 && currentTotal + billItem.price <= targetTotal + 30) {
+          const originalItem = stockItems.find(item => item.id === billItem.id);
+          if (originalItem && originalItem.availableQuantity >= billItem.quantity + 1) {
+            billItem.quantity += 1;
+            billItem.total = billItem.price * billItem.quantity;
+            currentTotal += billItem.price;
+          }
+        }
+      }
+    }
+
+    console.log('Final bill items:', selectedItems.length, 'Total:', currentTotal);
+    return { items: selectedItems, total: currentTotal };
   };
 
   // Get previous bill items to avoid repeats
