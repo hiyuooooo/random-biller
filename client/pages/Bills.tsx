@@ -309,8 +309,12 @@ export default function Bills() {
         availableItems = stockItems.filter(item => item.availableQuantity > 0);
       }
 
-      // Shuffle available items for variety
-      const shuffledItems = [...availableItems].sort(() => Math.random() - 0.5);
+      // Shuffle available items for variety using Fisher-Yates algorithm
+      const shuffledItems = [...availableItems];
+      for (let i = shuffledItems.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
+      }
 
       // First pass: try to add items to reach minimum 2 items
       for (const item of shuffledItems) {
@@ -647,7 +651,7 @@ export default function Bills() {
             <tfoot>
               <tr class="total-row">
                 <td colspan="4"><strong>Sub Total:</strong></td>
-                <td><strong>���${bill.subTotal}</strong></td>
+                <td><strong>₹${bill.subTotal}</strong></td>
               </tr>
             </tfoot>
           </table>
