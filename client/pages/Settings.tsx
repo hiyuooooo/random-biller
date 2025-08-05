@@ -366,15 +366,13 @@ export default function Settings() {
 
         toast({
           title: "Import Successful",
-          description: "Data has been imported successfully. Please refresh the page to see changes.",
+          description: "Data has been imported successfully. Refreshing to load imported data...",
         });
 
-        // Suggest page refresh for complete data reload
+        // Automatically refresh page to reload imported data
         setTimeout(() => {
-          if (window.confirm("Refresh the page now to load imported data?")) {
-            window.location.reload();
-          }
-        }, 2000);
+          window.location.reload();
+        }, 1500);
 
       } catch (error) {
         console.error("Import failed:", error);
