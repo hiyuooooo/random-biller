@@ -289,21 +289,29 @@ export default function Bills() {
   };
 
   // Enhanced bill generator with improved constraints
-  const generateOptimalBillItems = (targetTotal: number, previousItems: string[] = []): { items: BillItem[], total: number } => {
-    console.log('Generating bill items for target:', targetTotal, 'Previous items:', previousItems);
+  const generateOptimalBillItems = (
+    targetTotal: number,
+    previousItems: string[] = [],
+  ): { items: BillItem[]; total: number } => {
+    console.log(
+      "Generating bill items for target:",
+      targetTotal,
+      "Previous items:",
+      previousItems,
+    );
 
     // Get available items that aren't in previous bill
-    let availableItems = stockItems.filter(item =>
-      item.availableQuantity > 0 &&
-      !previousItems.includes(item.itemName)
+    let availableItems = stockItems.filter(
+      (item) =>
+        item.availableQuantity > 0 && !previousItems.includes(item.itemName),
     );
 
     if (availableItems.length < 2) {
       // If not enough unique items available, use all available items
-      availableItems = stockItems.filter(item => item.availableQuantity > 0);
+      availableItems = stockItems.filter((item) => item.availableQuantity > 0);
     }
 
-    console.log('Available items:', availableItems.length);
+    console.log("Available items:", availableItems.length);
 
     if (availableItems.length === 0) {
       return { items: [], total: 0 };
@@ -313,7 +321,10 @@ export default function Bills() {
     const shuffledItems = [...availableItems];
     for (let i = shuffledItems.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
+      [shuffledItems[i], shuffledItems[j]] = [
+        shuffledItems[j],
+        shuffledItems[i],
+      ];
     }
 
     // Strategy: Always ensure minimum 2 items, then optimize
@@ -339,12 +350,13 @@ export default function Bills() {
       currentTotal += billItem.total;
     }
 
-    console.log('Initial 2 items selected, total:', currentTotal);
+    console.log("Initial 2 items selected, total:", currentTotal);
 
     // Step 2: Try to add more items or increase quantities to get closer to target
     const remainingBudget = targetTotal - currentTotal;
-    const remainingItems = shuffledItems.filter(item =>
-      !selectedItems.some(selected => selected.name === item.itemName)
+    const remainingItems = shuffledItems.filter(
+      (item) =>
+        !selectedItems.some((selected) => selected.name === item.itemName),
     );
 
     // Try to add more items within budget and tolerance
@@ -369,9 +381,17 @@ export default function Bills() {
     // Step 3: Try to increase quantities of existing items if under target
     if (currentTotal < targetTotal - 10) {
       for (const billItem of selectedItems) {
-        if (billItem.quantity < 2 && currentTotal + billItem.price <= targetTotal + 30) {
-          const originalItem = stockItems.find(item => item.id === billItem.id);
-          if (originalItem && originalItem.availableQuantity >= billItem.quantity + 1) {
+        if (
+          billItem.quantity < 2 &&
+          currentTotal + billItem.price <= targetTotal + 30
+        ) {
+          const originalItem = stockItems.find(
+            (item) => item.id === billItem.id,
+          );
+          if (
+            originalItem &&
+            originalItem.availableQuantity >= billItem.quantity + 1
+          ) {
             billItem.quantity += 1;
             billItem.total = billItem.price * billItem.quantity;
             currentTotal += billItem.price;
@@ -380,7 +400,12 @@ export default function Bills() {
       }
     }
 
-    console.log('Final bill items:', selectedItems.length, 'Total:', currentTotal);
+    console.log(
+      "Final bill items:",
+      selectedItems.length,
+      "Total:",
+      currentTotal,
+    );
     return { items: selectedItems, total: currentTotal };
   };
 
@@ -390,7 +415,7 @@ export default function Bills() {
 
     // Get the most recent bill's items
     const lastBill = bills[bills.length - 1];
-    return lastBill.items.map(item => item.name);
+    return lastBill.items.map((item) => item.name);
   };
 
   // Auto-select items based on target total with enhanced algorithm
@@ -400,26 +425,32 @@ export default function Bills() {
       return;
     }
 
-    console.log('Auto-selecting items for target:', targetTotal);
+    console.log("Auto-selecting items for target:", targetTotal);
     const previousItems = getPreviousBillItems();
-    console.log('Previous bill items to avoid:', previousItems);
+    console.log("Previous bill items to avoid:", previousItems);
 
     const result = generateOptimalBillItems(targetTotal, previousItems);
 
     if (result.items.length === 0) {
-      alert("Unable to generate bill items. Please check stock availability or try manual mode.");
+      alert(
+        "Unable to generate bill items. Please check stock availability or try manual mode.",
+      );
       return;
     }
 
-    console.log('Generated items:', result.items);
+    console.log("Generated items:", result.items);
     setSelectedItems(result.items);
 
     // Provide feedback about the generation
     const difference = Math.abs(result.total - targetTotal);
-    console.log(`Bill generated with ${result.items.length} items, total: ₹${result.total}, difference from target: ₹${difference}`);
+    console.log(
+      `Bill generated with ${result.items.length} items, total: ₹${result.total}, difference from target: ₹${difference}`,
+    );
 
     if (difference > 30) {
-      console.warn(`Generated bill total (₹${result.total}) differs from target (₹${targetTotal}) by ₹${difference}`);
+      console.warn(
+        `Generated bill total (₹${result.total}) differs from target (₹${targetTotal}) by ₹${difference}`,
+      );
     }
   };
 
@@ -1229,7 +1260,9 @@ export default function Bills() {
                 <div className="space-y-3">
                   <div className="flex space-x-2">
                     <Button
-                      onClick={() => autoSelectItems(Number(newBill.targetTotal))}
+                      onClick={() =>
+                        autoSelectItems(Number(newBill.targetTotal))
+                      }
                       disabled={!newBill.targetTotal}
                     >
                       <RefreshCw className="h-4 w-4 mr-2" />
@@ -1240,9 +1273,13 @@ export default function Bills() {
                     </Badge>
                   </div>
                   <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
-                    <div className="font-medium mb-1">Auto Selection Features:</div>
+                    <div className="font-medium mb-1">
+                      Auto Selection Features:
+                    </div>
                     <ul className="space-y-1">
-                      <li>• Avoids items from the previous bill to prevent repeats</li>
+                      <li>
+                        • Avoids items from the previous bill to prevent repeats
+                      </li>
                       <li>• Ensures minimum 2 items per bill</li>
                       <li>• Matches target total within ±₹30 tolerance</li>
                       <li>• Maximum 7 items per bill, up to 2 quantity each</li>
@@ -1329,9 +1366,19 @@ export default function Bills() {
                     <Label>Selected Items</Label>
                     {!manualMode && newBill.targetTotal && (
                       <div className="text-sm text-muted-foreground">
-                        Target: ₹{newBill.targetTotal} |
-                        Actual: ₹{selectedItems.reduce((sum, item) => sum + item.total, 0)} |
-                        Difference: ₹{Math.abs(Number(newBill.targetTotal) - selectedItems.reduce((sum, item) => sum + item.total, 0))}
+                        Target: ₹{newBill.targetTotal} | Actual: ₹
+                        {selectedItems.reduce(
+                          (sum, item) => sum + item.total,
+                          0,
+                        )}{" "}
+                        | Difference: ₹
+                        {Math.abs(
+                          Number(newBill.targetTotal) -
+                            selectedItems.reduce(
+                              (sum, item) => sum + item.total,
+                              0,
+                            ),
+                        )}
                       </div>
                     )}
                   </div>
@@ -1427,18 +1474,27 @@ export default function Bills() {
                   {selectedItems.length < 2 && (
                     <Alert>
                       <AlertDescription>
-                        ⚠️ Bills should have at least 2 items for optimal generation.
+                        ⚠️ Bills should have at least 2 items for optimal
+                        generation.
                       </AlertDescription>
                     </Alert>
                   )}
-                  {!manualMode && newBill.targetTotal &&
-                   Math.abs(Number(newBill.targetTotal) - selectedItems.reduce((sum, item) => sum + item.total, 0)) > 30 && (
-                    <Alert>
-                      <AlertDescription>
-                        ⚠️ Total differs from target by more than ₹30. Consider adjusting target or using manual mode.
-                      </AlertDescription>
-                    </Alert>
-                  )}
+                  {!manualMode &&
+                    newBill.targetTotal &&
+                    Math.abs(
+                      Number(newBill.targetTotal) -
+                        selectedItems.reduce(
+                          (sum, item) => sum + item.total,
+                          0,
+                        ),
+                    ) > 30 && (
+                      <Alert>
+                        <AlertDescription>
+                          ⚠️ Total differs from target by more than ₹30.
+                          Consider adjusting target or using manual mode.
+                        </AlertDescription>
+                      </Alert>
+                    )}
                 </div>
               )}
 

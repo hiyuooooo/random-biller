@@ -99,12 +99,21 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Enhanced bill generator with intelligent combination finding
-  const generateOptimalBillItems = (targetTotal: number, stockToUse: any[], previousItems: string[] = []): { items: BillItem[], total: number } => {
-    console.log('Generating optimal bill items for target:', targetTotal, 'Stock available:', stockToUse.length);
+  const generateOptimalBillItems = (
+    targetTotal: number,
+    stockToUse: any[],
+    previousItems: string[] = [],
+  ): { items: BillItem[]; total: number } => {
+    console.log(
+      "Generating optimal bill items for target:",
+      targetTotal,
+      "Stock available:",
+      stockToUse.length,
+    );
 
     // Get available items that aren't in previous bill
-    let availableItems = stockToUse.filter(item =>
-      !previousItems.includes(item.name)
+    let availableItems = stockToUse.filter(
+      (item) => !previousItems.includes(item.name),
     );
 
     if (availableItems.length < 2) {
@@ -116,7 +125,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       return { items: [], total: 0 };
     }
 
-    let bestMatch: { items: BillItem[], total: number } | null = null;
+    let bestMatch: { items: BillItem[]; total: number } | null = null;
     let closestDiff = Infinity;
 
     // Try multiple attempts with different strategies
@@ -125,7 +134,10 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       const shuffledItems = [...availableItems];
       for (let i = shuffledItems.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
+        [shuffledItems[i], shuffledItems[j]] = [
+          shuffledItems[j],
+          shuffledItems[i],
+        ];
       }
 
       const selectedItems: BillItem[] = [];
@@ -150,7 +162,10 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
           // Check if this gets us closer to target without going too far over
           if (currentTotal + itemCost <= targetTotal + 30) {
-            if (Math.abs((currentTotal + itemCost) - targetTotal) < Math.abs((currentTotal + bestQtyTotal) - targetTotal)) {
+            if (
+              Math.abs(currentTotal + itemCost - targetTotal) <
+              Math.abs(currentTotal + bestQtyTotal - targetTotal)
+            ) {
               bestQty = qty;
               bestQtyTotal = itemCost;
             }
@@ -172,16 +187,22 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         }
 
         // Stop if we're close enough and have minimum items
-        if (selectedItems.length >= 2 && Math.abs(currentTotal - targetTotal) <= 30) {
+        if (
+          selectedItems.length >= 2 &&
+          Math.abs(currentTotal - targetTotal) <= 30
+        ) {
           break;
         }
       }
 
       // Ensure we have at least 2 items - add cheapest if needed
       if (selectedItems.length < 2) {
-        const unusedItems = shuffledItems.filter(item =>
-          !selectedItems.some(selected => selected.name === item.name)
-        ).sort((a, b) => a.price - b.price);
+        const unusedItems = shuffledItems
+          .filter(
+            (item) =>
+              !selectedItems.some((selected) => selected.name === item.name),
+          )
+          .sort((a, b) => a.price - b.price);
 
         for (const item of unusedItems.slice(0, 2 - selectedItems.length)) {
           if (currentTotal + item.price <= targetTotal + 30) {
@@ -211,7 +232,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
     // If still no match, create a proportional bill
     if (!bestMatch) {
-      console.log('No match found, creating proportional bill');
+      console.log("No match found, creating proportional bill");
 
       // Calculate how to distribute target among available items
       const selectedItems: BillItem[] = [];
@@ -225,7 +246,10 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       for (let i = 0; i < numItems; i++) {
         const item = sortedItems[i];
         const qty = Math.max(1, Math.round(targetPerItem / item.price));
-        const clampedQty = Math.min(qty, Math.floor((targetTotal - currentTotal) / item.price) + 1);
+        const clampedQty = Math.min(
+          qty,
+          Math.floor((targetTotal - currentTotal) / item.price) + 1,
+        );
         const finalQty = Math.max(1, clampedQty);
 
         const billItem: BillItem = {
@@ -246,7 +270,14 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       closestDiff = Math.abs(currentTotal - targetTotal);
     }
 
-    console.log('Generated bill with', bestMatch.items.length, 'items, total:', bestMatch.total, 'difference:', closestDiff);
+    console.log(
+      "Generated bill with",
+      bestMatch.items.length,
+      "items, total:",
+      bestMatch.total,
+      "difference:",
+      closestDiff,
+    );
     return bestMatch;
   };
 
@@ -277,7 +308,12 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
             { id: 7, name: "Salt (1kg)", price: 25 },
           ];
 
-    console.log('Generating bills from transactions:', transactions.length, 'Stock items:', stockToUse.length);
+    console.log(
+      "Generating bills from transactions:",
+      transactions.length,
+      "Stock items:",
+      stockToUse.length,
+    );
 
     let previousBillItems: string[] = [];
 
@@ -298,19 +334,28 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         return; // Skip invalid transactions
       }
 
-      console.log(`Generating bill for transaction ${index + 1}/${transactions.length}: target ${targetTotal}`);
+      console.log(
+        `Generating bill for transaction ${index + 1}/${transactions.length}: target ${targetTotal}`,
+      );
 
       // Generate bill items using enhanced algorithm
-      const result = generateOptimalBillItems(targetTotal, stockToUse, previousBillItems);
+      const result = generateOptimalBillItems(
+        targetTotal,
+        stockToUse,
+        previousBillItems,
+      );
 
       let selectedItems = result.items;
       let currentTotal = result.total;
 
       // If no items generated, create fallback (should not happen with new algorithm)
       if (selectedItems.length === 0) {
-        console.warn('No items generated, using fallback');
+        console.warn("No items generated, using fallback");
         const fallbackItem = stockToUse[0];
-        const quantity = Math.max(1, Math.round(targetTotal / fallbackItem.price));
+        const quantity = Math.max(
+          1,
+          Math.round(targetTotal / fallbackItem.price),
+        );
         selectedItems = [
           {
             id: fallbackItem.id,
@@ -326,8 +371,17 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       // Check tolerance constraint
       const difference = Math.abs(currentTotal - targetTotal);
       if (difference > 30) {
-        console.warn(`Bill ${currentBillNumber} exceeds preferred tolerance: difference ${difference}`);
-        console.log('Target:', targetTotal, 'Generated:', currentTotal, 'Items:', selectedItems.length);
+        console.warn(
+          `Bill ${currentBillNumber} exceeds preferred tolerance: difference ${difference}`,
+        );
+        console.log(
+          "Target:",
+          targetTotal,
+          "Generated:",
+          currentTotal,
+          "Items:",
+          selectedItems.length,
+        );
 
         // For now, continue with bill generation but log the issue
         // In production, you might want to either:
@@ -361,13 +415,15 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       generatedBills.push(bill);
 
       // Update previous items for next bill to avoid consecutive repeats
-      previousBillItems = selectedItems.map(item => item.name);
+      previousBillItems = selectedItems.map((item) => item.name);
 
-      console.log(`Generated bill ${currentBillNumber} with ${selectedItems.length} items, total: ${currentTotal}`);
+      console.log(
+        `Generated bill ${currentBillNumber} with ${selectedItems.length} items, total: ${currentTotal}`,
+      );
       currentBillNumber++;
     });
 
-    console.log('Generated', generatedBills.length, 'bills total');
+    console.log("Generated", generatedBills.length, "bills total");
     setBills((prev) => [...prev, ...generatedBills]);
     return generatedBills;
   };
