@@ -276,10 +276,14 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         currentTotal = fallbackItem.price * quantity;
       }
 
-      // Check tolerance constraint (must be ±30)
+      // STRICT tolerance constraint enforcement
       const difference = Math.abs(currentTotal - targetTotal);
       if (difference > 30) {
-        console.warn(`Bill ${currentBillNumber} exceeds tolerance: difference ${difference}`);
+        console.error(`REJECTING bill ${currentBillNumber}: difference ${difference} exceeds ±30 tolerance`);
+        console.log('Target:', targetTotal, 'Generated:', currentTotal);
+
+        // Skip this transaction rather than generate an invalid bill
+        return;
       }
 
       const bill: Bill = {
