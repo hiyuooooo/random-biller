@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { useAccount } from "@/components/AccountManager";
+import { useBill } from "@/components/BillContext";
+import { useCustomer } from "@/components/CustomerContext";
+import { useStock } from "@/components/StockContext";
 import {
   Card,
   CardContent,
@@ -15,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import {
   Settings as SettingsIcon,
   Building2,
@@ -22,6 +26,8 @@ import {
   FileText,
   Database,
   Shield,
+  Download,
+  Upload,
 } from "lucide-react";
 
 export default function Settings() {
