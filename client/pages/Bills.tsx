@@ -1381,6 +1381,27 @@ export default function Bills() {
                 </div>
               )}
 
+              {/* Validation Alerts */}
+              {selectedItems.length > 0 && (
+                <div className="space-y-2">
+                  {selectedItems.length < 2 && (
+                    <Alert>
+                      <AlertDescription>
+                        ⚠️ Bills should have at least 2 items for optimal generation.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  {!manualMode && newBill.targetTotal &&
+                   Math.abs(Number(newBill.targetTotal) - selectedItems.reduce((sum, item) => sum + item.total, 0)) > 30 && (
+                    <Alert>
+                      <AlertDescription>
+                        ⚠️ Total differs from target by more than ₹30. Consider adjusting target or using manual mode.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-end space-x-2">
                 <Button
                   variant="outline"
