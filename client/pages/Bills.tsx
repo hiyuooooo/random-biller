@@ -1186,17 +1186,28 @@ export default function Bills() {
               </div>
 
               {!manualMode ? (
-                <div className="flex space-x-2">
-                  <Button
-                    onClick={() => autoSelectItems(Number(newBill.targetTotal))}
-                    disabled={!newBill.targetTotal}
-                  >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    Auto Select Items
-                  </Button>
-                  <Badge variant="outline">
-                    Payment Mode: {newBill.paymentMode}
-                  </Badge>
+                <div className="space-y-3">
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={() => autoSelectItems(Number(newBill.targetTotal))}
+                      disabled={!newBill.targetTotal}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Auto Select Items
+                    </Button>
+                    <Badge variant="outline">
+                      Payment Mode: {newBill.paymentMode}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg">
+                    <div className="font-medium mb-1">Auto Selection Features:</div>
+                    <ul className="space-y-1">
+                      <li>• Avoids items from the previous bill to prevent repeats</li>
+                      <li>• Ensures minimum 2 items per bill</li>
+                      <li>• Matches target total within ±₹30 tolerance</li>
+                      <li>• Maximum 7 items per bill, up to 2 quantity each</li>
+                    </ul>
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
