@@ -1054,6 +1054,7 @@ export default function Settings() {
                     <div className="text-sm text-muted-foreground space-y-2 mt-4">
                       <p><strong>Export:</strong> Creates a complete backup of all your data for the active account.</p>
                       <p><strong>Import:</strong> Restores data from a previously exported backup file.</p>
+                      <p><strong>Generate Test Data:</strong> Creates sample data for testing the backup functionality.</p>
                       <p><strong>Clear Cache:</strong> Removes all stored data and resets the application.</p>
                     </div>
                   </div>
