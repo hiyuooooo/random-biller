@@ -379,7 +379,12 @@ export default function Bills() {
       let fallbackTotal = 0;
 
       const availableItems = stockItems.filter(item => item.availableQuantity > 0);
-      const shuffledItems = [...availableItems].sort(() => Math.random() - 0.5);
+      // Better randomization for fallback
+      const shuffledItems = [...availableItems];
+      for (let i = shuffledItems.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
+      }
 
       // Add exactly 2 items to meet minimum requirement
       for (let i = 0; i < Math.min(2, shuffledItems.length); i++) {
@@ -1646,7 +1651,7 @@ export default function Bills() {
                                 className="w-24"
                               />
                             </td>
-                            <td className="p-3">₹{item.total}</td>
+                            <td className="p-3">���{item.total}</td>
                             <td className="p-3">
                               <Button
                                 size="sm"
