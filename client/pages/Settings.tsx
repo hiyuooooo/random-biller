@@ -896,24 +896,44 @@ export default function Settings() {
                       <Button
                         variant="outline"
                         className="w-full justify-start"
+                        onClick={exportAllData}
+                        disabled={!activeAccount}
                       >
-                        <Database className="h-4 w-4 mr-2" />
+                        <Download className="h-4 w-4 mr-2" />
                         Export All Data
                       </Button>
                       <Button
                         variant="outline"
                         className="w-full justify-start"
+                        onClick={importData}
+                        disabled={!activeAccount}
                       >
-                        <Database className="h-4 w-4 mr-2" />
+                        <Upload className="h-4 w-4 mr-2" />
                         Import Data
                       </Button>
                       <Button
                         variant="outline"
-                        className="w-full justify-start"
+                        className="w-full justify-start text-destructive hover:text-destructive"
+                        onClick={clearCache}
                       >
                         <Shield className="h-4 w-4 mr-2" />
                         Clear Cache
                       </Button>
+
+                      {/* Hidden file input for import */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".json"
+                        onChange={handleFileImport}
+                        style={{ display: "none" }}
+                      />
+                    </div>
+
+                    <div className="text-sm text-muted-foreground space-y-2 mt-4">
+                      <p><strong>Export:</strong> Creates a complete backup of all your data for the active account.</p>
+                      <p><strong>Import:</strong> Restores data from a previously exported backup file.</p>
+                      <p><strong>Clear Cache:</strong> Removes all stored data and resets the application.</p>
                     </div>
                   </div>
                 </div>
