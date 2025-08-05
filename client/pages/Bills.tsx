@@ -400,7 +400,10 @@ export default function Bills() {
       return;
     }
 
+    console.log('Auto-selecting items for target:', targetTotal);
     const previousItems = getPreviousBillItems();
+    console.log('Previous bill items to avoid:', previousItems);
+
     const result = generateOptimalBillItems(targetTotal, previousItems);
 
     if (result.items.length === 0) {
@@ -408,10 +411,13 @@ export default function Bills() {
       return;
     }
 
+    console.log('Generated items:', result.items);
     setSelectedItems(result.items);
 
     // Provide feedback about the generation
     const difference = Math.abs(result.total - targetTotal);
+    console.log(`Bill generated with ${result.items.length} items, total: ₹${result.total}, difference from target: ₹${difference}`);
+
     if (difference > 30) {
       console.warn(`Generated bill total (₹${result.total}) differs from target (₹${targetTotal}) by ₹${difference}`);
     }
