@@ -64,28 +64,34 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AccountProvider>
-          <AccountDependentProviders>
-            <Toaster />
-            <Sonner />
-            {!isLoggedIn ? (
-              <Login onLogin={handleLogin} />
-            ) : (
-              <BrowserRouter>
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/transactions" element={<Transactions />} />
-                  <Route path="/bills" element={<Bills />} />
-                  <Route path="/bill-blocker" element={<BillBlocker />} />
-                  <Route path="/stock" element={<Stock />} />
-                  <Route path="/customers" element={<Customers />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </BrowserRouter>
-            )}
-          </AccountDependentProviders>
+          <StockProvider>
+            <TransactionProvider>
+              <CustomerProvider>
+                <BillProvider>
+                  <Toaster />
+                  <Sonner />
+                  {!isLoggedIn ? (
+                    <Login onLogin={handleLogin} />
+                  ) : (
+                    <BrowserRouter>
+                      <Routes>
+                        <Route path="/" element={<Index />} />
+                        <Route path="/transactions" element={<Transactions />} />
+                        <Route path="/bills" element={<Bills />} />
+                        <Route path="/bill-blocker" element={<BillBlocker />} />
+                        <Route path="/stock" element={<Stock />} />
+                        <Route path="/customers" element={<Customers />} />
+                        <Route path="/reports" element={<Reports />} />
+                        <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/settings" element={<Settings />} />
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </BrowserRouter>
+                  )}
+                </BillProvider>
+              </CustomerProvider>
+            </TransactionProvider>
+          </StockProvider>
         </AccountProvider>
       </TooltipProvider>
     </QueryClientProvider>
