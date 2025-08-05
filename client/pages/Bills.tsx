@@ -411,9 +411,26 @@ export default function Bills() {
 
   // Auto-select items based on target total with enhanced algorithm
   const autoSelectItems = (targetTotal: number) => {
+    if (!targetTotal || targetTotal <= 0) {
+      alert("Please enter a valid target total amount.");
+      return;
+    }
+
     const previousItems = getPreviousBillItems();
     const result = generateOptimalBillItems(targetTotal, previousItems);
+
+    if (result.items.length === 0) {
+      alert("Unable to generate bill items. Please check stock availability or try manual mode.");
+      return;
+    }
+
     setSelectedItems(result.items);
+
+    // Provide feedback about the generation
+    const difference = Math.abs(result.total - targetTotal);
+    if (difference > 30) {
+      console.warn(`Generated bill total (₹${result.total}) differs from target (₹${targetTotal}) by ₹${difference}`);
+    }
   };
 
   const handleCreateBill = () => {
@@ -630,7 +647,7 @@ export default function Bills() {
             <tfoot>
               <tr class="total-row">
                 <td colspan="4"><strong>Sub Total:</strong></td>
-                <td><strong>₹${bill.subTotal}</strong></td>
+                <td><strong>���${bill.subTotal}</strong></td>
               </tr>
             </tfoot>
           </table>
