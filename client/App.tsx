@@ -87,10 +87,9 @@ const App = () => {
 const container = document.getElementById("root")!;
 
 // Prevent multiple root creation in development
-if (!container._reactRoot) {
-  const root = createRoot(container);
-  container._reactRoot = root;
-  root.render(<App />);
-} else {
-  container._reactRoot.render(<App />);
+let root: any = (container as any)._reactRoot;
+if (!root) {
+  root = createRoot(container);
+  (container as any)._reactRoot = root;
 }
+root.render(<App />);
