@@ -29,16 +29,11 @@ const queryClient = new QueryClient();
 
 // Wrapper component to handle account-dependent contexts
 const AccountDependentProviders = ({ children }: { children: React.ReactNode }) => {
-  const { activeAccount } = useAccount();
-
-  // Use account ID as key to force re-mount when account changes
-  const accountKey = activeAccount?.id || 'no-account';
-
   return (
-    <StockProvider key={`stock-${accountKey}`}>
-      <TransactionProvider key={`transaction-${accountKey}`}>
-        <CustomerProvider key={`customer-${accountKey}`}>
-          <BillProvider key={`bill-${accountKey}`}>
+    <StockProvider>
+      <TransactionProvider>
+        <CustomerProvider>
+          <BillProvider>
             {children}
           </BillProvider>
         </CustomerProvider>
