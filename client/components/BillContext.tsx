@@ -72,6 +72,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
   // Load bills for active account (both initial load and account switch)
   useEffect(() => {
     if (activeAccount) {
+      setIsLoading(true);
       try {
         const storageKey = `bills_${activeAccount.id}`;
         const saved = localStorage.getItem(storageKey);
@@ -82,10 +83,13 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         }
       } catch {
         setBills([]);
+      } finally {
+        setIsLoading(false);
       }
     } else {
       // If no active account, start with empty array
       setBills([]);
+      setIsLoading(false);
     }
   }, [activeAccount?.id]);
 
