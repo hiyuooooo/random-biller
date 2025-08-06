@@ -49,7 +49,7 @@ export default function Customers() {
     if (transactions.length > 0) {
       syncCustomersFromTransactions(transactions);
     }
-  }, [transactions, syncCustomersFromTransactions]);
+  }, [transactions]); // Remove syncCustomersFromTransactions from dependencies to prevent multiple calls
 
   // Filter customers
   const filteredCustomers = useMemo(() => {
