@@ -158,7 +158,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     setTimeout(() => {
       console.log(`Account switch to ${account.name} completed`);
       // Force a small refresh to ensure all contexts have updated
-      window.dispatchEvent(new Event('account-switched'));
+      window.dispatchEvent(new Event("account-switched"));
     }, 200);
   };
 
