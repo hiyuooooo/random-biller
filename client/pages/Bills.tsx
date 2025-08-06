@@ -1931,6 +1931,7 @@ export default function Bills() {
                             <SelectContent>
                               {stockItems
                                 .filter((item) => item.availableQuantity > 0)
+                                .sort((a, b) => a.itemName.localeCompare(b.itemName))
                                 .map((item) => (
                                   <SelectItem
                                     key={item.id}
