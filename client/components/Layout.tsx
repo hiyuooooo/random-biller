@@ -10,6 +10,7 @@ import {
   TrendingUp,
   Shield,
   LogOut,
+  Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccount } from "./AccountManager";
@@ -24,6 +25,7 @@ const navigation = [
   { name: "Customers", href: "/customers", icon: Users },
   { name: "Reports", href: "/reports", icon: TrendingUp },
   { name: "Analytics", href: "/analytics", icon: TrendingUp },
+  { name: "Data Management", href: "/data-management", icon: Database },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
 
