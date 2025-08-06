@@ -267,6 +267,8 @@ export default function Bills() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingBill, setEditingBill] = useState<any>(null);
   const [editItems, setEditItems] = useState<any[]>([]);
+  const [isDateRangeDialogOpen, setIsDateRangeDialogOpen] = useState(false);
+  const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
   // New bill form state
   const [newBill, setNewBill] = useState({
@@ -749,34 +751,71 @@ export default function Bills() {
     }
   };
 
-  // Batch PDF download function
-  const generateBatchPDF = async (billsToGenerate: any[]) => {
-    if (billsToGenerate.length === 0) {
+  // Filter bills by date range
+  const filterBillsByDateRange = (billsList: any[], fromDate: string, toDate: string) => {
+    if (!fromDate && !toDate) return billsList;
+
+    return billsList.filter(bill => {
+      const billDate = new Date(bill.date.split('-').reverse().join('-')); // Convert DD-MM-YYYY to YYYY-MM-DD
+      const from = fromDate ? new Date(fromDate) : new Date('1900-01-01');
+      const to = toDate ? new Date(toDate) : new Date('2100-12-31');
+
+      return billDate >= from && billDate <= to;
+    });
+  };
+
+  // Enhanced batch PDF download with date range filtering
+  const generateBatchPDF = async (billsToGenerate: any[], useCustomRange = false) => {
+    let filteredBills = billsToGenerate;
+
+    if (useCustomRange && (dateRange.from || dateRange.to)) {
+      filteredBills = filterBillsByDateRange(billsToGenerate, dateRange.from, dateRange.to);
+
+      if (filteredBills.length === 0) {
+        alert("No bills found in the selected date range.");
+        return;
+      }
+    }
+
+    if (filteredBills.length === 0) {
       alert("No bills selected for PDF generation.");
       return;
     }
 
     const confirmed = confirm(
-      `Generate ${billsToGenerate.length} PDF files? This may take a few moments.`,
+      `Generate ${filteredBills.length} PDF files?${useCustomRange ? ` (Date range: ${dateRange.from || 'All'} to ${dateRange.to || 'All'})` : ''} This may take a few moments.`,
     );
 
     if (!confirmed) return;
 
     try {
-      for (let i = 0; i < billsToGenerate.length; i++) {
-        const bill = billsToGenerate[i];
-        await generatePDF(bill);
+      let successCount = 0;
+      let errorCount = 0;
 
-        // Add delay between downloads to prevent browser blocking
-        if (i < billsToGenerate.length - 1) {
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+      for (let i = 0; i < filteredBills.length; i++) {
+        const bill = filteredBills[i];
+        try {
+          await generatePDF(bill);
+          successCount++;
+
+          // Add delay between downloads to prevent browser blocking
+          if (i < filteredBills.length - 1) {
+            await new Promise((resolve) => setTimeout(resolve, 800));
+          }
+        } catch (error) {
+          console.error(`Error generating PDF for bill ${bill.billNumber}:`, error);
+          errorCount++;
         }
       }
 
-      alert(`Successfully generated ${billsToGenerate.length} PDF files!`);
+      if (errorCount === 0) {
+        alert(`Successfully generated ${successCount} PDF files!`);
+      } else {
+        alert(`Generated ${successCount} PDF files successfully. ${errorCount} files failed to generate.`);
+      }
     } catch (error) {
       console.error("Error in batch PDF generation:", error);
-      alert("Error generating some PDFs. Please try again.");
+      alert("Error generating PDFs. Please try again.");
     }
   };
 
@@ -1047,6 +1086,16 @@ export default function Bills() {
               <Download className="h-4 w-4 mr-2" />
               Download All PDFs (
               {bills.filter((b) => b.status === "generated").length})
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsDateRangeDialogOpen(true)}
+              disabled={
+                bills.filter((b) => b.status === "generated").length === 0
+              }
+            >
+              <Calendar className="h-4 w-4 mr-2" />
+              Download by Date Range
             </Button>
             <Button
               variant="destructive"
