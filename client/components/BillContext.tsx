@@ -98,7 +98,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     setBills((prev) => prev.filter((bill) => bill.id !== id));
   };
 
-  // Enhanced bill generator with intelligent combination finding
+  // Enhanced bill generator with improved ±25 target total matching logic
   const generateOptimalBillItems = (
     targetTotal: number,
     stockToUse: any[],
@@ -127,10 +127,11 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
     let bestMatch: { items: BillItem[]; total: number } | null = null;
     let closestDiff = Infinity;
+    const tolerance = 25; // Fixed ±25 tolerance as requested
 
-    // Try multiple attempts with different strategies
-    for (let attempt = 0; attempt < 50; attempt++) {
-      // Shuffle items for variety
+    // Multiple iterations to find the best combination within ±25
+    for (let attempt = 0; attempt < 100; attempt++) {
+      // Shuffle items for variety using Fisher-Yates algorithm
       const shuffledItems = [...availableItems];
       for (let i = shuffledItems.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -143,32 +144,30 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       const selectedItems: BillItem[] = [];
       let currentTotal = 0;
 
-      // Strategy: Try to build a bill close to target
-      const itemsToTry = shuffledItems.slice(0, 7); // Limit to 7 items
+      // Dynamic programming approach: try to hit target exactly or within tolerance
+      const itemsToTry = shuffledItems.slice(0, 8); // Allow up to 8 items
 
-      // Greedy approach: select items and quantities that get us close to target
+      // First pass: add items greedily to get close to target
       for (const item of itemsToTry) {
-        if (selectedItems.length >= 7) break;
+        if (selectedItems.length >= 8) break;
 
         const remaining = targetTotal - currentTotal;
 
-        // Calculate optimal quantity for this item
+        // Try different quantities (1, 2, 3, 4) to find best fit
         let bestQty = 0;
         let bestQtyTotal = 0;
+        let bestDiff = Infinity;
 
-        // Try quantities 1, 2, 3
-        for (let qty = 1; qty <= 3; qty++) {
+        for (let qty = 1; qty <= 4; qty++) {
           const itemCost = item.price * qty;
+          const newTotal = currentTotal + itemCost;
+          const diff = Math.abs(newTotal - targetTotal);
 
-          // Check if this gets us closer to target without going too far over
-          if (currentTotal + itemCost <= targetTotal + 30) {
-            if (
-              Math.abs(currentTotal + itemCost - targetTotal) <
-              Math.abs(currentTotal + bestQtyTotal - targetTotal)
-            ) {
-              bestQty = qty;
-              bestQtyTotal = itemCost;
-            }
+          // Accept if within tolerance or better than current best
+          if (diff <= tolerance || (diff < bestDiff && newTotal <= targetTotal + tolerance)) {
+            bestQty = qty;
+            bestQtyTotal = itemCost;
+            bestDiff = diff;
           }
         }
 
@@ -186,12 +185,48 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
           currentTotal += bestQtyTotal;
         }
 
-        // Stop if we're close enough and have minimum items
+        // Stop if we're within tolerance and have minimum items
         if (
           selectedItems.length >= 2 &&
-          Math.abs(currentTotal - targetTotal) <= 30
+          Math.abs(currentTotal - targetTotal) <= tolerance
         ) {
           break;
+        }
+      }
+
+      // Second pass: fine-tune by adjusting quantities or removing items
+      if (selectedItems.length >= 2) {
+        const diff = currentTotal - targetTotal;
+
+        // If we're over target, try to reduce quantities
+        if (diff > tolerance) {
+          for (let i = selectedItems.length - 1; i >= 0; i--) {
+            const item = selectedItems[i];
+            if (item.quantity > 1) {
+              const reduction = item.price;
+              if (currentTotal - reduction >= targetTotal - tolerance) {
+                item.quantity -= 1;
+                item.total = item.price * item.quantity;
+                currentTotal -= reduction;
+                if (Math.abs(currentTotal - targetTotal) <= tolerance) break;
+              }
+            }
+          }
+        }
+
+        // If we're under target, try to add more of existing items
+        else if (diff < -tolerance) {
+          for (const item of selectedItems) {
+            if (item.quantity < 3) {
+              const addition = item.price;
+              if (currentTotal + addition <= targetTotal + tolerance) {
+                item.quantity += 1;
+                item.total = item.price * item.quantity;
+                currentTotal += addition;
+                if (Math.abs(currentTotal - targetTotal) <= tolerance) break;
+              }
+            }
+          }
         }
       }
 
@@ -205,7 +240,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
           .sort((a, b) => a.price - b.price);
 
         for (const item of unusedItems.slice(0, 2 - selectedItems.length)) {
-          if (currentTotal + item.price <= targetTotal + 30) {
+          if (currentTotal + item.price <= targetTotal + tolerance) {
             const billItem: BillItem = {
               id: item.id,
               name: item.name,
@@ -220,37 +255,37 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Check if this is our best match so far
-      const diff = Math.abs(currentTotal - targetTotal);
-      if (selectedItems.length >= 2 && diff <= 30 && diff < closestDiff) {
-        bestMatch = { items: selectedItems, total: currentTotal };
-        closestDiff = diff;
+      const finalDiff = Math.abs(currentTotal - targetTotal);
+      if (selectedItems.length >= 2 && finalDiff < closestDiff) {
+        bestMatch = { items: [...selectedItems], total: currentTotal };
+        closestDiff = finalDiff;
 
-        // If very close, stop searching
-        if (diff <= 10) break;
+        // If we hit exactly within tolerance, stop searching
+        if (finalDiff <= tolerance) {
+          console.log(`Found match within tolerance on attempt ${attempt + 1}`);
+          break;
+        }
       }
     }
 
-    // If still no match, create a proportional bill
-    if (!bestMatch) {
-      console.log("No match found, creating proportional bill");
+    // If still no good match, create a proportional bill as fallback
+    if (!bestMatch || closestDiff > tolerance) {
+      console.log("No match within tolerance found, creating proportional bill");
 
-      // Calculate how to distribute target among available items
       const selectedItems: BillItem[] = [];
       let currentTotal = 0;
 
-      // Sort items by price and take 2-3 items
+      // Sort items by price efficiency (price per unit)
       const sortedItems = availableItems.sort((a, b) => a.price - b.price);
       const numItems = Math.min(3, sortedItems.length);
-      const targetPerItem = targetTotal / numItems;
 
+      // Distribute target proportionally among selected items
       for (let i = 0; i < numItems; i++) {
         const item = sortedItems[i];
-        const qty = Math.max(1, Math.round(targetPerItem / item.price));
-        const clampedQty = Math.min(
-          qty,
-          Math.floor((targetTotal - currentTotal) / item.price) + 1,
-        );
-        const finalQty = Math.max(1, clampedQty);
+        const remaining = targetTotal - currentTotal;
+        const targetForThisItem = remaining / (numItems - i);
+        const qty = Math.max(1, Math.round(targetForThisItem / item.price));
+        const finalQty = Math.min(qty, 3); // Cap at 3 quantity
 
         const billItem: BillItem = {
           id: item.id,
@@ -263,7 +298,8 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         selectedItems.push(billItem);
         currentTotal += billItem.total;
 
-        if (Math.abs(currentTotal - targetTotal) <= 30) break;
+        // Stop if we're getting close to target
+        if (Math.abs(currentTotal - targetTotal) <= tolerance) break;
       }
 
       bestMatch = { items: selectedItems, total: currentTotal };
@@ -275,8 +311,12 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       bestMatch.items.length,
       "items, total:",
       bestMatch.total,
+      "target:",
+      targetTotal,
       "difference:",
       closestDiff,
+      "within tolerance:",
+      closestDiff <= tolerance
     );
     return bestMatch;
   };
@@ -368,11 +408,11 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         currentTotal = fallbackItem.price * quantity;
       }
 
-      // Check tolerance constraint
+      // Check tolerance constraint (±25)
       const difference = Math.abs(currentTotal - targetTotal);
-      if (difference > 30) {
+      if (difference > 25) {
         console.warn(
-          `Bill ${currentBillNumber} exceeds preferred tolerance: difference ${difference}`,
+          `Bill ${currentBillNumber} exceeds ±25 tolerance: difference ${difference}`,
         );
         console.log(
           "Target:",
@@ -383,10 +423,18 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
           selectedItems.length,
         );
 
-        // For now, continue with bill generation but log the issue
-        // In production, you might want to either:
-        // 1. Reject the bill (return;)
-        // 2. Or try a different algorithm
+        // Try one more time with different approach if tolerance exceeded
+        const retryResult = generateOptimalBillItems(
+          targetTotal,
+          stockToUse,
+          [] // Don't avoid previous items on retry
+        );
+
+        if (Math.abs(retryResult.total - targetTotal) < difference) {
+          selectedItems = retryResult.items;
+          currentTotal = retryResult.total;
+          console.log(`Retry improved result: ${retryResult.total} (diff: ${Math.abs(retryResult.total - targetTotal)})`);
+        }
       }
 
       const bill: Bill = {
