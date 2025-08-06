@@ -52,8 +52,8 @@ const App = () => {
           <StockProvider>
             <TransactionProvider>
               <CustomerProvider>
-                <BillProvider>
-                  <IterationMonitorProvider>
+                <IterationMonitorProvider>
+                  <BillProvider>
                     <Toaster />
                     <Sonner />
                   {!isLoggedIn ? (
@@ -81,8 +81,8 @@ const App = () => {
                       </Routes>
                     </BrowserRouter>
                   )}
-                  </IterationMonitorProvider>
-                </BillProvider>
+                  </BillProvider>
+                </IterationMonitorProvider>
               </CustomerProvider>
             </TransactionProvider>
           </StockProvider>
