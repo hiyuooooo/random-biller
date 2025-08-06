@@ -254,24 +254,31 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
       const existingCustomer = getCustomerByName(customerName);
 
       if (existingCustomer) {
-        // Update existing customer
-        updateCustomer(existingCustomer.id, {
-          totalTransactions: customerData.totalTransactions,
-          totalAmount: customerData.totalAmount,
-          lastTransaction: customerData.lastTransaction,
-          transactions: customerData.transactions,
-          preferredPayment: customerData.preferredPayment,
-        });
+        // Update existing customer only if data has changed
+        if (existingCustomer.totalTransactions !== customerData.totalTransactions ||
+            existingCustomer.totalAmount !== customerData.totalAmount ||
+            existingCustomer.lastTransaction !== customerData.lastTransaction) {
+          updateCustomer(existingCustomer.id, {
+            totalTransactions: customerData.totalTransactions,
+            totalAmount: customerData.totalAmount,
+            lastTransaction: customerData.lastTransaction,
+            transactions: customerData.transactions,
+            preferredPayment: customerData.preferredPayment,
+          });
+        }
       } else {
-        // Create new customer
-        addCustomer({
-          name: customerName,
-          preferredPayment: customerData.preferredPayment,
-          totalTransactions: customerData.totalTransactions,
-          totalAmount: customerData.totalAmount,
-          lastTransaction: customerData.lastTransaction,
-          transactions: customerData.transactions,
-        });
+        // Only create new customer if one with this name doesn't already exist
+        const duplicateCheck = customers.find(c => c.name.toLowerCase() === customerName.toLowerCase());
+        if (!duplicateCheck) {
+          addCustomer({
+            name: customerName,
+            preferredPayment: customerData.preferredPayment,
+            totalTransactions: customerData.totalTransactions,
+            totalAmount: customerData.totalAmount,
+            lastTransaction: customerData.lastTransaction,
+            transactions: customerData.transactions,
+          });
+        }
       }
     });
   };
