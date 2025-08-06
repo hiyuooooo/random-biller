@@ -483,7 +483,18 @@ export default function Bills() {
 
     // Generate a mock bill number for monitoring (use next bill number)
     const mockBillNumber = Math.max(...bills.map((b) => b.billNumber), 1000) + 1;
-    const result = generateOptimalBillItems(targetTotal, previousItems, mockBillNumber);
+
+    // Use the stock items in the format expected by the algorithm
+    const stockForAlgorithm = stockItems
+      .filter(item => item.availableQuantity > 0)
+      .map(item => ({
+        id: item.id,
+        name: item.itemName,
+        price: item.price,
+        availableQuantity: item.availableQuantity
+      }));
+
+    const result = generate200IterationBillItems(targetTotal, stockForAlgorithm, previousItems, mockBillNumber);
 
     if (result.items.length === 0) {
       alert(
