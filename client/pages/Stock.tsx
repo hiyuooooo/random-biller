@@ -300,9 +300,11 @@ export default function Stock() {
     setQuickAddData((prev) => ({ ...prev, itemPrefix: prefix }));
 
     if (prefix.length >= 2) {
-      const matches = stockItems.filter((item) =>
-        item.itemName.toLowerCase().includes(prefix.toLowerCase()),
-      );
+      const matches = stockItems
+        .filter((item) =>
+          item.itemName.toLowerCase().includes(prefix.toLowerCase()),
+        )
+        .sort((a, b) => a.itemName.localeCompare(b.itemName));
       setSuggestions(matches);
     } else {
       setSuggestions([]);
