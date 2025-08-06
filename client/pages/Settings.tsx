@@ -416,6 +416,70 @@ export default function Settings() {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label>Signature Image (PNG)</Label>
+                    <Input
+                      type="file"
+                      accept="image/png"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const dataUrl = event.target?.result as string;
+                            setInvoiceSettings((prev) => ({
+                              ...prev,
+                              signatureImageUrl: dataUrl,
+                            }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Upload a PNG image for signature (will appear on right side of PDF)
+                    </p>
+                    {invoiceSettings.signatureImageUrl && (
+                      <div className="mt-2">
+                        <img
+                          src={invoiceSettings.signatureImageUrl}
+                          alt="Signature Preview"
+                          className="max-w-32 max-h-16 border rounded"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-1"
+                          onClick={() =>
+                            setInvoiceSettings((prev) => ({
+                              ...prev,
+                              signatureImageUrl: "",
+                            }))
+                          }
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Authorized Signature Text</Label>
+                    <Input
+                      value={invoiceSettings.authorizedSignatureText}
+                      onChange={(e) =>
+                        setInvoiceSettings((prev) => ({
+                          ...prev,
+                          authorizedSignatureText: e.target.value,
+                        }))
+                      }
+                      placeholder="Authorized Signature (appears below signature image)"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Text that appears below the signature image
+                    </p>
+                  </div>
+
                   <div className="mt-6 p-4 border rounded-lg bg-muted/20">
                     <h4 className="font-medium mb-2">Preview</h4>
                     <div className="text-sm space-y-2 border p-4 bg-white rounded">
