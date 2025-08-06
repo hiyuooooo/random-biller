@@ -41,7 +41,9 @@ interface BillContextType {
     startingBillNumber: number,
     blockedNumbers: number[],
     availableStock?: any[],
+    reduceStockCallback?: (id: number, quantity: number) => boolean,
   ) => void;
+  deleteAllBills: () => void;
 }
 
 const BillContext = createContext<BillContextType | null>(null);
@@ -96,6 +98,10 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
   const deleteBill = (id: string) => {
     setBills((prev) => prev.filter((bill) => bill.id !== id));
+  };
+
+  const deleteAllBills = () => {
+    setBills([]);
   };
 
   // Enhanced bill generator with improved ±25 target total matching logic
@@ -326,6 +332,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     startingBillNumber: number,
     blockedNumbers: number[],
     availableStock: any[] = [],
+    reduceStockCallback?: (id: number, quantity: number) => boolean,
   ) => {
     const generatedBills: Bill[] = [];
     let currentBillNumber = startingBillNumber;
@@ -462,6 +469,18 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
       generatedBills.push(bill);
 
+      // Reduce stock quantities if callback provided
+      if (reduceStockCallback) {
+        selectedItems.forEach((billItem) => {
+          const success = reduceStockCallback(billItem.id, billItem.quantity);
+          if (success) {
+            console.log(`Reduced stock for ${billItem.name}: -${billItem.quantity}`);
+          } else {
+            console.warn(`Failed to reduce stock for ${billItem.name}`);
+          }
+        });
+      }
+
       // Update previous items for next bill to avoid consecutive repeats
       previousBillItems = selectedItems.map((item) => item.name);
 
@@ -484,6 +503,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         updateBill,
         deleteBill,
         generateBillsFromTransactions,
+        deleteAllBills,
       }}
     >
       {children}
