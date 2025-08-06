@@ -133,10 +133,10 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
     let bestMatch: { items: BillItem[]; total: number } | null = null;
     let closestDiff = Infinity;
-    const tolerance = 30; // ±30 tolerance as per Python rules
+    const tolerance = 30; // ±30 tolerance as per requirements
     let iterationsPerformed = 0;
 
-    // 200 iterations to find the best combination (matching Python algorithm)
+    // Complete 200 iterations to find the best combination
     for (let attempt = 0; attempt < 200; attempt++) {
       iterationsPerformed++;
 
@@ -152,17 +152,17 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
       const selectedItems: BillItem[] = [];
       let currentTotal = 0;
-      const maxItems = 7; // Maximum 7 items per bill as per Python rules
+      const maxItems = 7; // Maximum 7 items per bill
 
       // Try to select items in shuffled order
       for (const item of shuffledItems) {
         if (selectedItems.length >= maxItems) break;
 
-        // Try different quantities (typically 1-3 as per common practice)
+        // Try different quantities (up to 2 as per requirements)
         let bestQty = 0;
         let bestQtyTotal = 0;
 
-        for (let qty = 1; qty <= Math.min(3, item.availableQuantity); qty++) {
+        for (let qty = 1; qty <= Math.min(2, item.availableQuantity); qty++) {
           const itemCost = item.price * qty;
           const newTotal = currentTotal + itemCost;
 
@@ -187,11 +187,6 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
           selectedItems.push(billItem);
           currentTotal += bestQtyTotal;
-
-          // Early exit if we're close enough to target
-          if (currentTotal >= targetTotal - tolerance) {
-            break;
-          }
         }
       }
 
@@ -208,11 +203,11 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         bestMatch = { items: [...selectedItems], total: currentTotal };
         closestDiff = finalDiff;
 
-        // Log good matches but continue all iterations for better optimization
-        if (finalDiff <= 1) {
-          console.log(`Found excellent match on iteration ${attempt + 1}, continuing to optimize...`);
+        // Continue all 200 iterations to find the absolute best match
+        if (finalDiff === 0) {
+          console.log(`Found perfect match on iteration ${attempt + 1}, continuing for optimization...`);
         } else if (finalDiff <= tolerance && selectedItems.length >= 2) {
-          console.log(`Found good match within ±${tolerance} on iteration ${attempt + 1}, continuing to optimize...`);
+          console.log(`Found good match within ±${tolerance} on iteration ${attempt + 1}, continuing for optimization...`);
         }
       }
     }
@@ -251,7 +246,6 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       `${bestMatch.items.length} items, total: ₹${bestMatch.total},`,
       `target: ₹${targetTotal}, difference: ₹${closestDiff},`,
       `within ±${tolerance}: ${closestDiff <= tolerance}`,
-      `(All 200 iterations completed for maximum optimization)`,
     );
 
     return bestMatch;
@@ -348,11 +342,11 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         currentTotal = fallbackItem.price * quantity;
       }
 
-      // Check tolerance constraint (±25)
+      // Check tolerance constraint (±30)
       const difference = Math.abs(currentTotal - targetTotal);
-      if (difference > 25) {
+      if (difference > 30) {
         console.warn(
-          `Bill ${currentBillNumber} exceeds ±25 tolerance: difference ${difference}`,
+          `Bill ${currentBillNumber} exceeds ±30 tolerance: difference ${difference}`,
         );
         console.log(
           "Target:",
@@ -404,7 +398,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
       generatedBills.push(bill);
 
-      // Reduce stock quantities if callback provided
+      // Always reduce stock quantities when generating bills
       if (reduceStockCallback) {
         selectedItems.forEach((billItem) => {
           const success = reduceStockCallback(billItem.id, billItem.quantity);
@@ -412,10 +406,18 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
             console.log(
               `Reduced stock for ${billItem.name}: -${billItem.quantity}`,
             );
+            // Update available quantity in stockToUse for subsequent bills
+            const stockItem = stockToUse.find(item => item.id === billItem.id);
+            if (stockItem) {
+              stockItem.availableQuantity = Math.max(0, stockItem.availableQuantity - billItem.quantity);
+            }
           } else {
             console.warn(`Failed to reduce stock for ${billItem.name}`);
           }
         });
+      } else {
+        // Log warning if no callback provided
+        console.warn("No stock reduction callback provided - stock quantities will not be updated");
       }
 
       // Update previous items for next bill to avoid consecutive repeats
