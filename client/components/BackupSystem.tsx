@@ -58,6 +58,18 @@ export function BackupSystem() {
       return;
     }
 
+    // Get invoice settings for backup
+    let invoiceSettings = null;
+    try {
+      const invoiceKey = `settings_invoice_${activeAccount.id}`;
+      const savedInvoice = localStorage.getItem(invoiceKey);
+      if (savedInvoice) {
+        invoiceSettings = JSON.parse(savedInvoice);
+      }
+    } catch (error) {
+      console.warn("Could not backup invoice settings:", error);
+    }
+
     const backupData: BackupData = {
       version: "1.0",
       timestamp: new Date().toISOString(),
@@ -66,6 +78,7 @@ export function BackupSystem() {
       bills: bills,
       transactions: transactions,
       stock: stockItems,
+      invoiceSettings: invoiceSettings,
     };
 
     // Create JSON string with proper formatting
