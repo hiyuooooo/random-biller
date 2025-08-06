@@ -1125,7 +1125,15 @@ export default function Bills() {
           </div>
         </div>
 
-        {/* Statistics */}
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="view">Bills Management</TabsTrigger>
+            <TabsTrigger value="monitor">Iteration Monitor</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="view" className="space-y-6">
+            {/* Statistics */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardContent className="p-4">
@@ -1989,6 +1997,13 @@ export default function Bills() {
             </div>
           </DialogContent>
         </Dialog>
+
+          </TabsContent>
+
+          <TabsContent value="monitor" className="space-y-6">
+            <IterationMonitorTab />
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
