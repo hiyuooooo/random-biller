@@ -125,7 +125,7 @@ interface Bill {
 }
 
 export default function Bills() {
-  const { bills, addBill, updateBill, deleteBill } = useBill();
+  const { bills, addBill, updateBill, deleteBill, deleteAllBills } = useBill();
 
   const handleDeleteBill = (billId: string) => {
     if (
@@ -134,6 +134,29 @@ export default function Bills() {
       )
     ) {
       deleteBill(billId);
+    }
+  };
+
+  const handleDeleteAllBills = () => {
+    // First confirmation
+    if (
+      !confirm(
+        "⚠️ WARNING: You are about to delete ALL bills permanently!\n\nThis action cannot be undone. All bill data will be lost forever.\n\nAre you absolutely sure you want to proceed?"
+      )
+    ) {
+      return;
+    }
+
+    // Second confirmation with typing requirement
+    const confirmText = prompt(
+      "To confirm deletion of ALL bills, please type 'DELETE ALL BILLS' exactly:"
+    );
+
+    if (confirmText === "DELETE ALL BILLS") {
+      deleteAllBills();
+      alert("All bills have been permanently deleted.");
+    } else {
+      alert("Deletion cancelled. The confirmation text did not match.");
     }
   };
 
@@ -492,7 +515,10 @@ export default function Bills() {
 
     // Update stock quantities
     selectedItems.forEach((billItem) => {
-      reduceStock(billItem.id, billItem.quantity);
+      const success = reduceStock(billItem.id, billItem.quantity);
+      if (!success) {
+        console.warn(`Failed to reduce stock for ${billItem.name}`);
+      }
     });
 
     // Reset form
@@ -966,6 +992,14 @@ export default function Bills() {
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Bill
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteAllBills}
+              disabled={bills.length === 0}
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete All Bills
             </Button>
           </div>
         </div>
