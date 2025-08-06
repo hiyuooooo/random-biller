@@ -443,6 +443,21 @@ export default function Bills() {
       "Total:",
       currentTotal,
     );
+
+    // Complete iteration monitoring
+    if (monitorId && iterationMonitor) {
+      const difference = Math.abs(currentTotal - targetTotal);
+      iterationMonitor.completeIteration(monitorId, {
+        bestMatch: {
+          items: selectedItems,
+          total: currentTotal,
+          difference: difference,
+        },
+        currentIteration: 1, // This is a simplified algorithm, not 200 iterations
+      });
+      iterationMonitor.logIteration(monitorId, 1, `Auto-select completed: ${selectedItems.length} items, total: ₹${currentTotal}, difference: ₹${difference}`, "success");
+    }
+
     return { items: selectedItems, total: currentTotal };
   };
 
