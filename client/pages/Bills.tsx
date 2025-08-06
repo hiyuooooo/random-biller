@@ -1602,7 +1602,7 @@ export default function Bills() {
             if (!open) resetCreateBillForm();
           }}
         >
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Create New Bill</DialogTitle>
               <DialogDescription>
