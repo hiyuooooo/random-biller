@@ -264,7 +264,6 @@ export default function Bills() {
     setManualMode(mode);
     setSelectedItems([]); // Clear items when switching modes
   };
-  const { stockItems, reduceStock } = useStock();
   const [activeTab, setActiveTab] = useState("view");
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
