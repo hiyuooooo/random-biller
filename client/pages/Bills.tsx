@@ -906,6 +906,21 @@ export default function Bills() {
 
   const generatePDF = async (bill: any) => {
     try {
+      // Get invoice settings from localStorage
+      const activeAccount = JSON.parse(localStorage.getItem("activeAccount") || "null");
+      let invoiceSettings = null;
+      if (activeAccount) {
+        try {
+          const storageKey = `settings_invoice_${activeAccount.id}`;
+          const saved = localStorage.getItem(storageKey);
+          if (saved) {
+            invoiceSettings = JSON.parse(saved);
+          }
+        } catch (error) {
+          console.warn("Could not load invoice settings for PDF generation:", error);
+        }
+      }
+
       // Create HTML content for the bill
       const htmlContent = `
         <!DOCTYPE html>
