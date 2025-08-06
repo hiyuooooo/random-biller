@@ -1756,7 +1756,7 @@ export default function Bills() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Quantity</Label>
+                      <Label className="text-base font-medium">Quantity</Label>
                       <Input
                         type="number"
                         value={itemToAdd.quantity}
@@ -1767,10 +1767,11 @@ export default function Bills() {
                           }))
                         }
                         min="1"
+                        className="h-12 text-center text-lg"
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Custom Price (optional)</Label>
+                      <Label className="text-base font-medium">Custom Price</Label>
                       <Input
                         type="number"
                         value={itemToAdd.customPrice}
