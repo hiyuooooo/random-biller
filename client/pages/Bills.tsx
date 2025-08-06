@@ -320,6 +320,7 @@ export default function Bills() {
   const generateOptimalBillItems = (
     targetTotal: number,
     previousItems: string[] = [],
+    billNumber?: number,
   ): { items: BillItem[]; total: number } => {
     console.log(
       "Generating bill items for target:",
