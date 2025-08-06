@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -161,6 +162,12 @@ export default function Reports() {
   const [activeTab, setActiveTab] = useState("billing");
   const [bulkPdfDateRange, setBulkPdfDateRange] = useState({ from: "", to: "" });
   const { bills } = useBill();
+  const navigate = useNavigate();
+
+  const navigateToBill = (billNumber: number) => {
+    // Navigate to bills page with a query parameter to highlight the specific bill
+    navigate(`/bills?highlight=${billNumber}`);
+  };
 
   // Filter bill reports based on mismatch threshold
   const mismatchReports = useMemo(() => {
@@ -864,9 +871,11 @@ export default function Reports() {
                         {mismatchReports.map((bill) => (
                           <tr
                             key={bill.id}
-                            className="border-b bg-red-50 hover:bg-red-100 transition-colors"
+                            className="border-b bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
+                            onClick={() => navigateToBill(bill.billNumber)}
+                            title="Click to view this bill in Bills section"
                           >
-                            <td className="p-3 font-medium">
+                            <td className="p-3 font-medium text-blue-600 hover:text-blue-800">
                               {bill.billNumber}
                             </td>
                             <td className="p-3">{bill.customerName}</td>
