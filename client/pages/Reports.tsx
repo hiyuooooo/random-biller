@@ -168,8 +168,8 @@ export default function Reports() {
   const navigate = useNavigate();
 
   const navigateToBill = (billNumber: number) => {
-    // Navigate to bills page with a query parameter to highlight the specific bill
-    navigate(`/bills?highlight=${billNumber}`);
+    // Navigate to bills page with a query parameter to highlight the specific bill and open edit
+    navigate(`/bills?highlight=${billNumber}&edit=true`);
   };
 
   // Filter bill reports based on mismatch threshold
