@@ -131,7 +131,7 @@ interface Bill {
 export default function Bills() {
   const { bills, addBill, updateBill, deleteBill, deleteAllBills } = useBill();
   const iterationMonitor = useIterationMonitor();
-  const { stockItems, reduceStock } = useStock();
+  const { stockItems, reduceStock, restoreStock, adjustStock } = useStock();
   const { getCustomerSuggestions } = useCustomer();
   const [searchParams] = useSearchParams();
   const [highlightedBillNumber, setHighlightedBillNumber] = useState<number | null>(null);
@@ -160,10 +160,10 @@ export default function Bills() {
   const handleDeleteBill = (billId: string) => {
     if (
       confirm(
-        "Are you sure you want to delete this bill? This action cannot be undone.",
+        "Are you sure you want to delete this bill? Stock quantities will be restored.",
       )
     ) {
-      deleteBill(billId);
+      deleteBill(billId, { restoreStock });
     }
   };
 
@@ -205,7 +205,11 @@ export default function Bills() {
       subTotal: editItems.reduce((sum, item) => sum + item.total, 0),
     };
 
-    updateBill(editingBill.id, updatedBill);
+    updateBill(editingBill.id, updatedBill, {
+      restoreStock,
+      reduceStock,
+      adjustStock,
+    });
     setIsEditDialogOpen(false);
     setEditingBill(null);
     setEditItems([]);
@@ -1908,7 +1912,7 @@ export default function Bills() {
                                         {item.itemName}
                                       </span>
                                       <span className="text-sm text-muted-foreground">
-                                        ₹{item.price} • Stock:{" "}
+                                        ��{item.price} • Stock:{" "}
                                         {item.availableQuantity}{" "}
                                         {item.blocked && "• (Blocked)"}
                                       </span>
