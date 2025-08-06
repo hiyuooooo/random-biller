@@ -128,6 +128,35 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeAccount?.id]);
 
+  // Listen for account switch events to force refresh
+  useEffect(() => {
+    const handleAccountSwitch = () => {
+      console.log("Account switch event detected in CustomerContext, forcing data refresh");
+      if (activeAccount) {
+        // Force reload data for current account
+        try {
+          const storageKey = `customers_${activeAccount.id}`;
+          const saved = localStorage.getItem(storageKey);
+          if (saved) {
+            const parsedCustomers = JSON.parse(saved);
+            if (Array.isArray(parsedCustomers)) {
+              setCustomers(parsedCustomers);
+              console.log(`Force reloaded ${parsedCustomers.length} customers for account ${activeAccount.name}`);
+            }
+          } else {
+            setCustomers(defaultCustomers);
+          }
+        } catch (error) {
+          console.error("Error force reloading customers:", error);
+          setCustomers(defaultCustomers);
+        }
+      }
+    };
+
+    window.addEventListener('account-switched', handleAccountSwitch);
+    return () => window.removeEventListener('account-switched', handleAccountSwitch);
+  }, [activeAccount]);
+
   const addCustomer = (customerData: Omit<Customer, "id">) => {
     const newCustomer: Customer = {
       ...customerData,
