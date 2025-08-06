@@ -208,6 +208,9 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
   };
 
   const syncCustomersFromTransactions = (transactions: any[]) => {
+    // Prevent multiple rapid syncs
+    if (transactions.length === 0) return;
+
     const customerMap = new Map<string, any>();
 
     // Group transactions by customer name
