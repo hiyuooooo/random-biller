@@ -71,24 +71,30 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
   // Load bills for active account (both initial load and account switch)
   useEffect(() => {
     if (activeAccount) {
-      setIsLoading(true);
       try {
         const storageKey = `bills_${activeAccount.id}`;
         const saved = localStorage.getItem(storageKey);
         if (saved) {
-          setBills(JSON.parse(saved));
+          const parsedBills = JSON.parse(saved);
+          // Ensure we have valid bill data
+          if (Array.isArray(parsedBills)) {
+            setBills(parsedBills);
+            console.log(`Loaded ${parsedBills.length} bills for account ${activeAccount.name}`);
+          } else {
+            console.warn("Invalid bills data found, starting with empty array");
+            setBills([]);
+          }
         } else {
+          console.log(`No saved bills found for account ${activeAccount.name}, starting with empty array`);
           setBills([]);
         }
-      } catch {
+      } catch (error) {
+        console.error("Error loading bills:", error);
         setBills([]);
-      } finally {
-        setIsLoading(false);
       }
     } else {
       // If no active account, start with empty array
       setBills([]);
-      setIsLoading(false);
     }
   }, [activeAccount?.id]);
 
