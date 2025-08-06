@@ -191,6 +191,31 @@ export default function Stock() {
   };
 
   const handleDeleteAllStock = () => {
+    // Check if any stock items are used in bills
+    const usedItems: { itemName: string; billNumbers: number[] }[] = [];
+
+    stockItems.forEach(item => {
+      const usage = isStockUsedInBills(item.id);
+      if (usage.isUsed) {
+        usedItems.push({
+          itemName: item.itemName,
+          billNumbers: usage.billNumbers
+        });
+      }
+    });
+
+    if (usedItems.length > 0) {
+      const usedItemsText = usedItems.map(item =>
+        `• ${item.itemName} (Bills: ${item.billNumbers.join(', ')})`
+      ).join('\n');
+
+      alert(
+        `Cannot delete all stock items because the following items are used in bills:\n\n${usedItemsText}\n\n` +
+        "Please remove these items from all bills before bulk deletion."
+      );
+      return;
+    }
+
     if (
       confirm(
         "Are you sure you want to delete ALL stock items? This action cannot be undone.",
