@@ -481,7 +481,9 @@ export default function Bills() {
     const previousItems = getPreviousBillItems();
     console.log("Previous bill items to avoid:", previousItems);
 
-    const result = generateOptimalBillItems(targetTotal, previousItems);
+    // Generate a mock bill number for monitoring (use next bill number)
+    const mockBillNumber = Math.max(...bills.map((b) => b.billNumber), 1000) + 1;
+    const result = generateOptimalBillItems(targetTotal, previousItems, mockBillNumber);
 
     if (result.items.length === 0) {
       alert(
