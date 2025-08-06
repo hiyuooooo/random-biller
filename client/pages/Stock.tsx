@@ -196,6 +196,13 @@ export default function Stock() {
     lowStockThreshold: "",
   });
   const [adjustmentReason, setAdjustmentReason] = useState("");
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickAddData, setQuickAddData] = useState({
+    itemPrefix: "",
+    quantity: "",
+    date: new Date().toISOString().split("T")[0],
+  });
+  const [suggestions, setSuggestions] = useState<any[]>([]);
 
   // Filter items based on search
   const filteredItems = useMemo(() => {
