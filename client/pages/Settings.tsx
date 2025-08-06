@@ -506,8 +506,24 @@ export default function Settings() {
                       </div>
                       <div className="mt-8 pt-4 border-t text-xs">
                         <p>{invoiceSettings.declaration}</p>
-                        <div className="mt-4 text-center">
-                          <p>{invoiceSettings.signatureText}</p>
+                        <div className="mt-4 flex justify-between items-end">
+                          <div className="text-center flex-1">
+                            <p>{invoiceSettings.signatureText}</p>
+                          </div>
+                          {invoiceSettings.signatureImageUrl && (
+                            <div className="text-center">
+                              <img
+                                src={invoiceSettings.signatureImageUrl}
+                                alt="Signature"
+                                className="max-w-24 max-h-12 mx-auto"
+                              />
+                              {invoiceSettings.authorizedSignatureText && (
+                                <p className="text-xs mt-1">
+                                  {invoiceSettings.authorizedSignatureText}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
