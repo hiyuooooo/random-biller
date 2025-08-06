@@ -991,6 +991,21 @@ export default function Bills() {
               margin-top: 40px;
               font-weight: bold;
             }
+            .signature-container {
+              display: flex;
+              justify-content: space-between;
+              align-items: end;
+              margin-top: 40px;
+            }
+            .signature-image {
+              max-width: 150px;
+              max-height: 60px;
+            }
+            .authorized-signature {
+              text-align: center;
+              font-size: 10px;
+              margin-top: 5px;
+            }
             @media print {
               body { margin: 0; }
               .header {
