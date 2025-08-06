@@ -3,6 +3,7 @@ import { Layout } from "@/components/Layout";
 import { useBill } from "@/components/BillContext";
 import { useStock } from "@/components/StockContext";
 import { useIterationMonitor } from "@/components/IterationMonitor";
+import { useCustomer } from "@/components/CustomerContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -1986,7 +1987,7 @@ export default function Bills() {
                                     `₹${item.price}`
                                   )}
                                 </td>
-                                <td className="p-3">₹{item.total}</td>
+                                <td className="p-3">��{item.total}</td>
                                 <td className="p-3">
                                   <Button
                                     size="sm"
