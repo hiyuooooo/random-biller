@@ -97,12 +97,9 @@ const App = () => {
 
 const container = document.getElementById("root")!;
 
-// Check if root already exists to prevent the warning
-if (!(container as any)._reactRootContainer) {
-  const root = createRoot(container);
-  root.render(<App />);
-} else {
-  // If root already exists, just re-render
-  const root = createRoot(container);
-  root.render(<App />);
+// Create root only once and store it globally to avoid recreation
+if (!(window as any).__reactRoot) {
+  (window as any).__reactRoot = createRoot(container);
 }
+
+(window as any).__reactRoot.render(<App />);
