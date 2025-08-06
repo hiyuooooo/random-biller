@@ -1793,7 +1793,7 @@ export default function Bills() {
                             }));
 
                             // Update customer suggestions
-                            if (name.length >= 2) {
+                            if (name.length >= 1) {
                               const suggestions = getCustomerSuggestions(name);
                               setCustomerSuggestions(suggestions);
                             } else {
