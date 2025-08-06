@@ -155,6 +155,35 @@ export function TransactionProvider({
     }
   }, [activeAccount?.id]);
 
+  // Listen for account switch events to force refresh
+  useEffect(() => {
+    const handleAccountSwitch = () => {
+      console.log("Account switch event detected in TransactionContext, forcing data refresh");
+      if (activeAccount) {
+        // Force reload data for current account
+        try {
+          const storageKey = `transactions_${activeAccount.id}`;
+          const saved = localStorage.getItem(storageKey);
+          if (saved) {
+            const parsedTransactions = JSON.parse(saved);
+            if (Array.isArray(parsedTransactions)) {
+              setTransactions(parsedTransactions);
+              console.log(`Force reloaded ${parsedTransactions.length} transactions for account ${activeAccount.name}`);
+            }
+          } else {
+            setTransactions(defaultTransactions);
+          }
+        } catch (error) {
+          console.error("Error force reloading transactions:", error);
+          setTransactions(defaultTransactions);
+        }
+      }
+    };
+
+    window.addEventListener('account-switched', handleAccountSwitch);
+    return () => window.removeEventListener('account-switched', handleAccountSwitch);
+  }, [activeAccount]);
+
   const addTransaction = (transaction: Transaction) => {
     setTransactions((prev) => [...prev, transaction]);
   };
