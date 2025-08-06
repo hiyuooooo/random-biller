@@ -53,8 +53,9 @@ const App = () => {
             <TransactionProvider>
               <CustomerProvider>
                 <BillProvider>
-                  <Toaster />
-                  <Sonner />
+                  <IterationMonitorProvider>
+                    <Toaster />
+                    <Sonner />
                   {!isLoggedIn ? (
                     <Login onLogin={handleLogin} />
                   ) : (
@@ -80,6 +81,7 @@ const App = () => {
                       </Routes>
                     </BrowserRouter>
                   )}
+                  </IterationMonitorProvider>
                 </BillProvider>
               </CustomerProvider>
             </TransactionProvider>
