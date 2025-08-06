@@ -1255,7 +1255,7 @@ export default function Bills() {
             <thead>
               <tr>
                 <th>Date</th>
-                <th>Customer Name</th>
+                ${megaReportOptions.hideCustomerNames ? '' : '<th>Customer Name</th>'}
                 <th>Bill Number</th>
                 <th>Bill Total</th>
               </tr>
@@ -1266,7 +1266,7 @@ export default function Bills() {
                   (bill) => `
                 <tr>
                   <td>${bill.date}</td>
-                  <td>${bill.customerName}</td>
+                  ${megaReportOptions.hideCustomerNames ? '' : `<td>${bill.customerName}</td>`}
                   <td>${bill.billNumber}</td>
                   <td>₹${bill.subTotal.toLocaleString()}</td>
                 </tr>
@@ -1274,13 +1274,25 @@ export default function Bills() {
                 )
                 .join("")}
             </tbody>
+            ${!megaReportOptions.totalAtLastPage ? `
             <tfoot>
               <tr class="total-row">
-                <td colspan="3"><strong>TOTAL:</strong></td>
+                <td colspan="${megaReportOptions.hideCustomerNames ? '2' : '3'}"><strong>TOTAL:</strong></td>
                 <td><strong>₹${totalSum.toLocaleString()}</strong></td>
               </tr>
             </tfoot>
+            ` : ''}
           </table>
+
+          ${megaReportOptions.totalAtLastPage ? `
+          <div style="page-break-before: always; padding-top: 50px; text-align: center;">
+            <h2>Total Summary</h2>
+            <div style="margin: 40px auto; padding: 30px; border: 2px solid #333; border-radius: 10px; width: 300px; background-color: #f8f9fa;">
+              <p style="font-size: 18px; margin: 0;"><strong>Total Bills:</strong> ${generatedBills.length}</p>
+              <p style="font-size: 24px; margin: 20px 0 0 0; color: #333;"><strong>GRAND TOTAL: ₹${totalSum.toLocaleString()}</strong></p>
+            </div>
+          </div>
+          ` : ''}
 
           <div class="footer">
             <p>Generated on ${new Date().toLocaleString()}</p>
@@ -2107,7 +2119,7 @@ export default function Bills() {
                                 className="w-24"
                               />
                             </td>
-                            <td className="p-3">���{item.total}</td>
+                            <td className="p-3">����{item.total}</td>
                             <td className="p-3">
                               <Button
                                 size="sm"
