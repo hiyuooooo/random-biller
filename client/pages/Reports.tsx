@@ -1115,7 +1115,7 @@ export default function Reports() {
                   <div className="max-h-[600px] overflow-y-auto border rounded-lg p-4 bg-white">
                     <div className="space-y-6">
                       {bills.map((bill, index) => (
-                        <div key={bill.id} className="border-b pb-4">
+                        <div key={`mega-report-${bill.id}-${index}`} className="border-b pb-4">
                           <div className="grid grid-cols-2 gap-4 mb-2">
                             <div>
                               <p className="font-medium">
