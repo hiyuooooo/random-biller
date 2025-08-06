@@ -807,7 +807,7 @@ export default function Transactions() {
                         "border-b hover:bg-accent/50 transition-colors",
                         !transaction.isValid && "bg-red-50 border-red-200",
                         transaction.billGenerated &&
-                          "bg-green-50 border-green-200",
+                          "bg-blue-50 border-blue-300 ring-2 ring-blue-200",
                       )}
                     >
                       <td className="p-3">
