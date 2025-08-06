@@ -32,6 +32,8 @@ interface CustomerContextType {
     transaction: CustomerTransaction,
   ) => void;
   getCustomerByName: (name: string) => Customer | undefined;
+  syncCustomersFromTransactions: (transactions: any[]) => void;
+  getCustomerSuggestions: (prefix: string) => Customer[];
 }
 
 // Default customer data
