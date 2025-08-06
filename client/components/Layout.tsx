@@ -58,9 +58,17 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
           <div className="ml-auto flex items-center space-x-4">
-            <div className="text-sm text-muted-foreground">
-              {activeAccount?.name || "No Account Selected"}
-            </div>
+            {activeAccount && (
+              <div className="flex items-center space-x-4">
+                <AccountSelector />
+                <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                  <span>Active:</span>
+                  <span className="font-medium text-foreground">
+                    {activeAccount.name}
+                  </span>
+                </div>
+              </div>
+            )}
             <Button variant="outline" size="sm" onClick={handleLogout}>
               <LogOut className="h-4 w-4 mr-2" />
               Logout
