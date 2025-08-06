@@ -170,7 +170,7 @@ export default function Transactions() {
     }
   };
   const { generateBillsFromTransactions } = useBill();
-  const { getUnblockedStock } = useStock();
+  const { getUnblockedStock, reduceStock } = useStock();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
   const [customerFilter, setCustomerFilter] = useState("");
