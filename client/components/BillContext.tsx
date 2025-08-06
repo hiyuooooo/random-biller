@@ -370,6 +370,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         targetTotal,
         stockToUse,
         previousBillItems,
+        currentBillNumber,
       );
 
       let selectedItems = result.items;
