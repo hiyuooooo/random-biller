@@ -56,10 +56,10 @@ const App = () => {
                   <BillProvider>
                     <Toaster />
                     <Sonner />
-                    {!isLoggedIn ? (
-                      <Login onLogin={handleLogin} />
-                    ) : (
-                      <BrowserRouter>
+                    <BrowserRouter>
+                      {!isLoggedIn ? (
+                        <Login onLogin={handleLogin} />
+                      ) : (
                         <Routes>
                           <Route path="/" element={<Index />} />
                           <Route
@@ -82,8 +82,8 @@ const App = () => {
                           <Route path="/settings" element={<Settings />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
-                      </BrowserRouter>
-                    )}
+                      )}
+                    </BrowserRouter>
                   </BillProvider>
                 </IterationMonitorProvider>
               </CustomerProvider>
