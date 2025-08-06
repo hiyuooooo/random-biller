@@ -798,6 +798,7 @@ export default function Bills() {
     // Use the stock items in the format expected by the algorithm
     const stockForAlgorithm = stockItems
       .filter((item) => item.availableQuantity > 0)
+      .sort((a, b) => a.itemName.localeCompare(b.itemName))
       .map((item) => ({
         id: item.id,
         name: item.itemName,
