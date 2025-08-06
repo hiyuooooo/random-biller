@@ -1135,11 +1135,6 @@ export default function Transactions() {
                       startBillNum,
                       blockedNumbers,
                       getUnblockedStock(),
-                      (itemId: number, quantity: number) => {
-                        // Use the stock context's reduceStock function
-                        const { reduceStock } = useStock();
-                        return reduceStock(itemId, quantity);
-                      }
                     );
 
                     // Mark selected transactions as having bills generated
