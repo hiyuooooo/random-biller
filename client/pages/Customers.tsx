@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { useCustomer, type Customer, type CustomerTransaction } from "@/components/CustomerContext";
+import { useTransaction } from "@/components/TransactionContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
