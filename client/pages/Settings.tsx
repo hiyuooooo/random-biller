@@ -225,6 +225,8 @@ export default function Settings() {
             "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
           signatureText: "Authorized Signature",
           logoUrl: "",
+          signatureImageUrl: "",
+          authorizedSignatureText: "",
         });
       }
     }
