@@ -55,6 +55,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
   // Initialize with empty array and load data in useEffect
   const [bills, setBills] = useState<Bill[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Save to account-specific localStorage whenever bills or activeAccount changes
   useEffect(() => {
