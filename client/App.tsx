@@ -12,6 +12,7 @@ import { BillProvider } from "@/components/BillContext";
 import { StockProvider } from "@/components/StockContext";
 import { TransactionProvider } from "@/components/TransactionContext";
 import { CustomerProvider } from "@/components/CustomerContext";
+import { IterationMonitorProvider } from "@/components/IterationMonitor";
 import { useState } from "react";
 import Login from "./pages/Login";
 import Index from "./pages/Index";
