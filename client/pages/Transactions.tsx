@@ -51,6 +51,7 @@ import { SampleDataGenerator } from "@/components/SampleDataGenerator";
 import { useBill } from "@/components/BillContext";
 import { useTransaction } from "@/components/TransactionContext";
 import { useStock } from "@/components/StockContext";
+import { useAccount } from "@/components/AccountManager";
 
 // Mock transaction data
 const mockTransactions = [
