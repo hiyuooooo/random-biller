@@ -13,7 +13,7 @@ import {
   Database,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAccount } from "./AccountManager";
+import { useAccount, AccountSelector } from "./AccountManager";
 import { Button } from "./ui/button";
 
 const navigation = [
