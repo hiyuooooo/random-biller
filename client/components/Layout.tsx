@@ -49,7 +49,8 @@ export function Layout({ children }: LayoutProps) {
   const { activeAccount } = useAccount();
   const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false);
   const [logoutStep, setLogoutStep] = useState(1);
-  const [deleteCurrentAccountData, setDeleteCurrentAccountData] = useState(false);
+  const [deleteCurrentAccountData, setDeleteCurrentAccountData] =
+    useState(false);
   const [deleteAllAccountsData, setDeleteAllAccountsData] = useState(false);
 
   const handleLogout = () => {
@@ -200,7 +201,9 @@ export function Layout({ children }: LayoutProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center space-x-2">
               <LogOut className="h-5 w-5" />
-              <span>{logoutStep === 1 ? "Confirm Logout" : "Data Deletion Options"}</span>
+              <span>
+                {logoutStep === 1 ? "Confirm Logout" : "Data Deletion Options"}
+              </span>
             </DialogTitle>
             <DialogDescription>
               {logoutStep === 1
@@ -213,14 +216,16 @@ export function Layout({ children }: LayoutProps) {
             {logoutStep === 1 && (
               <>
                 <div className="text-sm text-muted-foreground">
-                  You are currently logged in as <strong>{activeAccount?.name}</strong>.
-                  Your data will be preserved unless you choose to delete it in the next step.
+                  You are currently logged in as{" "}
+                  <strong>{activeAccount?.name}</strong>. Your data will be
+                  preserved unless you choose to delete it in the next step.
                 </div>
 
                 <Alert>
                   <AlertTriangle className="h-4 w-4" />
                   <AlertDescription>
-                    You will have the option to delete account data in the next step if needed.
+                    You will have the option to delete account data in the next
+                    step if needed.
                   </AlertDescription>
                 </Alert>
               </>
@@ -231,8 +236,9 @@ export function Layout({ children }: LayoutProps) {
                 <Alert className="border-amber-200 bg-amber-50">
                   <AlertTriangle className="h-4 w-4 text-amber-600" />
                   <AlertDescription className="text-amber-800">
-                    <strong>Warning:</strong> Data deletion is permanent and cannot be undone.
-                    Only select these options if you want to completely remove data.
+                    <strong>Warning:</strong> Data deletion is permanent and
+                    cannot be undone. Only select these options if you want to
+                    completely remove data.
                   </AlertDescription>
                 </Alert>
 
@@ -241,14 +247,20 @@ export function Layout({ children }: LayoutProps) {
                     <Checkbox
                       id="delete-current"
                       checked={deleteCurrentAccountData}
-                      onCheckedChange={(checked) => setDeleteCurrentAccountData(checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        setDeleteCurrentAccountData(checked as boolean)
+                      }
                     />
                     <div className="space-y-1">
-                      <label htmlFor="delete-current" className="text-sm font-medium cursor-pointer">
+                      <label
+                        htmlFor="delete-current"
+                        className="text-sm font-medium cursor-pointer"
+                      >
                         Delete current account data ({activeAccount?.name})
                       </label>
                       <p className="text-xs text-muted-foreground">
-                        Removes all bills, transactions, and stock data for the current account only
+                        Removes all bills, transactions, and stock data for the
+                        current account only
                       </p>
                     </div>
                   </div>
@@ -257,14 +269,20 @@ export function Layout({ children }: LayoutProps) {
                     <Checkbox
                       id="delete-all"
                       checked={deleteAllAccountsData}
-                      onCheckedChange={(checked) => setDeleteAllAccountsData(checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        setDeleteAllAccountsData(checked as boolean)
+                      }
                     />
                     <div className="space-y-1">
-                      <label htmlFor="delete-all" className="text-sm font-medium cursor-pointer">
+                      <label
+                        htmlFor="delete-all"
+                        className="text-sm font-medium cursor-pointer"
+                      >
                         Delete ALL accounts and data
                       </label>
                       <p className="text-xs text-muted-foreground">
-                        Removes all accounts, settings, and data from this application completely
+                        Removes all accounts, settings, and data from this
+                        application completely
                       </p>
                     </div>
                   </div>
@@ -273,7 +291,8 @@ export function Layout({ children }: LayoutProps) {
                     <Alert className="border-red-200 bg-red-50">
                       <Trash2 className="h-4 w-4 text-red-600" />
                       <AlertDescription className="text-red-800">
-                        <strong>This action cannot be undone!</strong> Make sure you have backups if needed.
+                        <strong>This action cannot be undone!</strong> Make sure
+                        you have backups if needed.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -288,14 +307,21 @@ export function Layout({ children }: LayoutProps) {
             </Button>
             <Button
               onClick={confirmLogout}
-              variant={logoutStep === 2 && (deleteCurrentAccountData || deleteAllAccountsData) ? "destructive" : "default"}
+              variant={
+                logoutStep === 2 &&
+                (deleteCurrentAccountData || deleteAllAccountsData)
+                  ? "destructive"
+                  : "default"
+              }
             >
               {logoutStep === 1 ? (
                 "Continue"
               ) : (
                 <>
                   <LogOut className="h-4 w-4 mr-2" />
-                  {(deleteCurrentAccountData || deleteAllAccountsData) ? "Delete & Logout" : "Logout"}
+                  {deleteCurrentAccountData || deleteAllAccountsData
+                    ? "Delete & Logout"
+                    : "Logout"}
                 </>
               )}
             </Button>

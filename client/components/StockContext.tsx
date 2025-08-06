@@ -178,7 +178,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   // Listen for account switch events to force refresh
   useEffect(() => {
     const handleAccountSwitch = () => {
-      console.log("Account switch event detected in StockContext, forcing data refresh");
+      console.log(
+        "Account switch event detected in StockContext, forcing data refresh",
+      );
       if (activeAccount) {
         // Force reload data for current account
         try {
@@ -188,7 +190,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
             const parsedStock = JSON.parse(saved);
             if (Array.isArray(parsedStock)) {
               setStockItems(parsedStock);
-              console.log(`Force reloaded ${parsedStock.length} stock items for account ${activeAccount.name}`);
+              console.log(
+                `Force reloaded ${parsedStock.length} stock items for account ${activeAccount.name}`,
+              );
             }
           } else {
             setStockItems(defaultStock);
@@ -200,8 +204,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    window.addEventListener('account-switched', handleAccountSwitch);
-    return () => window.removeEventListener('account-switched', handleAccountSwitch);
+    window.addEventListener("account-switched", handleAccountSwitch);
+    return () =>
+      window.removeEventListener("account-switched", handleAccountSwitch);
   }, [activeAccount]);
 
   const addStockItem = (item: StockItem) => {
@@ -258,14 +263,23 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     }
 
     // If reducing stock, check if there's enough
-    if (quantityDifference < 0 && item.availableQuantity < Math.abs(quantityDifference)) {
+    if (
+      quantityDifference < 0 &&
+      item.availableQuantity < Math.abs(quantityDifference)
+    ) {
       return false;
     }
 
     setStockItems((prev) =>
       prev.map((item) =>
         item.id === id
-          ? { ...item, availableQuantity: Math.max(0, item.availableQuantity + quantityDifference) }
+          ? {
+              ...item,
+              availableQuantity: Math.max(
+                0,
+                item.availableQuantity + quantityDifference,
+              ),
+            }
           : item,
       ),
     );

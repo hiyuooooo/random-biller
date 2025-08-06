@@ -117,8 +117,14 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
           const parsedCustomers = JSON.parse(saved);
           if (Array.isArray(parsedCustomers)) {
             // Deduplicate customers by ID and name to prevent duplicate keys
-            const uniqueCustomers = parsedCustomers.filter((customer, index, self) =>
-              index === self.findIndex(c => c.id === customer.id || c.name.toLowerCase() === customer.name.toLowerCase())
+            const uniqueCustomers = parsedCustomers.filter(
+              (customer, index, self) =>
+                index ===
+                self.findIndex(
+                  (c) =>
+                    c.id === customer.id ||
+                    c.name.toLowerCase() === customer.name.toLowerCase(),
+                ),
             );
             setCustomers(uniqueCustomers);
           } else {
@@ -140,7 +146,9 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
   // Listen for account switch events to force refresh
   useEffect(() => {
     const handleAccountSwitch = () => {
-      console.log("Account switch event detected in CustomerContext, forcing data refresh");
+      console.log(
+        "Account switch event detected in CustomerContext, forcing data refresh",
+      );
       if (activeAccount) {
         // Force reload data for current account
         try {
@@ -150,11 +158,19 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
             const parsedCustomers = JSON.parse(saved);
             if (Array.isArray(parsedCustomers)) {
               // Deduplicate customers by ID and name to prevent duplicate keys
-              const uniqueCustomers = parsedCustomers.filter((customer, index, self) =>
-                index === self.findIndex(c => c.id === customer.id || c.name.toLowerCase() === customer.name.toLowerCase())
+              const uniqueCustomers = parsedCustomers.filter(
+                (customer, index, self) =>
+                  index ===
+                  self.findIndex(
+                    (c) =>
+                      c.id === customer.id ||
+                      c.name.toLowerCase() === customer.name.toLowerCase(),
+                  ),
               );
               setCustomers(uniqueCustomers);
-              console.log(`Force reloaded ${uniqueCustomers.length} unique customers for account ${activeAccount.name}`);
+              console.log(
+                `Force reloaded ${uniqueCustomers.length} unique customers for account ${activeAccount.name}`,
+              );
             }
           } else {
             setCustomers(defaultCustomers);
@@ -166,14 +182,15 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    window.addEventListener('account-switched', handleAccountSwitch);
-    return () => window.removeEventListener('account-switched', handleAccountSwitch);
+    window.addEventListener("account-switched", handleAccountSwitch);
+    return () =>
+      window.removeEventListener("account-switched", handleAccountSwitch);
   }, [activeAccount]);
 
   const addCustomer = (customerData: Omit<Customer, "id">) => {
     setCustomers((prev) => {
       // Generate a unique ID based on existing IDs to avoid conflicts
-      const maxId = prev.length > 0 ? Math.max(...prev.map(c => c.id)) : 0;
+      const maxId = prev.length > 0 ? Math.max(...prev.map((c) => c.id)) : 0;
       const newCustomer: Customer = {
         ...customerData,
         id: maxId + 1,
@@ -227,12 +244,16 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
     const customerMap = new Map<string, any>();
 
     // Group transactions by customer name
-    transactions.forEach(transaction => {
+    transactions.forEach((transaction) => {
       const customerName = transaction.customerName?.trim();
-      if (!customerName || customerName.toLowerCase() === 'cash') return;
+      if (!customerName || customerName.toLowerCase() === "cash") return;
 
-      const cleanName = customerName.endsWith('_c') ? customerName.slice(0, -2) : customerName;
-      const paymentMode = customerName.endsWith('_c') ? 'Cash' : transaction.paymentMode || 'GPay';
+      const cleanName = customerName.endsWith("_c")
+        ? customerName.slice(0, -2)
+        : customerName;
+      const paymentMode = customerName.endsWith("_c")
+        ? "Cash"
+        : transaction.paymentMode || "GPay";
 
       if (!customerMap.has(cleanName)) {
         customerMap.set(cleanName, {
@@ -251,7 +272,7 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         date: transaction.date,
         amount: transaction.total,
         paymentMode: paymentMode,
-        items: []
+        items: [],
       });
       customer.totalAmount += transaction.total;
       customer.totalTransactions += 1;
@@ -268,9 +289,12 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
 
       if (existingCustomer) {
         // Update existing customer only if data has changed
-        if (existingCustomer.totalTransactions !== customerData.totalTransactions ||
-            existingCustomer.totalAmount !== customerData.totalAmount ||
-            existingCustomer.lastTransaction !== customerData.lastTransaction) {
+        if (
+          existingCustomer.totalTransactions !==
+            customerData.totalTransactions ||
+          existingCustomer.totalAmount !== customerData.totalAmount ||
+          existingCustomer.lastTransaction !== customerData.lastTransaction
+        ) {
           updateCustomer(existingCustomer.id, {
             totalTransactions: customerData.totalTransactions,
             totalAmount: customerData.totalAmount,
@@ -281,7 +305,9 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         }
       } else {
         // Only create new customer if one with this name doesn't already exist
-        const duplicateCheck = customers.find(c => c.name.toLowerCase() === customerName.toLowerCase());
+        const duplicateCheck = customers.find(
+          (c) => c.name.toLowerCase() === customerName.toLowerCase(),
+        );
         if (!duplicateCheck) {
           addCustomer({
             name: customerName,
@@ -299,9 +325,11 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
   const getCustomerSuggestions = (prefix: string) => {
     if (prefix.length < 2) return [];
 
-    return customers.filter(customer =>
-      customer.name.toLowerCase().includes(prefix.toLowerCase())
-    ).slice(0, 5); // Limit to 5 suggestions
+    return customers
+      .filter((customer) =>
+        customer.name.toLowerCase().includes(prefix.toLowerCase()),
+      )
+      .slice(0, 5); // Limit to 5 suggestions
   };
 
   return (

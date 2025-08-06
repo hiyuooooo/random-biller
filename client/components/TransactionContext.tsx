@@ -158,7 +158,9 @@ export function TransactionProvider({
   // Listen for account switch events to force refresh
   useEffect(() => {
     const handleAccountSwitch = () => {
-      console.log("Account switch event detected in TransactionContext, forcing data refresh");
+      console.log(
+        "Account switch event detected in TransactionContext, forcing data refresh",
+      );
       if (activeAccount) {
         // Force reload data for current account
         try {
@@ -168,7 +170,9 @@ export function TransactionProvider({
             const parsedTransactions = JSON.parse(saved);
             if (Array.isArray(parsedTransactions)) {
               setTransactions(parsedTransactions);
-              console.log(`Force reloaded ${parsedTransactions.length} transactions for account ${activeAccount.name}`);
+              console.log(
+                `Force reloaded ${parsedTransactions.length} transactions for account ${activeAccount.name}`,
+              );
             }
           } else {
             setTransactions(defaultTransactions);
@@ -180,8 +184,9 @@ export function TransactionProvider({
       }
     };
 
-    window.addEventListener('account-switched', handleAccountSwitch);
-    return () => window.removeEventListener('account-switched', handleAccountSwitch);
+    window.addEventListener("account-switched", handleAccountSwitch);
+    return () =>
+      window.removeEventListener("account-switched", handleAccountSwitch);
   }, [activeAccount]);
 
   const addTransaction = (transaction: Transaction) => {
@@ -241,13 +246,17 @@ export function TransactionProvider({
       prev.map((transaction) => {
         // If filteredTransactions is provided, only select those that are in the filtered list
         if (filteredTransactions) {
-          const isInFilteredList = filteredTransactions.some(ft => ft.id === transaction.id);
+          const isInFilteredList = filteredTransactions.some(
+            (ft) => ft.id === transaction.id,
+          );
           return transaction.isValid && isInFilteredList
             ? { ...transaction, selected: true }
             : transaction;
         }
         // Default behavior: select all valid transactions
-        return transaction.isValid ? { ...transaction, selected: true } : transaction;
+        return transaction.isValid
+          ? { ...transaction, selected: true }
+          : transaction;
       }),
     );
   };

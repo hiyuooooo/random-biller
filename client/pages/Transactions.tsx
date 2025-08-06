@@ -795,9 +795,12 @@ export default function Transactions() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => selectAllTransactions(filteredTransactions)}
+                      onClick={() =>
+                        selectAllTransactions(filteredTransactions)
+                      }
                       disabled={
-                        filteredTransactions.filter((t) => t.isValid).length === 0
+                        filteredTransactions.filter((t) => t.isValid).length ===
+                        0
                       }
                     >
                       <Check className="h-4 w-4 mr-2" />
@@ -814,8 +817,10 @@ export default function Transactions() {
                     </Button>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {getSelectedTransactions().length} of {filteredTransactions.filter(t => t.isValid).length}{" "}
-                    valid transactions selected (from {filteredTransactions.length} filtered)
+                    {getSelectedTransactions().length} of{" "}
+                    {filteredTransactions.filter((t) => t.isValid).length} valid
+                    transactions selected (from {filteredTransactions.length}{" "}
+                    filtered)
                   </div>
                 </div>
                 <div className="overflow-x-auto">

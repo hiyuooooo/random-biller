@@ -1,6 +1,10 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { useCustomer, type Customer, type CustomerTransaction } from "@/components/CustomerContext";
+import {
+  useCustomer,
+  type Customer,
+  type CustomerTransaction,
+} from "@/components/CustomerContext";
 import { useTransaction } from "@/components/TransactionContext";
 import { useBill } from "@/components/BillContext";
 import { useNavigate } from "react-router-dom";
@@ -50,8 +54,8 @@ export default function Customers() {
 
   // Function to get bills for a specific customer
   const getCustomerBills = (customerName: string) => {
-    return bills.filter(bill =>
-      bill.customerName.toLowerCase() === customerName.toLowerCase()
+    return bills.filter(
+      (bill) => bill.customerName.toLowerCase() === customerName.toLowerCase(),
     );
   };
 
@@ -101,7 +105,8 @@ export default function Customers() {
       (c) => c.preferredPayment === "GPay",
     ).length;
     const avgTransactionValue =
-      totalRevenue / customers.reduce((sum, c) => sum + c.totalTransactions, 0) || 0;
+      totalRevenue /
+        customers.reduce((sum, c) => sum + c.totalTransactions, 0) || 0;
 
     return {
       totalCustomers,
@@ -276,20 +281,28 @@ export default function Customers() {
                   )}
                   <div className="pt-2 border-t space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Transactions:</span>
+                      <span className="text-muted-foreground">
+                        Transactions:
+                      </span>
                       <span className="font-medium">
                         {customer.totalTransactions}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Amount:</span>
+                      <span className="text-muted-foreground">
+                        Total Amount:
+                      </span>
                       <span className="font-medium">
                         ₹{customer.totalAmount.toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Last Transaction:</span>
-                      <span className="font-medium">{customer.lastTransaction}</span>
+                      <span className="text-muted-foreground">
+                        Last Transaction:
+                      </span>
+                      <span className="font-medium">
+                        {customer.lastTransaction}
+                      </span>
                     </div>
 
                     {(() => {
@@ -297,26 +310,44 @@ export default function Customers() {
                       return customerBills.length > 0 ? (
                         <div className="pt-2 border-t">
                           <div className="flex justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">Bills Generated:</span>
-                            <span className="font-medium">{customerBills.length}</span>
+                            <span className="text-muted-foreground">
+                              Bills Generated:
+                            </span>
+                            <span className="font-medium">
+                              {customerBills.length}
+                            </span>
                           </div>
                           <div className="flex justify-between text-sm mb-1">
-                            <span className="text-muted-foreground">Bills Total:</span>
+                            <span className="text-muted-foreground">
+                              Bills Total:
+                            </span>
                             <span className="font-medium">
-                              ₹{customerBills.reduce((sum, bill) => sum + bill.subTotal, 0).toLocaleString()}
+                              ₹
+                              {customerBills
+                                .reduce((sum, bill) => sum + bill.subTotal, 0)
+                                .toLocaleString()}
                             </span>
                           </div>
                           <div className="flex justify-between text-sm">
-                            <span className="text-muted-foreground">Latest Bill:</span>
+                            <span className="text-muted-foreground">
+                              Latest Bill:
+                            </span>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                const latestBill = customerBills.sort((a, b) => b.billNumber - a.billNumber)[0];
+                                const latestBill = customerBills.sort(
+                                  (a, b) => b.billNumber - a.billNumber,
+                                )[0];
                                 navigateToBill(latestBill.billNumber);
                               }}
                               className="font-medium text-blue-600 hover:text-blue-800 underline"
                             >
-                              #{customerBills.sort((a, b) => b.billNumber - a.billNumber)[0]?.billNumber}
+                              #
+                              {
+                                customerBills.sort(
+                                  (a, b) => b.billNumber - a.billNumber,
+                                )[0]?.billNumber
+                              }
                             </button>
                           </div>
                           <button

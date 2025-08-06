@@ -160,7 +160,10 @@ export default function Reports() {
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("billing");
-  const [bulkPdfDateRange, setBulkPdfDateRange] = useState({ from: "", to: "" });
+  const [bulkPdfDateRange, setBulkPdfDateRange] = useState({
+    from: "",
+    to: "",
+  });
   const { bills } = useBill();
   const navigate = useNavigate();
 
@@ -374,7 +377,7 @@ export default function Reports() {
       document.body.appendChild(tempDiv);
 
       // Wait for images and content to load
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Convert HTML to canvas
       const canvas = await html2canvas(tempDiv, {
@@ -414,7 +417,9 @@ export default function Reports() {
       }
 
       // Download PDF
-      pdf.save(`Mega_Sale_Report_${new Date().toISOString().split("T")[0]}.pdf`);
+      pdf.save(
+        `Mega_Sale_Report_${new Date().toISOString().split("T")[0]}.pdf`,
+      );
 
       console.log("Mega report PDF downloaded successfully!");
     } catch (error) {
@@ -432,13 +437,15 @@ export default function Reports() {
 
       const { from, to } = bulkPdfDateRange;
       if (!from || !to) {
-        alert("Please select both start and end dates for bulk PDF generation.");
+        alert(
+          "Please select both start and end dates for bulk PDF generation.",
+        );
         return;
       }
 
       // Filter bills by date range
       const filteredBills = bills.filter((bill) => {
-        const billDate = new Date(bill.date.split('-').reverse().join('-')); // Convert DD-MM-YYYY to YYYY-MM-DD
+        const billDate = new Date(bill.date.split("-").reverse().join("-")); // Convert DD-MM-YYYY to YYYY-MM-DD
         const startDate = new Date(from);
         const endDate = new Date(to);
         return billDate >= startDate && billDate <= endDate;
@@ -449,7 +456,9 @@ export default function Reports() {
         return;
       }
 
-      const confirmed = confirm(`Generate ${filteredBills.length} separate PDF files for bills in the selected date range?`);
+      const confirmed = confirm(
+        `Generate ${filteredBills.length} separate PDF files for bills in the selected date range?`,
+      );
       if (!confirmed) return;
 
       // Generate PDF for each bill
@@ -457,7 +466,7 @@ export default function Reports() {
         const bill = filteredBills[i];
         await generateSingleBillPDF(bill, i, filteredBills.length);
         // Add small delay to prevent overwhelming the browser
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
       alert(`Successfully generated ${filteredBills.length} PDF files!`);
@@ -467,7 +476,11 @@ export default function Reports() {
     }
   };
 
-  const generateSingleBillPDF = async (bill: any, index: number, total: number) => {
+  const generateSingleBillPDF = async (
+    bill: any,
+    index: number,
+    total: number,
+  ) => {
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -504,7 +517,9 @@ export default function Reports() {
             </tr>
           </thead>
           <tbody>
-            ${bill.items.map((item: any, itemIndex: number) => `
+            ${bill.items
+              .map(
+                (item: any, itemIndex: number) => `
               <tr>
                 <td>${itemIndex + 1}</td>
                 <td>${item.name}</td>
@@ -512,7 +527,9 @@ export default function Reports() {
                 <td>₹${item.price}</td>
                 <td>₹${item.total}</td>
               </tr>
-            `).join("")}
+            `,
+              )
+              .join("")}
           </tbody>
           <tfoot>
             <tr class="total-row">
@@ -534,7 +551,7 @@ export default function Reports() {
     tempDiv.style.backgroundColor = "white";
     document.body.appendChild(tempDiv);
 
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     // Convert to PDF
     const canvas = await html2canvas(tempDiv, {
@@ -553,7 +570,9 @@ export default function Reports() {
     const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
     pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-    pdf.save(`Bill_${bill.billNumber}_${bill.customerName.replace(/\s+/g, '_')}.pdf`);
+    pdf.save(
+      `Bill_${bill.billNumber}_${bill.customerName.replace(/\s+/g, "_")}.pdf`,
+    );
   };
 
   return (
@@ -1037,7 +1056,11 @@ export default function Reports() {
                   <div>
                     <Button
                       onClick={generateBulkPDFs}
-                      disabled={!bulkPdfDateRange.from || !bulkPdfDateRange.to || bills.length === 0}
+                      disabled={
+                        !bulkPdfDateRange.from ||
+                        !bulkPdfDateRange.to ||
+                        bills.length === 0
+                      }
                       className="w-full"
                     >
                       <Download className="h-4 w-4 mr-2" />
@@ -1047,12 +1070,17 @@ export default function Reports() {
                 </div>
                 {bulkPdfDateRange.from && bulkPdfDateRange.to && (
                   <div className="mt-3 text-sm text-muted-foreground">
-                    {bills.filter((bill) => {
-                      const billDate = new Date(bill.date.split('-').reverse().join('-'));
-                      const startDate = new Date(bulkPdfDateRange.from);
-                      const endDate = new Date(bulkPdfDateRange.to);
-                      return billDate >= startDate && billDate <= endDate;
-                    }).length} bills found in selected date range
+                    {
+                      bills.filter((bill) => {
+                        const billDate = new Date(
+                          bill.date.split("-").reverse().join("-"),
+                        );
+                        const startDate = new Date(bulkPdfDateRange.from);
+                        const endDate = new Date(bulkPdfDateRange.to);
+                        return billDate >= startDate && billDate <= endDate;
+                      }).length
+                    }{" "}
+                    bills found in selected date range
                   </div>
                 )}
               </CardContent>

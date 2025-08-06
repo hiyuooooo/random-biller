@@ -174,11 +174,13 @@ export default function Stock() {
   const { bills } = useBill();
 
   // Function to check if a stock item is used in any bills
-  const isStockUsedInBills = (stockId: number): { isUsed: boolean; billNumbers: number[] } => {
+  const isStockUsedInBills = (
+    stockId: number,
+  ): { isUsed: boolean; billNumbers: number[] } => {
     const billNumbers: number[] = [];
 
-    bills.forEach(bill => {
-      const isUsedInBill = bill.items.some(item => item.id === stockId);
+    bills.forEach((bill) => {
+      const isUsedInBill = bill.items.some((item) => item.id === stockId);
       if (isUsedInBill) {
         billNumbers.push(bill.billNumber);
       }
@@ -186,7 +188,7 @@ export default function Stock() {
 
     return {
       isUsed: billNumbers.length > 0,
-      billNumbers
+      billNumbers,
     };
   };
 
@@ -194,24 +196,27 @@ export default function Stock() {
     // Check if any stock items are used in bills
     const usedItems: { itemName: string; billNumbers: number[] }[] = [];
 
-    stockItems.forEach(item => {
+    stockItems.forEach((item) => {
       const usage = isStockUsedInBills(item.id);
       if (usage.isUsed) {
         usedItems.push({
           itemName: item.itemName,
-          billNumbers: usage.billNumbers
+          billNumbers: usage.billNumbers,
         });
       }
     });
 
     if (usedItems.length > 0) {
-      const usedItemsText = usedItems.map(item =>
-        `• ${item.itemName} (Bills: ${item.billNumbers.join(', ')})`
-      ).join('\n');
+      const usedItemsText = usedItems
+        .map(
+          (item) =>
+            `• ${item.itemName} (Bills: ${item.billNumbers.join(", ")})`,
+        )
+        .join("\n");
 
       alert(
         `Cannot delete all stock items because the following items are used in bills:\n\n${usedItemsText}\n\n` +
-        "Please remove these items from all bills before bulk deletion."
+          "Please remove these items from all bills before bulk deletion.",
       );
       return;
     }
@@ -290,11 +295,11 @@ export default function Stock() {
 
   // Handle prefix search for items
   const handlePrefixSearch = (prefix: string) => {
-    setQuickAddData(prev => ({ ...prev, itemPrefix: prefix }));
+    setQuickAddData((prev) => ({ ...prev, itemPrefix: prefix }));
 
     if (prefix.length >= 2) {
-      const matches = stockItems.filter(item =>
-        item.itemName.toLowerCase().includes(prefix.toLowerCase())
+      const matches = stockItems.filter((item) =>
+        item.itemName.toLowerCase().includes(prefix.toLowerCase()),
       );
       setSuggestions(matches);
     } else {
@@ -316,34 +321,37 @@ export default function Stock() {
     }
 
     // Check if item exists
-    const existingItem = stockItems.find(item =>
-      item.itemName.toLowerCase() === quickAddData.itemPrefix.toLowerCase()
+    const existingItem = stockItems.find(
+      (item) =>
+        item.itemName.toLowerCase() === quickAddData.itemPrefix.toLowerCase(),
     );
 
     if (existingItem) {
       // Add quantity to existing item
       updateStockItem(existingItem.id, {
-        availableQuantity: existingItem.availableQuantity + quantity
+        availableQuantity: existingItem.availableQuantity + quantity,
       });
       alert(`Added ${quantity} units to ${existingItem.itemName}`);
     } else {
       // Create new item
       const newStockItem = {
-        id: Math.max(...stockItems.map(item => item.id), 0) + 1,
+        id: Math.max(...stockItems.map((item) => item.id), 0) + 1,
         itemName: quickAddData.itemPrefix,
         price: 0, // Default price, user can edit later
         availableQuantity: quantity,
-        lowStockThreshold: 10 // Default threshold
+        lowStockThreshold: 10, // Default threshold
       };
       addStockItem(newStockItem);
-      alert(`Created new item: ${quickAddData.itemPrefix} with ${quantity} units`);
+      alert(
+        `Created new item: ${quickAddData.itemPrefix} with ${quantity} units`,
+      );
     }
 
     // Reset form but keep date
-    setQuickAddData(prev => ({
+    setQuickAddData((prev) => ({
       itemPrefix: "",
       quantity: "",
-      date: prev.date
+      date: prev.date,
     }));
     setSuggestions([]);
     setIsQuickAddOpen(false);
@@ -400,16 +408,20 @@ export default function Stock() {
     const usage = isStockUsedInBills(id);
 
     if (usage.isUsed) {
-      const stockItem = stockItems.find(item => item.id === id);
+      const stockItem = stockItems.find((item) => item.id === id);
       alert(
-        `Cannot delete "${stockItem?.itemName}" because it is used in the following bills: ${usage.billNumbers.join(', ')}\n\n` +
-        "Please remove this item from all bills before deleting it from stock."
+        `Cannot delete "${stockItem?.itemName}" because it is used in the following bills: ${usage.billNumbers.join(", ")}\n\n` +
+          "Please remove this item from all bills before deleting it from stock.",
       );
       return;
     }
 
-    const stockItem = stockItems.find(item => item.id === id);
-    if (confirm(`Are you sure you want to delete "${stockItem?.itemName}"? This action cannot be undone.`)) {
+    const stockItem = stockItems.find((item) => item.id === id);
+    if (
+      confirm(
+        `Are you sure you want to delete "${stockItem?.itemName}"? This action cannot be undone.`,
+      )
+    ) {
       deleteStockItem(id);
     }
   };
@@ -1011,7 +1023,10 @@ export default function Stock() {
                   type="date"
                   value={quickAddData.date}
                   onChange={(e) =>
-                    setQuickAddData(prev => ({ ...prev, date: e.target.value }))
+                    setQuickAddData((prev) => ({
+                      ...prev,
+                      date: e.target.value,
+                    }))
                   }
                 />
                 <p className="text-xs text-muted-foreground">
@@ -1035,13 +1050,17 @@ export default function Stock() {
                         key={item.id}
                         className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
                         onClick={() => {
-                          setQuickAddData(prev => ({ ...prev, itemPrefix: item.itemName }));
+                          setQuickAddData((prev) => ({
+                            ...prev,
+                            itemPrefix: item.itemName,
+                          }));
                           setSuggestions([]);
                         }}
                       >
                         <div className="font-medium">{item.itemName}</div>
                         <div className="text-sm text-gray-500">
-                          Current stock: {item.availableQuantity} • ₹{item.price}
+                          Current stock: {item.availableQuantity} • ₹
+                          {item.price}
                         </div>
                       </div>
                     ))}
@@ -1049,14 +1068,16 @@ export default function Stock() {
                 )}
 
                 <p className="text-xs text-muted-foreground">
-                  {quickAddData.itemPrefix && stockItems.find(item =>
-                    item.itemName.toLowerCase() === quickAddData.itemPrefix.toLowerCase()
+                  {quickAddData.itemPrefix &&
+                  stockItems.find(
+                    (item) =>
+                      item.itemName.toLowerCase() ===
+                      quickAddData.itemPrefix.toLowerCase(),
                   )
                     ? "Will add to existing item"
                     : quickAddData.itemPrefix
-                    ? "Will create new item"
-                    : "Type to search existing items or create new"
-                  }
+                      ? "Will create new item"
+                      : "Type to search existing items or create new"}
                 </p>
               </div>
 
@@ -1066,7 +1087,10 @@ export default function Stock() {
                   type="number"
                   value={quickAddData.quantity}
                   onChange={(e) =>
-                    setQuickAddData(prev => ({ ...prev, quantity: e.target.value }))
+                    setQuickAddData((prev) => ({
+                      ...prev,
+                      quantity: e.target.value,
+                    }))
                   }
                   placeholder="Enter quantity"
                   min="1"

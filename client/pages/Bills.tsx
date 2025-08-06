@@ -134,12 +134,14 @@ export default function Bills() {
   const { stockItems, reduceStock, restoreStock, adjustStock } = useStock();
   const { getCustomerSuggestions } = useCustomer();
   const [searchParams] = useSearchParams();
-  const [highlightedBillNumber, setHighlightedBillNumber] = useState<number | null>(null);
+  const [highlightedBillNumber, setHighlightedBillNumber] = useState<
+    number | null
+  >(null);
 
   // Handle highlighting and customer filter from URL parameters
   useEffect(() => {
-    const highlightParam = searchParams.get('highlight');
-    const customerParam = searchParams.get('customer');
+    const highlightParam = searchParams.get("highlight");
+    const customerParam = searchParams.get("customer");
 
     if (highlightParam) {
       const billNumber = parseInt(highlightParam);
@@ -328,20 +330,22 @@ export default function Bills() {
 
   // Filter bills based on search and status
   const filteredBills = useMemo(() => {
-    return bills.filter((bill) => {
-      const matchesSearch =
-        bill.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        bill.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        bill.billNumber.toString().includes(searchTerm);
+    return bills
+      .filter((bill) => {
+        const matchesSearch =
+          bill.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          bill.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          bill.billNumber.toString().includes(searchTerm);
 
-      const matchesStatus =
-        filterStatus === "all" || bill.status === filterStatus;
+        const matchesStatus =
+          filterStatus === "all" || bill.status === filterStatus;
 
-      return matchesSearch && matchesStatus;
-    }).sort((a, b) => {
-      // Sort by bill number in descending order (newest first)
-      return b.billNumber - a.billNumber;
-    });
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) => {
+        // Sort by bill number in descending order (newest first)
+        return b.billNumber - a.billNumber;
+      });
   }, [bills, searchTerm, filterStatus]);
 
   // Determine payment mode based on customer name
@@ -1631,7 +1635,8 @@ export default function Bills() {
                           key={bill.id}
                           className={cn(
                             "border-b hover:bg-accent/50 transition-colors",
-                            highlightedBillNumber === bill.billNumber && "bg-yellow-100 border-yellow-300 animate-pulse"
+                            highlightedBillNumber === bill.billNumber &&
+                              "bg-yellow-100 border-yellow-300 animate-pulse",
                           )}
                         >
                           <td className="p-3 font-medium">{bill.billNumber}</td>
@@ -1813,9 +1818,12 @@ export default function Bills() {
                                   setCustomerSuggestions([]);
                                 }}
                               >
-                                <div className="font-medium">{customer.name}</div>
+                                <div className="font-medium">
+                                  {customer.name}
+                                </div>
                                 <div className="text-sm text-gray-500">
-                                  {customer.totalTransactions} transactions • ₹{customer.totalAmount.toLocaleString()} total
+                                  {customer.totalTransactions} transactions • ₹
+                                  {customer.totalAmount.toLocaleString()} total
                                 </div>
                               </div>
                             ))}

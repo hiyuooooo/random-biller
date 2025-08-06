@@ -159,7 +159,9 @@ export function BackupSystem() {
           `bills_${activeAccount.id}`,
           JSON.stringify(restorePreview.bills),
         );
-        console.log(`Restored ${restorePreview.bills.length} bills to localStorage`);
+        console.log(
+          `Restored ${restorePreview.bills.length} bills to localStorage`,
+        );
       }
 
       // Import transactions
@@ -171,7 +173,9 @@ export function BackupSystem() {
           `transactions_${activeAccount.id}`,
           JSON.stringify(restorePreview.transactions),
         );
-        console.log(`Restored ${restorePreview.transactions.length} transactions to localStorage`);
+        console.log(
+          `Restored ${restorePreview.transactions.length} transactions to localStorage`,
+        );
       }
 
       // Import stock
@@ -180,7 +184,9 @@ export function BackupSystem() {
           `stockItems_${activeAccount.id}`,
           JSON.stringify(restorePreview.stock),
         );
-        console.log(`Restored ${restorePreview.stock.length} stock items to localStorage`);
+        console.log(
+          `Restored ${restorePreview.stock.length} stock items to localStorage`,
+        );
       }
 
       // Close dialog first
@@ -188,7 +194,7 @@ export function BackupSystem() {
       setRestorePreview(null);
 
       // Trigger account switch event to force refresh contexts
-      window.dispatchEvent(new CustomEvent('account-switched'));
+      window.dispatchEvent(new CustomEvent("account-switched"));
 
       alert(
         `Backup restored successfully!\n\n` +
@@ -197,7 +203,6 @@ export function BackupSystem() {
           `✓ ${restorePreview.stock?.length || 0} stock items restored\n\n` +
           `Data has been refreshed automatically.`,
       );
-
     } catch (error) {
       console.error("Error restoring backup:", error);
       alert("Error restoring backup. Please try again.");
