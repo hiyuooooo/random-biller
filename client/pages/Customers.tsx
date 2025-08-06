@@ -35,7 +35,8 @@ import {
 import { cn } from "@/lib/utils";
 
 export default function Customers() {
-  const { customers } = useCustomer();
+  const { customers, syncCustomersFromTransactions } = useCustomer();
+  const { transactions } = useTransaction();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
