@@ -323,13 +323,21 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getCustomerSuggestions = (prefix: string) => {
-    if (prefix.length < 2) return [];
+    if (prefix.length < 1) return [];
 
     return customers
       .filter((customer) =>
-        customer.name.toLowerCase().includes(prefix.toLowerCase()),
+        customer.name.toLowerCase().startsWith(prefix.toLowerCase()),
       )
-      .slice(0, 5); // Limit to 5 suggestions
+      .sort((a, b) => {
+        // Sort by most recent transactions first, then by total amount
+        const dateA = new Date(a.lastTransaction);
+        const dateB = new Date(b.lastTransaction);
+        if (dateA > dateB) return -1;
+        if (dateA < dateB) return 1;
+        return b.totalAmount - a.totalAmount;
+      })
+      .slice(0, 8); // Increase to 8 suggestions for better UX
   };
 
   return (
