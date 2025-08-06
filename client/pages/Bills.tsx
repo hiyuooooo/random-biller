@@ -136,9 +136,11 @@ export default function Bills() {
   const [searchParams] = useSearchParams();
   const [highlightedBillNumber, setHighlightedBillNumber] = useState<number | null>(null);
 
-  // Handle highlighting from URL parameter
+  // Handle highlighting and customer filter from URL parameters
   useEffect(() => {
     const highlightParam = searchParams.get('highlight');
+    const customerParam = searchParams.get('customer');
+
     if (highlightParam) {
       const billNumber = parseInt(highlightParam);
       if (!isNaN(billNumber)) {
@@ -148,6 +150,10 @@ export default function Bills() {
           setHighlightedBillNumber(null);
         }, 5000);
       }
+    }
+
+    if (customerParam) {
+      setSearchTerm(decodeURIComponent(customerParam));
     }
   }, [searchParams]);
 
@@ -328,6 +334,9 @@ export default function Bills() {
         filterStatus === "all" || bill.status === filterStatus;
 
       return matchesSearch && matchesStatus;
+    }).sort((a, b) => {
+      // Sort by bill number in descending order (newest first)
+      return b.billNumber - a.billNumber;
     });
   }, [bills, searchTerm, filterStatus]);
 
