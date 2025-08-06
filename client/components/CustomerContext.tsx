@@ -257,6 +257,8 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         deleteCustomer,
         addTransactionToCustomer,
         getCustomerByName,
+        syncCustomersFromTransactions,
+        getCustomerSuggestions,
       }}
     >
       {children}
