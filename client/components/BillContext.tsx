@@ -35,8 +35,14 @@ interface Bill {
 interface BillContextType {
   bills: Bill[];
   addBill: (bill: Bill) => void;
-  updateBill: (id: string, bill: Partial<Bill>) => void;
-  deleteBill: (id: string) => void;
+  updateBill: (id: string, bill: Partial<Bill>, stockCallbacks?: {
+    restoreStock: (id: number, quantity: number) => boolean;
+    reduceStock: (id: number, quantity: number) => boolean;
+    adjustStock: (id: number, quantityDifference: number) => boolean;
+  }) => void;
+  deleteBill: (id: string, stockCallbacks?: {
+    restoreStock: (id: number, quantity: number) => boolean;
+  }) => void;
   generateBillsFromTransactions: (
     transactions: any[],
     startingBillNumber: number,
@@ -52,9 +58,6 @@ const BillContext = createContext<BillContextType | null>(null);
 export function BillProvider({ children }: { children: React.ReactNode }) {
   const { activeAccount } = useAccount();
   const iterationMonitor = useIterationMonitor();
-
-  // Import useStock hook
-  const stockContext = React.useContext(React.createContext<any>(null));
 
   // Initialize with empty array and load data in useEffect
   const [bills, setBills] = useState<Bill[]>([]);
@@ -141,7 +144,11 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     setBills((prev) => [...prev, bill]);
   };
 
-  const updateBill = (id: string, billData: Partial<Bill>) => {
+  const updateBill = (id: string, billData: Partial<Bill>, stockCallbacks?: {
+    restoreStock: (id: number, quantity: number) => boolean;
+    reduceStock: (id: number, quantity: number) => boolean;
+    adjustStock: (id: number, quantityDifference: number) => boolean;
+  }) => {
     // Find the original bill to compare stock changes
     const originalBill = bills.find((bill) => bill.id === id);
 
@@ -149,8 +156,8 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       prev.map((bill) => (bill.id === id ? { ...bill, ...billData } : bill)),
     );
 
-    // If items have changed, we need to adjust stock
-    if (originalBill && billData.items && stockContext?.adjustStock) {
+    // If items have changed and stock callbacks are provided, adjust stock
+    if (originalBill && billData.items && stockCallbacks) {
       const originalItems = originalBill.items;
       const newItems = billData.items;
 
@@ -173,7 +180,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         if (quantityDifference !== 0) {
           // Positive difference means we need to restore stock
           // Negative difference means we need to reduce more stock
-          stockContext.adjustStock(originalItem.id, quantityDifference);
+          stockCallbacks.adjustStock(originalItem.id, quantityDifference);
           console.log(`Adjusted stock for ${originalItem.name}: ${quantityDifference > 0 ? '+' : ''}${quantityDifference}`);
         }
       });
@@ -182,7 +189,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       newItems.forEach(newItem => {
         if (!originalItemMap.has(newItem.id)) {
           // This is a new item, reduce stock
-          stockContext.reduceStock(newItem.id, newItem.quantity);
+          stockCallbacks.reduceStock(newItem.id, newItem.quantity);
           console.log(`Reduced stock for new item ${newItem.name}: -${newItem.quantity}`);
         }
       });
@@ -191,21 +198,23 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       originalItems.forEach(originalItem => {
         if (!newItemMap.has(originalItem.id)) {
           // This item was removed, restore stock
-          stockContext.restoreStock(originalItem.id, originalItem.quantity);
+          stockCallbacks.restoreStock(originalItem.id, originalItem.quantity);
           console.log(`Restored stock for removed item ${originalItem.name}: +${originalItem.quantity}`);
         }
       });
     }
   };
 
-  const deleteBill = (id: string) => {
+  const deleteBill = (id: string, stockCallbacks?: {
+    restoreStock: (id: number, quantity: number) => boolean;
+  }) => {
     // Find the bill being deleted to restore its stock
     const billToDelete = bills.find((bill) => bill.id === id);
 
-    if (billToDelete && stockContext?.restoreStock) {
+    if (billToDelete && stockCallbacks?.restoreStock) {
       // Restore stock for all items in the bill
       billToDelete.items.forEach((item) => {
-        const success = stockContext.restoreStock(item.id, item.quantity);
+        const success = stockCallbacks.restoreStock(item.id, item.quantity);
         if (success) {
           console.log(`Restored stock for ${item.name}: +${item.quantity}`);
         } else {
