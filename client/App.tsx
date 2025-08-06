@@ -7,7 +7,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AccountProvider } from "@/components/AccountManager";
+import { AccountProvider, useAccount } from "@/components/AccountManager";
 import { BillProvider } from "@/components/BillContext";
 import { StockProvider } from "@/components/StockContext";
 import { TransactionProvider } from "@/components/TransactionContext";
@@ -84,4 +84,12 @@ const App = () => {
   );
 };
 
-createRoot(document.getElementById("root")!).render(<App />);
+const container = document.getElementById("root")!;
+
+// Prevent multiple root creation in development
+let root: any = (container as any)._reactRoot;
+if (!root) {
+  root = createRoot(container);
+  (container as any)._reactRoot = root;
+}
+root.render(<App />);

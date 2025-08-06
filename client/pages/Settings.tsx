@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Layout } from "@/components/Layout";
 import { useAccount } from "@/components/AccountManager";
+import { useBill } from "@/components/BillContext";
+import { useCustomer } from "@/components/CustomerContext";
+import { useStock } from "@/components/StockContext";
 import {
   Card,
   CardContent,
@@ -15,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 import {
   Settings as SettingsIcon,
   Building2,
@@ -22,10 +26,17 @@ import {
   FileText,
   Database,
   Shield,
+  Download,
+  Upload,
 } from "lucide-react";
 
 export default function Settings() {
-  const { activeAccount } = useAccount();
+  const { activeAccount, accounts } = useAccount();
+  const { bills } = useBill();
+  const { customers } = useCustomer();
+  const { stockItems } = useStock();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [notifications, setNotifications] = useState(() => {
     if (!activeAccount)
@@ -221,6 +232,342 @@ export default function Settings() {
       }
     }
   }, [activeAccount?.id]);
+
+  // Export all data function
+  const exportAllData = () => {
+    try {
+      if (!activeAccount) {
+        toast({
+          title: "No Active Account",
+          description: "Please select an account before exporting data.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Gather all data for the active account
+      const backupData = {
+        version: "1.0.0",
+        timestamp: new Date().toISOString(),
+        accountId: activeAccount.id,
+        accountName: activeAccount.name,
+        data: {
+          // Account data
+          accounts: accounts,
+          activeAccountId: activeAccount.id,
+
+          // Business data
+          bills: bills,
+          customers: customers,
+          stockItems: stockItems,
+
+          // Settings data
+          notifications: notifications,
+          preferences: preferences,
+          invoiceSettings: invoiceSettings,
+        },
+      };
+
+      // Debug log
+      console.log("Exporting backup data:", {
+        billsCount: bills.length,
+        customersCount: customers.length,
+        stockItemsCount: stockItems.length,
+        accountId: activeAccount.id,
+        accountName: activeAccount.name,
+      });
+
+      // Create and download the backup file
+      const dataStr = JSON.stringify(backupData, null, 2);
+      const dataBlob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(dataBlob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `backup_${activeAccount.name.replace(/\s+/g, "_")}_${new Date().toISOString().split("T")[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Export Successful",
+        description: `Data backup exported successfully for ${activeAccount.name}.`,
+      });
+    } catch (error) {
+      console.error("Export failed:", error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Import data function
+  const importData = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const content = e.target?.result as string;
+        const backupData = JSON.parse(content);
+
+        // Validate backup data structure
+        if (!backupData.version || !backupData.data) {
+          throw new Error("Invalid backup file format");
+        }
+
+        if (!activeAccount) {
+          toast({
+            title: "No Active Account",
+            description: "Please select an account before importing data.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Confirm import with user
+        const confirmed = window.confirm(
+          `Import data from backup created on ${new Date(backupData.timestamp).toLocaleDateString()}?\n\nThis will replace current data for the active account. This action cannot be undone.`,
+        );
+
+        if (!confirmed) return;
+
+        // Store data in localStorage for the active account
+        const accountId = activeAccount.id;
+
+        // Debug log
+        console.log("Importing backup data:", {
+          billsCount: backupData.data.bills?.length || 0,
+          customersCount: backupData.data.customers?.length || 0,
+          stockItemsCount: backupData.data.stockItems?.length || 0,
+          accountId: accountId,
+          backupAccountId: backupData.accountId,
+        });
+
+        // Import business data
+        if (backupData.data.bills) {
+          localStorage.setItem(
+            `bills_${accountId}`,
+            JSON.stringify(backupData.data.bills),
+          );
+          console.log(
+            `Saved ${backupData.data.bills.length} bills to bills_${accountId}`,
+          );
+        }
+
+        if (backupData.data.customers) {
+          localStorage.setItem(
+            `customers_${accountId}`,
+            JSON.stringify(backupData.data.customers),
+          );
+          console.log(
+            `Saved ${backupData.data.customers.length} customers to customers_${accountId}`,
+          );
+        }
+
+        if (backupData.data.stockItems) {
+          localStorage.setItem(
+            `stockItems_${accountId}`,
+            JSON.stringify(backupData.data.stockItems),
+          );
+          console.log(
+            `Saved ${backupData.data.stockItems.length} stock items to stockItems_${accountId}`,
+          );
+        }
+
+        // Import settings data
+        if (backupData.data.notifications) {
+          localStorage.setItem(
+            `settings_notifications_${accountId}`,
+            JSON.stringify(backupData.data.notifications),
+          );
+          setNotifications(backupData.data.notifications);
+        }
+
+        if (backupData.data.preferences) {
+          localStorage.setItem(
+            `settings_preferences_${accountId}`,
+            JSON.stringify(backupData.data.preferences),
+          );
+          setPreferences(backupData.data.preferences);
+        }
+
+        if (backupData.data.invoiceSettings) {
+          localStorage.setItem(
+            `settings_invoice_${accountId}`,
+            JSON.stringify(backupData.data.invoiceSettings),
+          );
+          setInvoiceSettings(backupData.data.invoiceSettings);
+        }
+
+        toast({
+          title: "Import Successful",
+          description:
+            "Data has been imported successfully. Refreshing to load imported data...",
+        });
+
+        // Automatically refresh page to reload imported data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+      } catch (error) {
+        console.error("Import failed:", error);
+        toast({
+          title: "Import Failed",
+          description:
+            "Failed to import data. Please check the file format and try again.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    reader.readAsText(file);
+
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Clear cache function
+  const clearCache = () => {
+    const confirmed = window.confirm(
+      "Clear all cached data? This will remove all stored information and reset the application.",
+    );
+
+    if (confirmed) {
+      try {
+        localStorage.clear();
+        toast({
+          title: "Cache Cleared",
+          description:
+            "All cached data has been cleared. Please refresh the page.",
+        });
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } catch (error) {
+        console.error("Failed to clear cache:", error);
+        toast({
+          title: "Clear Failed",
+          description: "Failed to clear cache. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  // Test function to generate sample data
+  const generateTestData = () => {
+    if (!activeAccount) {
+      toast({
+        title: "No Active Account",
+        description: "Please select an account before generating test data.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const accountId = activeAccount.id;
+
+      // Generate test bills
+      const testBills = [
+        {
+          id: "BILL-001",
+          billNumber: 1001,
+          date: new Date().toISOString().split("T")[0],
+          customerName: "Test Customer 1",
+          items: [
+            { id: 1, name: "Rice (1kg)", price: 80, quantity: 2, total: 160 },
+          ],
+          subTotal: 160,
+          expectedTotal: 160,
+          paymentMode: "Cash",
+          status: "generated",
+          difference: 0,
+          tolerance: 0,
+          headerInfo: {
+            agencyName: activeAccount.name,
+            address: activeAccount.address,
+          },
+          footerInfo: { declaration: "Test declaration" },
+        },
+      ];
+
+      // Generate test customers
+      const testCustomers = [
+        {
+          id: 1,
+          name: "Test Customer 1",
+          phone: "+91 9876543210",
+          email: "test@example.com",
+          address: "Test Address",
+          preferredPayment: "Cash",
+          totalTransactions: 1,
+          totalAmount: 160,
+          lastTransaction: new Date().toISOString().split("T")[0],
+          transactions: [],
+        },
+      ];
+
+      // Generate test stock items
+      const testStockItems = [
+        {
+          id: 1,
+          itemName: "Rice (1kg)",
+          price: 80,
+          availableQuantity: 100,
+          lowStockThreshold: 10,
+        },
+        {
+          id: 2,
+          itemName: "Wheat Flour (1kg)",
+          price: 45,
+          availableQuantity: 150,
+          lowStockThreshold: 15,
+        },
+      ];
+
+      // Save test data
+      localStorage.setItem(`bills_${accountId}`, JSON.stringify(testBills));
+      localStorage.setItem(
+        `customers_${accountId}`,
+        JSON.stringify(testCustomers),
+      );
+      localStorage.setItem(
+        `stockItems_${accountId}`,
+        JSON.stringify(testStockItems),
+      );
+
+      toast({
+        title: "Test Data Generated",
+        description:
+          "Sample data has been created. Refreshing to load the data...",
+      });
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+    } catch (error) {
+      console.error("Failed to generate test data:", error);
+      toast({
+        title: "Generation Failed",
+        description: "Failed to generate test data. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Layout>
@@ -696,24 +1043,66 @@ export default function Settings() {
                       <Button
                         variant="outline"
                         className="w-full justify-start"
+                        onClick={exportAllData}
+                        disabled={!activeAccount}
                       >
-                        <Database className="h-4 w-4 mr-2" />
+                        <Download className="h-4 w-4 mr-2" />
                         Export All Data
                       </Button>
                       <Button
                         variant="outline"
                         className="w-full justify-start"
+                        onClick={importData}
+                        disabled={!activeAccount}
                       >
-                        <Database className="h-4 w-4 mr-2" />
+                        <Upload className="h-4 w-4 mr-2" />
                         Import Data
                       </Button>
                       <Button
                         variant="outline"
                         className="w-full justify-start"
+                        onClick={generateTestData}
+                        disabled={!activeAccount}
+                      >
+                        <Database className="h-4 w-4 mr-2" />
+                        Generate Test Data
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-destructive hover:text-destructive"
+                        onClick={clearCache}
                       >
                         <Shield className="h-4 w-4 mr-2" />
                         Clear Cache
                       </Button>
+
+                      {/* Hidden file input for import */}
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".json"
+                        onChange={handleFileImport}
+                        style={{ display: "none" }}
+                      />
+                    </div>
+
+                    <div className="text-sm text-muted-foreground space-y-2 mt-4">
+                      <p>
+                        <strong>Export:</strong> Creates a complete backup of
+                        all your data for the active account.
+                      </p>
+                      <p>
+                        <strong>Import:</strong> Restores data from a previously
+                        exported backup file.
+                      </p>
+                      <p>
+                        <strong>Generate Test Data:</strong> Creates sample data
+                        for testing the backup functionality.
+                      </p>
+                      <p>
+                        <strong>Clear Cache:</strong> Removes all stored data
+                        and resets the application.
+                      </p>
                     </div>
                   </div>
                 </div>

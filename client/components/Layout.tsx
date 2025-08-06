@@ -10,10 +10,19 @@ import {
   TrendingUp,
   Shield,
   LogOut,
+  ChevronDown,
+  Building2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAccount } from "./AccountManager";
 import { Button } from "./ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
@@ -33,7 +42,7 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const location = useLocation();
-  const { activeAccount } = useAccount();
+  const { activeAccount, accounts, setActiveAccount } = useAccount();
 
   const handleLogout = () => {
     localStorage.removeItem("isLoggedIn");
@@ -56,13 +65,58 @@ export function Layout({ children }: LayoutProps) {
             </div>
           </div>
           <div className="ml-auto flex items-center space-x-4">
-            <div className="text-sm text-muted-foreground">
-              {activeAccount?.name || "No Account Selected"}
-            </div>
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
-              Logout
-            </Button>
+            {/* Account Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center space-x-2 min-w-0"
+                >
+                  <Building2 className="h-4 w-4 flex-shrink-0" />
+                  <span className="hidden sm:inline truncate max-w-32">
+                    {activeAccount?.name || "Select Account"}
+                  </span>
+                  <ChevronDown className="h-4 w-4 flex-shrink-0" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-72">
+                <div className="px-2 py-1.5 text-sm font-medium text-muted-foreground">
+                  Switch Account
+                </div>
+                <DropdownMenuSeparator />
+                {accounts.map((account) => (
+                  <DropdownMenuItem
+                    key={account.id}
+                    onClick={() => setActiveAccount(account)}
+                    className={cn(
+                      "flex items-center space-x-3 cursor-pointer p-3",
+                      activeAccount?.id === account.id && "bg-accent",
+                    )}
+                  >
+                    <Building2 className="h-4 w-4 flex-shrink-0" />
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="font-medium truncate">
+                        {account.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {account.address}
+                      </span>
+                    </div>
+                    {activeAccount?.id === account.id && (
+                      <div className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                    )}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer text-destructive"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
