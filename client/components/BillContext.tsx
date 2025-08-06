@@ -111,6 +111,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     targetTotal: number,
     stockToUse: any[],
     previousItems: string[] = [],
+    billNumber?: number,
   ): { items: BillItem[]; total: number } => {
     console.log(
       "Generating optimal bill items for target:",
