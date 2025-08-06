@@ -42,6 +42,7 @@ import { cn } from "@/lib/utils";
 import { SampleDataGenerator } from "@/components/SampleDataGenerator";
 import * as XLSX from "xlsx";
 import { useStock } from "@/components/StockContext";
+import { useBill } from "@/components/BillContext";
 
 // Mock stock data based on your Python code structure
 const mockStockData = [
@@ -170,6 +171,24 @@ export default function Stock() {
     toggleBlockItem,
     deleteAllStock,
   } = useStock();
+  const { bills } = useBill();
+
+  // Function to check if a stock item is used in any bills
+  const isStockUsedInBills = (stockId: number): { isUsed: boolean; billNumbers: number[] } => {
+    const billNumbers: number[] = [];
+
+    bills.forEach(bill => {
+      const isUsedInBill = bill.items.some(item => item.id === stockId);
+      if (isUsedInBill) {
+        billNumbers.push(bill.billNumber);
+      }
+    });
+
+    return {
+      isUsed: billNumbers.length > 0,
+      billNumbers
+    };
+  };
 
   const handleDeleteAllStock = () => {
     if (
@@ -353,7 +372,19 @@ export default function Stock() {
   };
 
   const deleteItem = (id: number) => {
-    if (confirm("Are you sure you want to delete this item?")) {
+    const usage = isStockUsedInBills(id);
+
+    if (usage.isUsed) {
+      const stockItem = stockItems.find(item => item.id === id);
+      alert(
+        `Cannot delete "${stockItem?.itemName}" because it is used in the following bills: ${usage.billNumbers.join(', ')}\n\n` +
+        "Please remove this item from all bills before deleting it from stock."
+      );
+      return;
+    }
+
+    const stockItem = stockItems.find(item => item.id === id);
+    if (confirm(`Are you sure you want to delete "${stockItem?.itemName}"? This action cannot be undone.`)) {
       deleteStockItem(id);
     }
   };
