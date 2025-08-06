@@ -203,6 +203,15 @@ export function BackupSystem() {
         );
       }
 
+      // Import invoice settings
+      if (restorePreview.invoiceSettings) {
+        localStorage.setItem(
+          `settings_invoice_${activeAccount.id}`,
+          JSON.stringify(restorePreview.invoiceSettings),
+        );
+        console.log("Restored invoice settings to localStorage");
+      }
+
       // Close dialog first
       setIsRestoreDialogOpen(false);
       setRestorePreview(null);
