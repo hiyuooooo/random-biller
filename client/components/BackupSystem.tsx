@@ -155,11 +155,11 @@ export function BackupSystem() {
     try {
       // Import bills
       if (restorePreview.bills && Array.isArray(restorePreview.bills)) {
-        // Clear existing bills and add from backup
         localStorage.setItem(
           `bills_${activeAccount.id}`,
           JSON.stringify(restorePreview.bills),
         );
+        console.log(`Restored ${restorePreview.bills.length} bills to localStorage`);
       }
 
       // Import transactions
@@ -171,6 +171,7 @@ export function BackupSystem() {
           `transactions_${activeAccount.id}`,
           JSON.stringify(restorePreview.transactions),
         );
+        console.log(`Restored ${restorePreview.transactions.length} transactions to localStorage`);
       }
 
       // Import stock
@@ -179,24 +180,24 @@ export function BackupSystem() {
           `stockItems_${activeAccount.id}`,
           JSON.stringify(restorePreview.stock),
         );
+        console.log(`Restored ${restorePreview.stock.length} stock items to localStorage`);
       }
 
       // Close dialog first
       setIsRestoreDialogOpen(false);
       setRestorePreview(null);
 
+      // Trigger account switch event to force refresh contexts
+      window.dispatchEvent(new CustomEvent('account-switched'));
+
       alert(
         `Backup restored successfully!\n\n` +
           `✓ ${restorePreview.bills?.length || 0} bills restored\n` +
           `✓ ${restorePreview.transactions?.length || 0} transactions restored\n` +
           `✓ ${restorePreview.stock?.length || 0} stock items restored\n\n` +
-          `The page will now refresh to load the restored data.`,
+          `Data has been refreshed automatically.`,
       );
 
-      // Short delay then refresh to ensure localStorage write is complete
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
     } catch (error) {
       console.error("Error restoring backup:", error);
       alert("Error restoring backup. Please try again.");
