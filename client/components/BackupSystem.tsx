@@ -50,7 +50,7 @@ export function BackupSystem() {
   const [isRestoreDialogOpen, setIsRestoreDialogOpen] = useState(false);
   const [restorePreview, setRestorePreview] = useState<BackupData | null>(null);
 
-  // Create comprehensive backup
+  // Create comprehensive backup as JSON
   const createBackup = () => {
     if (!activeAccount) {
       alert("No active account selected. Cannot create backup.");
@@ -67,83 +67,27 @@ export function BackupSystem() {
       stock: stockItems,
     };
 
-    // Create Excel workbook with multiple sheets
-    const workbook = XLSX.utils.book_new();
+    // Create JSON string with proper formatting
+    const jsonString = JSON.stringify(backupData, null, 2);
 
-    // Backup metadata sheet
-    const metadataSheet = XLSX.utils.json_to_sheet([
-      {
-        "Backup Version": backupData.version,
-        "Created Date": new Date(backupData.timestamp).toLocaleString(),
-        "Account ID": backupData.accountId,
-        "Account Name": backupData.accountName,
-        "Bills Count": bills.length,
-        "Transactions Count": transactions.length,
-        "Stock Items Count": stockItems.length,
-      },
-    ]);
-    XLSX.utils.book_append_sheet(workbook, metadataSheet, "Backup_Info");
-
-    // Bills sheet
-    if (bills.length > 0) {
-      const billsData = bills.map((bill) => ({
-        "Bill ID": bill.id,
-        "Bill Number": bill.billNumber,
-        Date: bill.date,
-        "Customer Name": bill.customerName,
-        "Sub Total": bill.subTotal,
-        "Payment Mode": bill.paymentMode,
-        Status: bill.status,
-        "Items Count": bill.items.length,
-        Items: bill.items
-          .map((item) => `${item.name} (${item.quantity}x₹${item.price})`)
-          .join("; "),
-      }));
-      const billsSheet = XLSX.utils.json_to_sheet(billsData);
-      XLSX.utils.book_append_sheet(workbook, billsSheet, "Bills");
-    }
-
-    // Transactions sheet
-    if (transactions.length > 0) {
-      const transactionsData = transactions.map((transaction) => ({
-        "Transaction ID": transaction.id,
-        Date: transaction.date,
-        "Customer Name": transaction.customerName,
-        Total: transaction.total,
-        "Payment Mode": transaction.paymentMode,
-        Status: transaction.isValid ? "Valid" : "Invalid",
-        "Bill Generated": transaction.billGenerated ? "Yes" : "No",
-      }));
-      const transactionsSheet = XLSX.utils.json_to_sheet(transactionsData);
-      XLSX.utils.book_append_sheet(workbook, transactionsSheet, "Transactions");
-    }
-
-    // Stock sheet
-    if (stockItems.length > 0) {
-      const stockData = stockItems.map((item) => ({
-        "Item ID": item.id,
-        "Item Name": item.itemName,
-        Price: item.price,
-        "Available Quantity": item.availableQuantity,
-        "Low Stock Threshold": item.lowStockThreshold,
-        Blocked: item.blocked ? "Yes" : "No",
-      }));
-      const stockSheet = XLSX.utils.json_to_sheet(stockData);
-      XLSX.utils.book_append_sheet(workbook, stockSheet, "Stock");
-    }
-
-    // Raw data sheet for complete restoration
-    const rawDataSheet = XLSX.utils.json_to_sheet([backupData]);
-    XLSX.utils.book_append_sheet(workbook, rawDataSheet, "Raw_Data");
+    // Create blob and download
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
 
     // Generate filename with timestamp
     const timestamp = new Date().toISOString().split("T")[0];
-    const filename = `Backup_${activeAccount.name.replace(/\s+/g, "_")}_${timestamp}.xlsx`;
+    const filename = `Backup_${activeAccount.name.replace(/\s+/g, "_")}_${timestamp}.json`;
 
-    XLSX.writeFile(workbook, filename);
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
 
     alert(
-      `Backup created successfully: ${filename}\n\nThis backup contains:\n- ${bills.length} bills\n- ${transactions.length} transactions\n- ${stockItems.length} stock items`,
+      `Backup created successfully: ${filename}\n\nThis JSON backup contains:\n- ${bills.length} bills\n- ${transactions.length} transactions\n- ${stockItems.length} stock items`,
     );
   };
 
@@ -155,46 +99,30 @@ export function BackupSystem() {
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: "array" });
+        const jsonString = e.target?.result as string;
+        const backupData = JSON.parse(jsonString) as BackupData;
 
-        // Try to read from Raw_Data sheet first
-        if (workbook.SheetNames.includes("Raw_Data")) {
-          const rawDataSheet = workbook.Sheets["Raw_Data"];
-          const rawData = XLSX.utils.sheet_to_json(rawDataSheet);
-
-          if (rawData.length > 0) {
-            const backupData = rawData[0] as any;
-
-            // Parse JSON strings if needed
-            if (typeof backupData.bills === "string") {
-              backupData.bills = JSON.parse(backupData.bills);
-            }
-            if (typeof backupData.transactions === "string") {
-              backupData.transactions = JSON.parse(backupData.transactions);
-            }
-            if (typeof backupData.stock === "string") {
-              backupData.stock = JSON.parse(backupData.stock);
-            }
-
-            setRestorePreview(backupData);
-            setIsRestoreDialogOpen(true);
-          } else {
-            alert(
-              "Invalid backup file format: No data found in Raw_Data sheet.",
-            );
-          }
-        } else {
-          alert("Invalid backup file format: Raw_Data sheet not found.");
+        // Validate backup data structure
+        if (!backupData.version || !backupData.timestamp || !backupData.accountName) {
+          alert("Invalid backup file format: Missing required fields.");
+          return;
         }
+
+        // Ensure arrays exist
+        backupData.bills = backupData.bills || [];
+        backupData.transactions = backupData.transactions || [];
+        backupData.stock = backupData.stock || [];
+
+        setRestorePreview(backupData);
+        setIsRestoreDialogOpen(true);
       } catch (error) {
         console.error("Error reading backup file:", error);
         alert(
-          "Error reading backup file. Please ensure it's a valid backup file created by this system.",
+          "Error reading backup file. Please ensure it's a valid JSON backup file created by this system.",
         );
       }
     };
-    reader.readAsArrayBuffer(file);
+    reader.readAsText(file);
 
     // Reset input
     event.target.value = "";
@@ -359,11 +287,11 @@ export function BackupSystem() {
                   </span>
                 </Button>
                 <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                />
+                type="file"
+                accept=".json"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
               </label>
             </div>
 
@@ -374,7 +302,7 @@ export function BackupSystem() {
                 <strong>Backup Information:</strong>
                 <ul className="mt-2 space-y-1 text-sm">
                   <li>
-                    • Backups are saved as Excel files with multiple sheets
+                    • Backups are saved as JSON files with complete data
                   </li>
                   <li>• Includes all bills, transactions, and stock data</li>
                   <li>• Account-specific backups preserve data separately</li>
