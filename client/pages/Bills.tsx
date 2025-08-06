@@ -1100,8 +1100,18 @@ export default function Bills() {
           </table>
 
           <div class="footer">
-            <p>${bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
-            <div class="signature">${bill.footerInfo?.signature || "Authorized Signature"}</div>
+            <p>${invoiceSettings?.declaration || bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
+            ${invoiceSettings?.signatureImageUrl ? `
+              <div class="signature-container">
+                <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+                <div>
+                  <img src="${invoiceSettings.signatureImageUrl}" alt="Signature" class="signature-image" />
+                  ${invoiceSettings.authorizedSignatureText ? `<div class="authorized-signature">${invoiceSettings.authorizedSignatureText}</div>` : ''}
+                </div>
+              </div>
+            ` : `
+              <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+            `}
           </div>
         </body>
         </html>
