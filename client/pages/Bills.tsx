@@ -837,11 +837,12 @@ export default function Bills() {
     const paymentMode = getPaymentMode(newBill.customerName);
     const displayName = cleanCustomerName(newBill.customerName);
 
+    const billNumber = parseInt(newBill.billNumber) ||
+        Math.max(...bills.map((b) => b.billNumber)) + 1;
+
     const bill: any = {
-      id: `BILL-${String(bills.length + 1).padStart(3, "0")}`,
-      billNumber:
-        parseInt(newBill.billNumber) ||
-        Math.max(...bills.map((b) => b.billNumber)) + 1,
+      id: `BILL-${billNumber}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      billNumber: billNumber,
       date: new Date(newBill.date).toLocaleDateString("en-GB"),
       customerName: displayName,
       items: selectedItems,
