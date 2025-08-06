@@ -140,6 +140,14 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     const tolerance = 30; // ±30 tolerance as per requirements
     let iterationsPerformed = 0;
 
+    // Start iteration monitoring if bill number provided
+    let monitorId: string | null = null;
+    if (billNumber && iterationMonitor) {
+      monitorId = iterationMonitor.startIteration(billNumber, targetTotal);
+      iterationMonitor.updateIteration(monitorId, { status: "running" });
+      iterationMonitor.logIteration(monitorId, 0, `Starting 200 iterations for bill ${billNumber} with target ₹${targetTotal}`, "info");
+    }
+
     // Complete 200 iterations to find the best combination
     for (let attempt = 0; attempt < 200; attempt++) {
       iterationsPerformed++;
