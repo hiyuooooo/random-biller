@@ -224,9 +224,9 @@ export default function Transactions() {
     return "GPay";
   };
 
-  // Filter transactions based on current filters
+  // Filter and sort transactions based on current filters
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((transaction) => {
+    let filtered = transactions.filter((transaction) => {
       // Date filter
       if (dateFilter.from || dateFilter.to) {
         const transactionDate = new Date(
@@ -262,6 +262,15 @@ export default function Transactions() {
 
       return true;
     });
+
+    // Sort transactions by date (newest first)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.date.split("-").reverse().join("-"));
+      const dateB = new Date(b.date.split("-").reverse().join("-"));
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    return filtered;
   }, [transactions, dateFilter, customerFilter, paymentModeFilter]);
 
   // Calculate summary statistics
@@ -786,13 +795,13 @@ export default function Transactions() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={selectAllTransactions}
+                      onClick={() => selectAllTransactions(filteredTransactions)}
                       disabled={
-                        transactions.filter((t) => t.isValid).length === 0
+                        filteredTransactions.filter((t) => t.isValid).length === 0
                       }
                     >
                       <Check className="h-4 w-4 mr-2" />
-                      Select All Valid
+                      Select All Filtered
                     </Button>
                     <Button
                       variant="outline"
@@ -805,8 +814,8 @@ export default function Transactions() {
                     </Button>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {getSelectedTransactions().length} of {summary.validCount}{" "}
-                    valid transactions selected
+                    {getSelectedTransactions().length} of {filteredTransactions.filter(t => t.isValid).length}{" "}
+                    valid transactions selected (from {filteredTransactions.length} filtered)
                   </div>
                 </div>
                 <div className="overflow-x-auto">
@@ -825,7 +834,7 @@ export default function Transactions() {
                               }
                               onCheckedChange={(checked) => {
                                 if (checked) {
-                                  selectAllTransactions();
+                                  selectAllTransactions(filteredTransactions);
                                 } else {
                                   deselectAllTransactions();
                                 }
