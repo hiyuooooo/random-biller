@@ -280,6 +280,7 @@ export default function Bills() {
     hideCustomerNames: false,
     totalAtLastPage: true,
   });
+  const [customerSuggestions, setCustomerSuggestions] = useState<any[]>([]);
 
   // New bill form state
   const [newBill, setNewBill] = useState({
