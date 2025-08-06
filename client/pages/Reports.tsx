@@ -771,9 +771,9 @@ export default function Reports() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredBillReports.map((bill) => (
+                      {filteredBillReports.map((bill, index) => (
                         <tr
-                          key={bill.id}
+                          key={`billing-report-${bill.id}-${index}`}
                           className={cn(
                             "border-b hover:bg-accent/50 transition-colors",
                             Math.abs(bill.difference) > 25 &&
@@ -887,9 +887,9 @@ export default function Reports() {
                         </tr>
                       </thead>
                       <tbody>
-                        {mismatchReports.map((bill) => (
+                        {mismatchReports.map((bill, index) => (
                           <tr
-                            key={bill.id}
+                            key={`mismatch-report-${bill.id}-${index}`}
                             className="border-b bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
                             onClick={() => navigateToBill(bill.billNumber)}
                             title="Click to view this bill in Bills section"
