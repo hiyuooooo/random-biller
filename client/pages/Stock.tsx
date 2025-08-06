@@ -938,6 +938,108 @@ export default function Stock() {
           </DialogContent>
         </Dialog>
 
+        {/* Quick Add Stock Dialog */}
+        <Dialog open={isQuickAddOpen} onOpenChange={setIsQuickAddOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Quick Add Stock</DialogTitle>
+              <DialogDescription>
+                Add quantity to existing items or create new items
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  value={quickAddData.date}
+                  onChange={(e) =>
+                    setQuickAddData(prev => ({ ...prev, date: e.target.value }))
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Date will persist until changed manually
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Item Name</Label>
+                <Input
+                  value={quickAddData.itemPrefix}
+                  onChange={(e) => handlePrefixSearch(e.target.value)}
+                  placeholder="Type item name or prefix..."
+                />
+
+                {/* Suggestions dropdown */}
+                {suggestions.length > 0 && (
+                  <div className="border rounded-lg bg-white shadow-lg max-h-48 overflow-y-auto">
+                    {suggestions.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                        onClick={() => {
+                          setQuickAddData(prev => ({ ...prev, itemPrefix: item.itemName }));
+                          setSuggestions([]);
+                        }}
+                      >
+                        <div className="font-medium">{item.itemName}</div>
+                        <div className="text-sm text-gray-500">
+                          Current stock: {item.availableQuantity} • ₹{item.price}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  {quickAddData.itemPrefix && stockItems.find(item =>
+                    item.itemName.toLowerCase() === quickAddData.itemPrefix.toLowerCase()
+                  )
+                    ? "Will add to existing item"
+                    : quickAddData.itemPrefix
+                    ? "Will create new item"
+                    : "Type to search existing items or create new"
+                  }
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Quantity to Add</Label>
+                <Input
+                  type="number"
+                  value={quickAddData.quantity}
+                  onChange={(e) =>
+                    setQuickAddData(prev => ({ ...prev, quantity: e.target.value }))
+                  }
+                  placeholder="Enter quantity"
+                  min="1"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    setSuggestions([]);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleQuickAdd}
+                  disabled={!quickAddData.itemPrefix || !quickAddData.quantity}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Add Stock
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Sample Data Generator */}
         <SampleDataGenerator />
       </div>
