@@ -160,7 +160,7 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
   const addCustomer = (customerData: Omit<Customer, "id">) => {
     const newCustomer: Customer = {
       ...customerData,
-      id: Date.now(),
+      id: Date.now() + Math.random() * 10000, // More unique ID generation
     };
     setCustomers((prev) => [...prev, newCustomer]);
   };
