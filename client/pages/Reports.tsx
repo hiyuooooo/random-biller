@@ -372,7 +372,7 @@ export default function Reports() {
       tempDiv.style.position = "absolute";
       tempDiv.style.left = "-9999px";
       tempDiv.style.top = "0";
-      tempDiv.style.width = "210mm"; // A4 width
+      tempDiv.style.width = "140mm"; // Reduced width to account for 70mm left margin
       tempDiv.style.backgroundColor = "white";
       document.body.appendChild(tempDiv);
 
@@ -385,34 +385,36 @@ export default function Reports() {
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
-        width: 794, // A4 width in pixels at 96 DPI
+        width: 529, // Reduced width for content area (140mm)
         height: 1123, // A4 height in pixels at 96 DPI
       });
 
       // Remove temporary element
       document.body.removeChild(tempDiv);
 
-      // Create PDF
+      // Create PDF with 70mm left margin
       const pdf = new jsPDF("p", "mm", "a4");
       const imgData = canvas.toDataURL("image/png");
 
       const pdfWidth = 210; // A4 width in mm
       const pdfHeight = 297; // A4 height in mm
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      const leftMargin = 70; // 70mm left margin as requested
+      const contentWidth = pdfWidth - leftMargin; // Available content width
+      const imgWidth = contentWidth;
+      const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
       let heightLeft = imgHeight;
       let position = 0;
 
-      // Add first page
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      // Add first page with 70mm left margin
+      pdf.addImage(imgData, "PNG", leftMargin, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
 
       // Add additional pages if needed
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", leftMargin, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
 
@@ -421,7 +423,7 @@ export default function Reports() {
         `Mega_Sale_Report_${new Date().toISOString().split("T")[0]}.pdf`,
       );
 
-      console.log("Mega report PDF downloaded successfully!");
+      console.log("Mega report PDF downloaded successfully with 70mm left margin!");
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Error generating PDF. Please try again.");
