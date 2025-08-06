@@ -171,6 +171,25 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Clear all data associated with this account
+    try {
+      const keysToRemove = [
+        `bills_${id}`,
+        `transactions_${id}`,
+        `stockItems_${id}`,
+        `billBlocker_startingNumber_${id}`,
+        `billBlocker_blockedNumbers_${id}`
+      ];
+
+      keysToRemove.forEach(key => {
+        localStorage.removeItem(key);
+      });
+
+      console.log(`Cleared all data for account ${id}`);
+    } catch (error) {
+      console.warn("Failed to clear account data:", error);
+    }
+
     // If deleting the active account, switch to another one first
     if (activeAccount?.id === id) {
       const otherAccount = accounts.find((acc) => acc.id !== id);
