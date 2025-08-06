@@ -208,16 +208,11 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         bestMatch = { items: [...selectedItems], total: currentTotal };
         closestDiff = finalDiff;
 
-        // Early exit if very close (≤1 as per Python algorithm)
+        // Log good matches but continue all iterations for better optimization
         if (finalDiff <= 1) {
-          console.log(`Found excellent match on iteration ${attempt + 1}`);
-          break;
-        }
-
-        // Exit if within tolerance and good enough
-        if (finalDiff <= tolerance && selectedItems.length >= 2) {
-          console.log(`Found good match within ±${tolerance} on iteration ${attempt + 1}`);
-          break;
+          console.log(`Found excellent match on iteration ${attempt + 1}, continuing to optimize...`);
+        } else if (finalDiff <= tolerance && selectedItems.length >= 2) {
+          console.log(`Found good match within ±${tolerance} on iteration ${attempt + 1}, continuing to optimize...`);
         }
       }
     }
@@ -252,10 +247,11 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     }
 
     console.log(
-      `Bill generation completed after ${iterationsPerformed} iterations:`,
+      `Bill generation completed after full ${iterationsPerformed} iterations:`,
       `${bestMatch.items.length} items, total: ₹${bestMatch.total},`,
       `target: ₹${targetTotal}, difference: ₹${closestDiff},`,
       `within ±${tolerance}: ${closestDiff <= tolerance}`,
+      `(All 200 iterations completed for maximum optimization)`,
     );
 
     return bestMatch;
