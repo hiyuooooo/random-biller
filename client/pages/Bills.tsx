@@ -1344,7 +1344,7 @@ export default function Bills() {
             </p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => generateMegaReport("pdf")}>
+            <Button variant="outline" onClick={() => setIsMegaReportOptionsOpen(true)}>
               <FileText className="h-4 w-4 mr-2" />
               Mega Report PDF
             </Button>
@@ -2119,7 +2119,7 @@ export default function Bills() {
                                 className="w-24"
                               />
                             </td>
-                            <td className="p-3">����{item.total}</td>
+                            <td className="p-3">���{item.total}</td>
                             <td className="p-3">
                               <Button
                                 size="sm"
