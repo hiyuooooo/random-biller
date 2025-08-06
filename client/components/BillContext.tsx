@@ -286,6 +286,19 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       `within ±${tolerance}: ${closestDiff <= tolerance}`,
     );
 
+    // Complete iteration monitoring
+    if (monitorId && iterationMonitor) {
+      iterationMonitor.completeIteration(monitorId, {
+        bestMatch: bestMatch ? {
+          items: bestMatch.items,
+          total: bestMatch.total,
+          difference: closestDiff,
+        } : null,
+        currentIteration: 200,
+      });
+      iterationMonitor.logIteration(monitorId, 200, `Completed all 200 iterations. Final result: ${bestMatch.items.length} items, total: ₹${bestMatch.total}, difference: ₹${closestDiff}`, "success");
+    }
+
     return bestMatch;
   };
 
