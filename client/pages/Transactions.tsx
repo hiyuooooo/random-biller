@@ -733,11 +733,22 @@ export default function Transactions() {
         {/* Transactions Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Transaction List</CardTitle>
-            <CardDescription>
-              Double-click any cell to edit. Payment mode is automatically
-              determined by customer name (_c suffix for cash).
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Transaction List</CardTitle>
+                <CardDescription>
+                  Double-click any cell to edit. Blue outlined transactions have been used for bill generation.
+                  Payment mode is automatically determined by customer name (_c suffix for cash).
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsTransactionListMinimized(!isTransactionListMinimized)}
+              >
+                {isTransactionListMinimized ? "Expand" : "Minimize"} List
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between mb-4">
