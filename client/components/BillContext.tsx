@@ -681,7 +681,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       }
 
       const bill: Bill = {
-        id: `BILL-${String(generatedBills.length + 1).padStart(3, "0")}`,
+        id: `BILL-${currentBillNumber}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         billNumber: currentBillNumber,
         date: transaction.date,
         customerName: transaction.customerName,
