@@ -128,6 +128,7 @@ interface Bill {
 
 export default function Bills() {
   const { bills, addBill, updateBill, deleteBill, deleteAllBills } = useBill();
+  const iterationMonitor = useIterationMonitor();
 
   const handleDeleteBill = (billId: string) => {
     if (
