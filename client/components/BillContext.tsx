@@ -180,7 +180,8 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
       const selectedItems: BillItem[] = [];
       let currentTotal = 0;
-      const maxItems = 7; // Maximum 7 items per bill
+      // Vary the number of items from 2 to 7 for more realistic bills
+      const maxItems = Math.floor(Math.random() * 6) + 2; // Random between 2-7 items
 
       // First, ensure we get at least 2 items by being more lenient
       let itemsAdded = 0;
