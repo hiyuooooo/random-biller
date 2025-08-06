@@ -158,11 +158,15 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
   }, [activeAccount]);
 
   const addCustomer = (customerData: Omit<Customer, "id">) => {
-    const newCustomer: Customer = {
-      ...customerData,
-      id: Date.now() + Math.random() * 10000, // More unique ID generation
-    };
-    setCustomers((prev) => [...prev, newCustomer]);
+    setCustomers((prev) => {
+      // Generate a unique ID based on existing IDs to avoid conflicts
+      const maxId = prev.length > 0 ? Math.max(...prev.map(c => c.id)) : 0;
+      const newCustomer: Customer = {
+        ...customerData,
+        id: maxId + 1,
+      };
+      return [...prev, newCustomer];
+    });
   };
 
   const updateCustomer = (id: number, updates: Partial<Customer>) => {
