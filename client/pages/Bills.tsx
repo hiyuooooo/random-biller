@@ -1802,7 +1802,7 @@ export default function Bills() {
                           (sum, item) => sum + item.total,
                           0,
                         )}{" "}
-                        | Difference: ₹
+                        | Difference: ���
                         {Math.abs(
                           Number(newBill.targetTotal) -
                             selectedItems.reduce(
@@ -2262,6 +2262,84 @@ export default function Bills() {
                   Download PDFs
                 </Button>
               </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Mega Report Options Dialog */}
+        <Dialog open={isMegaReportOptionsOpen} onOpenChange={setIsMegaReportOptionsOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Mega Report PDF Options</DialogTitle>
+              <DialogDescription>
+                Customize your mega report PDF settings
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="hideCustomerNames"
+                  checked={megaReportOptions.hideCustomerNames}
+                  onChange={(e) =>
+                    setMegaReportOptions((prev) => ({
+                      ...prev,
+                      hideCustomerNames: e.target.checked,
+                    }))
+                  }
+                  className="rounded"
+                />
+                <Label htmlFor="hideCustomerNames">Hide Customer Names</Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="totalAtLastPage"
+                  checked={megaReportOptions.totalAtLastPage}
+                  onChange={(e) =>
+                    setMegaReportOptions((prev) => ({
+                      ...prev,
+                      totalAtLastPage: e.target.checked,
+                    }))
+                  }
+                  className="rounded"
+                />
+                <Label htmlFor="totalAtLastPage">Show Total on Last Page</Label>
+              </div>
+
+              <div className="bg-muted/30 p-3 rounded-lg">
+                <h4 className="font-medium mb-2 text-sm">Preview Settings</h4>
+                <div className="text-xs space-y-1">
+                  <div className="flex justify-between">
+                    <span>Customer Names:</span>
+                    <span>{megaReportOptions.hideCustomerNames ? "Hidden" : "Visible"}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total Position:</span>
+                    <span>{megaReportOptions.totalAtLastPage ? "Last Page" : "Bottom of Table"}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsMegaReportOptionsOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  generateMegaReport("pdf");
+                  setIsMegaReportOptionsOpen(false);
+                }}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Generate PDF
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
