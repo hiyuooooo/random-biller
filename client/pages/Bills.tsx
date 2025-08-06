@@ -1781,18 +1781,20 @@ export default function Bills() {
                             customPrice: e.target.value,
                           }))
                         }
-                        placeholder="Leave empty for default"
+                        placeholder="Optional override"
+                        className="h-12"
                       />
+                      <p className="text-xs text-muted-foreground">Leave empty to use default price</p>
                     </div>
-                    <div className="space-y-2">
-                      <Label>&nbsp;</Label>
+                    <div className="space-y-2 flex flex-col justify-end">
                       <Button
                         onClick={addManualItem}
                         disabled={!itemToAdd.stockItemId}
-                        className="w-full"
+                        className="w-full h-12 bg-green-600 hover:bg-green-700"
+                        size="lg"
                       >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Add Item
+                        <Plus className="h-5 w-5 mr-2" />
+                        Add to Bill
                       </Button>
                     </div>
                   </div>
