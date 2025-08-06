@@ -1830,6 +1830,14 @@ export default function Bills() {
                             ))}
                           </div>
                         )}
+
+                        {/* Add click outside handler to close suggestions */}
+                        {customerSuggestions.length > 0 && (
+                          <div
+                            className="fixed inset-0 z-40"
+                            onClick={() => setCustomerSuggestions([])}
+                          />
+                        )}
                       </div>
                     </div>
                     <div className="space-y-2">
