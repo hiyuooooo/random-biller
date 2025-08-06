@@ -142,11 +142,23 @@ export default function Bills() {
   useEffect(() => {
     const highlightParam = searchParams.get("highlight");
     const customerParam = searchParams.get("customer");
+    const editParam = searchParams.get("edit");
 
     if (highlightParam) {
       const billNumber = parseInt(highlightParam);
       if (!isNaN(billNumber)) {
         setHighlightedBillNumber(billNumber);
+
+        // If edit=true parameter is present, auto-open edit dialog for the highlighted bill
+        if (editParam === "true") {
+          const billToEdit = bills.find(bill => bill.billNumber === billNumber);
+          if (billToEdit) {
+            setTimeout(() => {
+              startEditBill(billToEdit);
+            }, 100); // Small delay to ensure the component is ready
+          }
+        }
+
         // Clear highlight after 5 seconds
         setTimeout(() => {
           setHighlightedBillNumber(null);
@@ -157,7 +169,7 @@ export default function Bills() {
     if (customerParam) {
       setSearchTerm(decodeURIComponent(customerParam));
     }
-  }, [searchParams]);
+  }, [searchParams, bills]);
 
   const handleDeleteBill = (billId: string) => {
     if (
