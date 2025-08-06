@@ -1718,8 +1718,12 @@ export default function Bills() {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-4 gap-2">
+                <div className="space-y-6 bg-muted/30 p-6 rounded-lg">
+                  <div className="text-center">
+                    <h3 className="text-lg font-semibold mb-2">Manual Item Selection</h3>
+                    <p className="text-sm text-muted-foreground">Add items one by one with custom quantities and prices</p>
+                  </div>
+                  <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
                     <div className="space-y-2">
                       <Label>Item</Label>
                       <Select
