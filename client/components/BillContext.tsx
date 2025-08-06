@@ -389,24 +389,46 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       let selectedItems = result.items;
       let currentTotal = result.total;
 
-      // If no items generated, create fallback (should not happen with new algorithm)
+      // If no items generated, create fallback ensuring minimum 2 items
       if (selectedItems.length === 0) {
-        console.warn("No items generated, using fallback");
-        const fallbackItem = stockToUse[0];
-        const quantity = Math.max(
-          1,
-          Math.round(targetTotal / fallbackItem.price),
-        );
-        selectedItems = [
-          {
-            id: fallbackItem.id,
-            name: fallbackItem.name,
-            price: fallbackItem.price,
-            quantity: quantity,
-            total: fallbackItem.price * quantity,
-          },
-        ];
-        currentTotal = fallbackItem.price * quantity;
+        console.warn("No items generated, using fallback with minimum 2 items");
+        selectedItems = [];
+        currentTotal = 0;
+
+        // Get available items with stock
+        const availableForFallback = stockToUse.filter(item => item.availableQuantity > 0);
+
+        if (availableForFallback.length >= 2) {
+          // Sort by price and take 2 cheapest items
+          const sortedItems = availableForFallback.sort((a, b) => a.price - b.price);
+
+          for (let i = 0; i < Math.min(2, sortedItems.length); i++) {
+            const item = sortedItems[i];
+            const billItem = {
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: 1,
+              total: item.price,
+            };
+            selectedItems.push(billItem);
+            currentTotal += billItem.total;
+          }
+        } else if (availableForFallback.length === 1) {
+          // Only one item available, use it with quantity 2 if possible
+          const item = availableForFallback[0];
+          const maxQty = Math.min(2, item.availableQuantity);
+          selectedItems = [
+            {
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: maxQty,
+              total: item.price * maxQty,
+            },
+          ];
+          currentTotal = item.price * maxQty;
+        }
       }
 
       // Check tolerance constraint (±30)
