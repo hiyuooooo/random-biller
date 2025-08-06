@@ -43,6 +43,13 @@ export default function Customers() {
   );
   const [paymentFilter, setPaymentFilter] = useState("all");
 
+  // Sync customers from transactions on component mount
+  useEffect(() => {
+    if (transactions.length > 0) {
+      syncCustomersFromTransactions(transactions);
+    }
+  }, [transactions, syncCustomersFromTransactions]);
+
   // Filter customers
   const filteredCustomers = useMemo(() => {
     return customers.filter((customer) => {
