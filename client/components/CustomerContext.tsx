@@ -114,7 +114,16 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         const storageKey = `customers_${activeAccount.id}`;
         const saved = localStorage.getItem(storageKey);
         if (saved) {
-          setCustomers(JSON.parse(saved));
+          const parsedCustomers = JSON.parse(saved);
+          if (Array.isArray(parsedCustomers)) {
+            // Deduplicate customers by ID and name to prevent duplicate keys
+            const uniqueCustomers = parsedCustomers.filter((customer, index, self) =>
+              index === self.findIndex(c => c.id === customer.id || c.name.toLowerCase() === customer.name.toLowerCase())
+            );
+            setCustomers(uniqueCustomers);
+          } else {
+            setCustomers(defaultCustomers);
+          }
         } else {
           // If no data for this account, start with default customers
           setCustomers(defaultCustomers);
