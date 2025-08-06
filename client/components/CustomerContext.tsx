@@ -149,8 +149,12 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
           if (saved) {
             const parsedCustomers = JSON.parse(saved);
             if (Array.isArray(parsedCustomers)) {
-              setCustomers(parsedCustomers);
-              console.log(`Force reloaded ${parsedCustomers.length} customers for account ${activeAccount.name}`);
+              // Deduplicate customers by ID and name to prevent duplicate keys
+              const uniqueCustomers = parsedCustomers.filter((customer, index, self) =>
+                index === self.findIndex(c => c.id === customer.id || c.name.toLowerCase() === customer.name.toLowerCase())
+              );
+              setCustomers(uniqueCustomers);
+              console.log(`Force reloaded ${uniqueCustomers.length} unique customers for account ${activeAccount.name}`);
             }
           } else {
             setCustomers(defaultCustomers);
