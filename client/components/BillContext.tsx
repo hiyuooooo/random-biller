@@ -322,22 +322,25 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     const generatedBills: Bill[] = [];
     let currentBillNumber = startingBillNumber;
 
-    // Use provided stock or fallback to mock data
+    // Use provided stock or fallback to mock data, ensure only items with available quantity > 0
     const stockToUse =
       availableStock.length > 0
-        ? availableStock.map((item) => ({
-            id: item.id,
-            name: item.itemName,
-            price: item.price,
-          }))
+        ? availableStock
+            .filter((item) => item.availableQuantity > 0) // Only include items with stock
+            .map((item) => ({
+              id: item.id,
+              name: item.itemName,
+              price: item.price,
+              availableQuantity: item.availableQuantity,
+            }))
         : [
-            { id: 1, name: "Rice (1kg)", price: 80 },
-            { id: 2, name: "Wheat Flour (1kg)", price: 45 },
-            { id: 3, name: "Sugar (1kg)", price: 60 },
-            { id: 4, name: "Cooking Oil (1L)", price: 120 },
-            { id: 5, name: "Pulses (1kg)", price: 95 },
-            { id: 6, name: "Tea (250g)", price: 180 },
-            { id: 7, name: "Salt (1kg)", price: 25 },
+            { id: 1, name: "Rice (1kg)", price: 80, availableQuantity: 150 },
+            { id: 2, name: "Wheat Flour (1kg)", price: 45, availableQuantity: 200 },
+            { id: 3, name: "Sugar (1kg)", price: 60, availableQuantity: 100 },
+            { id: 4, name: "Cooking Oil (1L)", price: 120, availableQuantity: 80 },
+            { id: 5, name: "Pulses (1kg)", price: 95, availableQuantity: 120 },
+            { id: 6, name: "Tea (250g)", price: 180, availableQuantity: 60 },
+            { id: 7, name: "Salt (1kg)", price: 25, availableQuantity: 300 },
           ];
 
     console.log(
