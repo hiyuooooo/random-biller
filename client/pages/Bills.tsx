@@ -799,7 +799,7 @@ export default function Bills() {
           <style>
             body {
               font-family: Arial, sans-serif;
-              margin: 40px;
+              margin: 40px 40px 40px 0.70cm;
               color: #333;
               line-height: 1.6;
             }
