@@ -23,6 +23,7 @@ import Customers from "./pages/Customers";
 import Reports from "./pages/Reports";
 import Analytics from "./pages/Analytics";
 import Settings from "./pages/Settings";
+import DataManagement from "./pages/DataManagement";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -69,6 +70,7 @@ const App = () => {
                         <Route path="/customers" element={<Customers />} />
                         <Route path="/reports" element={<Reports />} />
                         <Route path="/analytics" element={<Analytics />} />
+                        <Route path="/data-management" element={<DataManagement />} />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>
