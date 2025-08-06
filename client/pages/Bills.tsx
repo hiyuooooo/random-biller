@@ -1874,6 +1874,98 @@ export default function Bills() {
             </DialogContent>
           </Dialog>
         )}
+
+        {/* Date Range PDF Download Dialog */}
+        <Dialog open={isDateRangeDialogOpen} onOpenChange={setIsDateRangeDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Download PDFs by Date Range</DialogTitle>
+              <DialogDescription>
+                Select a date range to filter bills for PDF download
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>From Date</Label>
+                  <Input
+                    type="date"
+                    value={dateRange.from}
+                    onChange={(e) =>
+                      setDateRange((prev) => ({ ...prev, from: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>To Date</Label>
+                  <Input
+                    type="date"
+                    value={dateRange.to}
+                    onChange={(e) =>
+                      setDateRange((prev) => ({ ...prev, to: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="bg-muted/30 p-3 rounded-lg">
+                <h4 className="font-medium mb-2">Preview</h4>
+                <div className="text-sm space-y-1">
+                  {(() => {
+                    const filteredBills = filterBillsByDateRange(
+                      bills.filter((b) => b.status === "generated"),
+                      dateRange.from,
+                      dateRange.to
+                    );
+                    return (
+                      <>
+                        <div className="flex justify-between">
+                          <span>Bills in range:</span>
+                          <span>{filteredBills.length}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Date range:</span>
+                          <span>
+                            {dateRange.from || 'All'} to {dateRange.to || 'All'}
+                          </span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDateRangeDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    generateBatchPDF(
+                      bills.filter((b) => b.status === "generated"),
+                      true
+                    );
+                    setIsDateRangeDialogOpen(false);
+                  }}
+                  disabled={
+                    filterBillsByDateRange(
+                      bills.filter((b) => b.status === "generated"),
+                      dateRange.from,
+                      dateRange.to
+                    ).length === 0
+                  }
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDFs
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
