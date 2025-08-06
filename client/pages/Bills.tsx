@@ -1724,8 +1724,8 @@ export default function Bills() {
                     <p className="text-sm text-muted-foreground">Add items one by one with custom quantities and prices</p>
                   </div>
                   <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-                    <div className="space-y-2">
-                      <Label>Item</Label>
+                    <div className="space-y-2 lg:col-span-2">
+                      <Label className="text-base font-medium">Select Item</Label>
                       <Select
                         value={itemToAdd.stockItemId}
                         onValueChange={(value) =>
@@ -1735,17 +1735,21 @@ export default function Bills() {
                           }))
                         }
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select item..." />
+                        <SelectTrigger className="h-12">
+                          <SelectValue placeholder="Choose an item from stock..." />
                         </SelectTrigger>
                         <SelectContent>
-                          {stockItems.map((item) => (
+                          {stockItems.filter(item => item.availableQuantity > 0).map((item) => (
                             <SelectItem
                               key={item.id}
                               value={item.id.toString()}
                             >
-                              {item.itemName} - ₹{item.price}{" "}
-                              {item.blocked && "(Blocked)"}
+                              <div className="flex flex-col">
+                                <span className="font-medium">{item.itemName}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  ₹{item.price} • Stock: {item.availableQuantity} {item.blocked && "• (Blocked)"}
+                                </span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
