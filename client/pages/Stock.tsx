@@ -255,9 +255,11 @@ export default function Stock() {
 
   // Filter items based on search
   const filteredItems = useMemo(() => {
-    return stockItems.filter((item) =>
-      item.itemName.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+    return stockItems
+      .filter((item) =>
+        item.itemName.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+      .sort((a, b) => a.itemName.localeCompare(b.itemName));
   }, [stockItems, searchTerm]);
 
   // Calculate statistics
