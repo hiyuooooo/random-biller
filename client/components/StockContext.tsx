@@ -172,6 +172,35 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeAccount?.id]);
 
+  // Listen for account switch events to force refresh
+  useEffect(() => {
+    const handleAccountSwitch = () => {
+      console.log("Account switch event detected in StockContext, forcing data refresh");
+      if (activeAccount) {
+        // Force reload data for current account
+        try {
+          const storageKey = `stockItems_${activeAccount.id}`;
+          const saved = localStorage.getItem(storageKey);
+          if (saved) {
+            const parsedStock = JSON.parse(saved);
+            if (Array.isArray(parsedStock)) {
+              setStockItems(parsedStock);
+              console.log(`Force reloaded ${parsedStock.length} stock items for account ${activeAccount.name}`);
+            }
+          } else {
+            setStockItems(defaultStock);
+          }
+        } catch (error) {
+          console.error("Error force reloading stock:", error);
+          setStockItems(defaultStock);
+        }
+      }
+    };
+
+    window.addEventListener('account-switched', handleAccountSwitch);
+    return () => window.removeEventListener('account-switched', handleAccountSwitch);
+  }, [activeAccount]);
+
   const addStockItem = (item: StockItem) => {
     setStockItems((prev) => [...prev, item]);
   };
