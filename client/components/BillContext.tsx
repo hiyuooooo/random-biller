@@ -98,6 +98,35 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeAccount?.id]);
 
+  // Listen for account switch events to force refresh
+  useEffect(() => {
+    const handleAccountSwitch = () => {
+      console.log("Account switch event detected, forcing data refresh");
+      if (activeAccount) {
+        // Force reload data for current account
+        try {
+          const storageKey = `bills_${activeAccount.id}`;
+          const saved = localStorage.getItem(storageKey);
+          if (saved) {
+            const parsedBills = JSON.parse(saved);
+            if (Array.isArray(parsedBills)) {
+              setBills(parsedBills);
+              console.log(`Force reloaded ${parsedBills.length} bills for account ${activeAccount.name}`);
+            }
+          } else {
+            setBills([]);
+          }
+        } catch (error) {
+          console.error("Error force reloading bills:", error);
+          setBills([]);
+        }
+      }
+    };
+
+    window.addEventListener('account-switched', handleAccountSwitch);
+    return () => window.removeEventListener('account-switched', handleAccountSwitch);
+  }, [activeAccount]);
+
   const addBill = (bill: Bill) => {
     setBills((prev) => [...prev, bill]);
   };
