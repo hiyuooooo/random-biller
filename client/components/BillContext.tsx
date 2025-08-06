@@ -220,15 +220,32 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         bestMatch = { items: [...selectedItems], total: currentTotal };
         closestDiff = finalDiff;
 
+        // Log progress to monitor
+        if (monitorId && iterationMonitor) {
+          iterationMonitor.updateIteration(monitorId, {
+            bestMatch: {
+              items: selectedItems,
+              total: currentTotal,
+              difference: finalDiff,
+            }
+          });
+        }
+
         // Continue all 200 iterations to find the absolute best match
         if (finalDiff === 0) {
           console.log(
             `Found perfect match on iteration ${attempt + 1}, continuing for optimization...`,
           );
+          if (monitorId && iterationMonitor) {
+            iterationMonitor.logIteration(monitorId, attempt + 1, `Perfect match found! Total: ₹${currentTotal}, difference: ₹0`, "success");
+          }
         } else if (finalDiff <= tolerance && selectedItems.length >= 2) {
           console.log(
             `Found good match within ±${tolerance} on iteration ${attempt + 1}, continuing for optimization...`,
           );
+          if (monitorId && iterationMonitor) {
+            iterationMonitor.logIteration(monitorId, attempt + 1, `Good match found! Total: ₹${currentTotal}, difference: ₹${finalDiff}`, "success");
+          }
         }
       }
     }
