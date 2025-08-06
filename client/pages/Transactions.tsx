@@ -184,6 +184,22 @@ export default function Transactions() {
   const [isGenerateBillsOpen, setIsGenerateBillsOpen] = useState(false);
   const [startingBillNumber, setStartingBillNumber] = useState("");
   const [billsToBlock, setBillsToBlock] = useState("");
+
+  // Load blocked bills from Bill Blocker when component mounts
+  const loadBlockedBills = () => {
+    try {
+      const storageKey = `billBlocker_blockedNumbers_${activeAccount?.id}`;
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const blockedNumbers = JSON.parse(saved);
+        if (Array.isArray(blockedNumbers) && blockedNumbers.length > 0) {
+          setBillsToBlock(blockedNumbers.join(","));
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to load blocked bills:", error);
+    }
+  };
   const [isTransactionListMinimized, setIsTransactionListMinimized] =
     useState(false);
 
