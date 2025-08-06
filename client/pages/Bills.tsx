@@ -356,6 +356,14 @@ export default function Bills() {
       ];
     }
 
+    // Start iteration monitoring if bill number provided
+    let monitorId: string | null = null;
+    if (billNumber && iterationMonitor) {
+      monitorId = iterationMonitor.startIteration(billNumber, targetTotal);
+      iterationMonitor.updateIteration(monitorId, { status: "running" });
+      iterationMonitor.logIteration(monitorId, 0, `Starting auto-select for bill ${billNumber} with target ₹${targetTotal}`, "info");
+    }
+
     // Strategy: Always ensure minimum 2 items, then optimize
     const selectedItems: BillItem[] = [];
     let currentTotal = 0;
