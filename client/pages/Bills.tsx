@@ -141,7 +141,7 @@ export default function Bills() {
     // First confirmation
     if (
       !confirm(
-        "⚠️ WARNING: You are about to delete ALL bills permanently!\n\nThis action cannot be undone. All bill data will be lost forever.\n\nAre you absolutely sure you want to proceed?"
+        "⚠️ WARNING: You are about to delete ALL bills permanently!\n\nThis action cannot be undone. All bill data will be lost forever.\n\nAre you absolutely sure you want to proceed?",
       )
     ) {
       return;
@@ -149,7 +149,7 @@ export default function Bills() {
 
     // Second confirmation with typing requirement
     const confirmText = prompt(
-      "To confirm deletion of ALL bills, please type 'DELETE ALL BILLS' exactly:"
+      "To confirm deletion of ALL bills, please type 'DELETE ALL BILLS' exactly:",
     );
 
     if (confirmText === "DELETE ALL BILLS") {
@@ -708,42 +708,41 @@ export default function Bills() {
       `;
 
       // Create temporary element for html2canvas
-      const tempDiv = document.createElement('div');
+      const tempDiv = document.createElement("div");
       tempDiv.innerHTML = htmlContent;
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.width = '210mm';
-      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.position = "absolute";
+      tempDiv.style.left = "-9999px";
+      tempDiv.style.width = "210mm";
+      tempDiv.style.backgroundColor = "white";
       document.body.appendChild(tempDiv);
 
       // Wait for styles to load
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
       // Generate canvas and PDF
       const canvas = await html2canvas(tempDiv, {
         scale: 1.5,
         useCORS: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
       });
 
       // Remove temporary element
       document.body.removeChild(tempDiv);
 
       // Create PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgData = canvas.toDataURL("image/png");
       const pdfWidth = 210;
       const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
 
       // Use bill number as filename
       const fileName = `${bill.billNumber}.pdf`;
       pdf.save(fileName);
 
       console.log(`PDF generated successfully: ${fileName}`);
-
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Error generating PDF. Please try again.");
@@ -758,7 +757,7 @@ export default function Bills() {
     }
 
     const confirmed = confirm(
-      `Generate ${billsToGenerate.length} PDF files? This may take a few moments.`
+      `Generate ${billsToGenerate.length} PDF files? This may take a few moments.`,
     );
 
     if (!confirmed) return;
@@ -770,7 +769,7 @@ export default function Bills() {
 
         // Add delay between downloads to prevent browser blocking
         if (i < billsToGenerate.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
         }
       }
 
@@ -1038,11 +1037,16 @@ export default function Bills() {
             </Button>
             <Button
               variant="outline"
-              onClick={() => generateBatchPDF(bills.filter(b => b.status === 'generated'))}
-              disabled={bills.filter(b => b.status === 'generated').length === 0}
+              onClick={() =>
+                generateBatchPDF(bills.filter((b) => b.status === "generated"))
+              }
+              disabled={
+                bills.filter((b) => b.status === "generated").length === 0
+              }
             >
               <Download className="h-4 w-4 mr-2" />
-              Download All PDFs ({bills.filter(b => b.status === 'generated').length})
+              Download All PDFs (
+              {bills.filter((b) => b.status === "generated").length})
             </Button>
             <Button
               variant="destructive"

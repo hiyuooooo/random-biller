@@ -2,7 +2,13 @@ import React from "react";
 import { Layout } from "@/components/Layout";
 import { BackupSystem } from "@/components/BackupSystem";
 import { AccountManager } from "@/components/AccountManager";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Database, Settings, Users } from "lucide-react";
 
@@ -27,11 +33,17 @@ export default function DataManagement() {
               <Database className="h-4 w-4" />
               <span>Backup & Restore</span>
             </TabsTrigger>
-            <TabsTrigger value="accounts" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="accounts"
+              className="flex items-center space-x-2"
+            >
               <Users className="h-4 w-4" />
               <span>Account Management</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="flex items-center space-x-2">
+            <TabsTrigger
+              value="settings"
+              className="flex items-center space-x-2"
+            >
               <Settings className="h-4 w-4" />
               <span>System Settings</span>
             </TabsTrigger>
@@ -58,7 +70,10 @@ export default function DataManagement() {
                   <div className="text-center py-8 text-muted-foreground">
                     <Settings className="h-12 w-12 mx-auto mb-4" />
                     <p>System settings will be available in future updates.</p>
-                    <p className="text-sm">This will include theme preferences, default values, and more.</p>
+                    <p className="text-sm">
+                      This will include theme preferences, default values, and
+                      more.
+                    </p>
                   </div>
                 </div>
               </CardContent>

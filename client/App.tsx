@@ -70,7 +70,10 @@ const App = () => {
                         <Route path="/customers" element={<Customers />} />
                         <Route path="/reports" element={<Reports />} />
                         <Route path="/analytics" element={<Analytics />} />
-                        <Route path="/data-management" element={<DataManagement />} />
+                        <Route
+                          path="/data-management"
+                          element={<DataManagement />}
+                        />
                         <Route path="/settings" element={<Settings />} />
                         <Route path="*" element={<NotFound />} />
                       </Routes>

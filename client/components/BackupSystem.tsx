@@ -71,29 +71,33 @@ export function BackupSystem() {
     const workbook = XLSX.utils.book_new();
 
     // Backup metadata sheet
-    const metadataSheet = XLSX.utils.json_to_sheet([{
-      "Backup Version": backupData.version,
-      "Created Date": new Date(backupData.timestamp).toLocaleString(),
-      "Account ID": backupData.accountId,
-      "Account Name": backupData.accountName,
-      "Bills Count": bills.length,
-      "Transactions Count": transactions.length,
-      "Stock Items Count": stockItems.length,
-    }]);
+    const metadataSheet = XLSX.utils.json_to_sheet([
+      {
+        "Backup Version": backupData.version,
+        "Created Date": new Date(backupData.timestamp).toLocaleString(),
+        "Account ID": backupData.accountId,
+        "Account Name": backupData.accountName,
+        "Bills Count": bills.length,
+        "Transactions Count": transactions.length,
+        "Stock Items Count": stockItems.length,
+      },
+    ]);
     XLSX.utils.book_append_sheet(workbook, metadataSheet, "Backup_Info");
 
     // Bills sheet
     if (bills.length > 0) {
-      const billsData = bills.map(bill => ({
+      const billsData = bills.map((bill) => ({
         "Bill ID": bill.id,
         "Bill Number": bill.billNumber,
-        "Date": bill.date,
+        Date: bill.date,
         "Customer Name": bill.customerName,
         "Sub Total": bill.subTotal,
         "Payment Mode": bill.paymentMode,
-        "Status": bill.status,
+        Status: bill.status,
         "Items Count": bill.items.length,
-        "Items": bill.items.map(item => `${item.name} (${item.quantity}x₹${item.price})`).join("; "),
+        Items: bill.items
+          .map((item) => `${item.name} (${item.quantity}x₹${item.price})`)
+          .join("; "),
       }));
       const billsSheet = XLSX.utils.json_to_sheet(billsData);
       XLSX.utils.book_append_sheet(workbook, billsSheet, "Bills");
@@ -101,13 +105,13 @@ export function BackupSystem() {
 
     // Transactions sheet
     if (transactions.length > 0) {
-      const transactionsData = transactions.map(transaction => ({
+      const transactionsData = transactions.map((transaction) => ({
         "Transaction ID": transaction.id,
-        "Date": transaction.date,
+        Date: transaction.date,
         "Customer Name": transaction.customerName,
-        "Total": transaction.total,
+        Total: transaction.total,
         "Payment Mode": transaction.paymentMode,
-        "Status": transaction.isValid ? "Valid" : "Invalid",
+        Status: transaction.isValid ? "Valid" : "Invalid",
         "Bill Generated": transaction.billGenerated ? "Yes" : "No",
       }));
       const transactionsSheet = XLSX.utils.json_to_sheet(transactionsData);
@@ -116,13 +120,13 @@ export function BackupSystem() {
 
     // Stock sheet
     if (stockItems.length > 0) {
-      const stockData = stockItems.map(item => ({
+      const stockData = stockItems.map((item) => ({
         "Item ID": item.id,
         "Item Name": item.itemName,
-        "Price": item.price,
+        Price: item.price,
         "Available Quantity": item.availableQuantity,
         "Low Stock Threshold": item.lowStockThreshold,
-        "Blocked": item.blocked ? "Yes" : "No",
+        Blocked: item.blocked ? "Yes" : "No",
       }));
       const stockSheet = XLSX.utils.json_to_sheet(stockData);
       XLSX.utils.book_append_sheet(workbook, stockSheet, "Stock");
@@ -133,12 +137,14 @@ export function BackupSystem() {
     XLSX.utils.book_append_sheet(workbook, rawDataSheet, "Raw_Data");
 
     // Generate filename with timestamp
-    const timestamp = new Date().toISOString().split('T')[0];
-    const filename = `Backup_${activeAccount.name.replace(/\s+/g, '_')}_${timestamp}.xlsx`;
-    
+    const timestamp = new Date().toISOString().split("T")[0];
+    const filename = `Backup_${activeAccount.name.replace(/\s+/g, "_")}_${timestamp}.xlsx`;
+
     XLSX.writeFile(workbook, filename);
-    
-    alert(`Backup created successfully: ${filename}\n\nThis backup contains:\n- ${bills.length} bills\n- ${transactions.length} transactions\n- ${stockItems.length} stock items`);
+
+    alert(
+      `Backup created successfully: ${filename}\n\nThis backup contains:\n- ${bills.length} bills\n- ${transactions.length} transactions\n- ${stockItems.length} stock items`,
+    );
   };
 
   // Handle backup file upload and preview
@@ -151,41 +157,45 @@ export function BackupSystem() {
       try {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: "array" });
-        
+
         // Try to read from Raw_Data sheet first
         if (workbook.SheetNames.includes("Raw_Data")) {
           const rawDataSheet = workbook.Sheets["Raw_Data"];
           const rawData = XLSX.utils.sheet_to_json(rawDataSheet);
-          
+
           if (rawData.length > 0) {
             const backupData = rawData[0] as any;
-            
+
             // Parse JSON strings if needed
-            if (typeof backupData.bills === 'string') {
+            if (typeof backupData.bills === "string") {
               backupData.bills = JSON.parse(backupData.bills);
             }
-            if (typeof backupData.transactions === 'string') {
+            if (typeof backupData.transactions === "string") {
               backupData.transactions = JSON.parse(backupData.transactions);
             }
-            if (typeof backupData.stock === 'string') {
+            if (typeof backupData.stock === "string") {
               backupData.stock = JSON.parse(backupData.stock);
             }
-            
+
             setRestorePreview(backupData);
             setIsRestoreDialogOpen(true);
           } else {
-            alert("Invalid backup file format: No data found in Raw_Data sheet.");
+            alert(
+              "Invalid backup file format: No data found in Raw_Data sheet.",
+            );
           }
         } else {
           alert("Invalid backup file format: Raw_Data sheet not found.");
         }
       } catch (error) {
         console.error("Error reading backup file:", error);
-        alert("Error reading backup file. Please ensure it's a valid backup file created by this system.");
+        alert(
+          "Error reading backup file. Please ensure it's a valid backup file created by this system.",
+        );
       }
     };
     reader.readAsArrayBuffer(file);
-    
+
     // Reset input
     event.target.value = "";
   };
@@ -200,12 +210,12 @@ export function BackupSystem() {
     // Final confirmation
     const confirmed = confirm(
       `⚠️ WARNING: This will replace ALL current data with backup data!\n\n` +
-      `Backup from: ${new Date(restorePreview.timestamp).toLocaleString()}\n` +
-      `Account: ${restorePreview.accountName}\n` +
-      `Bills: ${restorePreview.bills.length}\n` +
-      `Transactions: ${restorePreview.transactions.length}\n` +
-      `Stock Items: ${restorePreview.stock.length}\n\n` +
-      `Current data will be permanently lost. Continue?`
+        `Backup from: ${new Date(restorePreview.timestamp).toLocaleString()}\n` +
+        `Account: ${restorePreview.accountName}\n` +
+        `Bills: ${restorePreview.bills.length}\n` +
+        `Transactions: ${restorePreview.transactions.length}\n` +
+        `Stock Items: ${restorePreview.stock.length}\n\n` +
+        `Current data will be permanently lost. Continue?`,
     );
 
     if (!confirmed) return;
@@ -214,26 +224,39 @@ export function BackupSystem() {
       // Import bills
       if (restorePreview.bills && Array.isArray(restorePreview.bills)) {
         // Clear existing bills and add from backup
-        localStorage.setItem(`bills_${activeAccount.id}`, JSON.stringify(restorePreview.bills));
+        localStorage.setItem(
+          `bills_${activeAccount.id}`,
+          JSON.stringify(restorePreview.bills),
+        );
       }
 
       // Import transactions
-      if (restorePreview.transactions && Array.isArray(restorePreview.transactions)) {
-        localStorage.setItem(`transactions_${activeAccount.id}`, JSON.stringify(restorePreview.transactions));
+      if (
+        restorePreview.transactions &&
+        Array.isArray(restorePreview.transactions)
+      ) {
+        localStorage.setItem(
+          `transactions_${activeAccount.id}`,
+          JSON.stringify(restorePreview.transactions),
+        );
       }
 
       // Import stock
       if (restorePreview.stock && Array.isArray(restorePreview.stock)) {
-        localStorage.setItem(`stockItems_${activeAccount.id}`, JSON.stringify(restorePreview.stock));
+        localStorage.setItem(
+          `stockItems_${activeAccount.id}`,
+          JSON.stringify(restorePreview.stock),
+        );
       }
 
-      alert("Backup restored successfully! Please refresh the page to see the changes.");
+      alert(
+        "Backup restored successfully! Please refresh the page to see the changes.",
+      );
       setIsRestoreDialogOpen(false);
       setRestorePreview(null);
-      
+
       // Refresh the page to reload all data
       window.location.reload();
-      
     } catch (error) {
       console.error("Error restoring backup:", error);
       alert("Error restoring backup. Please try again.");
@@ -260,8 +283,8 @@ export function BackupSystem() {
             Data Backup & Restore System
           </CardTitle>
           <CardDescription>
-            Create comprehensive backups of all your bills, transactions, and stock data.
-            Backups include complete data for easy restoration.
+            Create comprehensive backups of all your bills, transactions, and
+            stock data. Backups include complete data for easy restoration.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -350,11 +373,15 @@ export function BackupSystem() {
               <AlertDescription>
                 <strong>Backup Information:</strong>
                 <ul className="mt-2 space-y-1 text-sm">
-                  <li>• Backups are saved as Excel files with multiple sheets</li>
+                  <li>
+                    • Backups are saved as Excel files with multiple sheets
+                  </li>
                   <li>• Includes all bills, transactions, and stock data</li>
                   <li>• Account-specific backups preserve data separately</li>
                   <li>• Restoration will replace all current data</li>
-                  <li>• Keep backups safe - they contain sensitive business data</li>
+                  <li>
+                    • Keep backups safe - they contain sensitive business data
+                  </li>
                 </ul>
               </AlertDescription>
             </Alert>
@@ -368,7 +395,8 @@ export function BackupSystem() {
           <DialogHeader>
             <DialogTitle>Restore Backup Preview</DialogTitle>
             <DialogDescription>
-              Review the backup data before restoration. This will replace all current data.
+              Review the backup data before restoration. This will replace all
+              current data.
             </DialogDescription>
           </DialogHeader>
 
@@ -392,17 +420,23 @@ export function BackupSystem() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center p-4 bg-muted rounded-lg">
                   <FileText className="h-6 w-6 mx-auto mb-2 text-blue-500" />
-                  <p className="text-lg font-bold">{restorePreview.bills?.length || 0}</p>
+                  <p className="text-lg font-bold">
+                    {restorePreview.bills?.length || 0}
+                  </p>
                   <p className="text-sm text-muted-foreground">Bills</p>
                 </div>
                 <div className="text-center p-4 bg-muted rounded-lg">
                   <CreditCard className="h-6 w-6 mx-auto mb-2 text-green-500" />
-                  <p className="text-lg font-bold">{restorePreview.transactions?.length || 0}</p>
+                  <p className="text-lg font-bold">
+                    {restorePreview.transactions?.length || 0}
+                  </p>
                   <p className="text-sm text-muted-foreground">Transactions</p>
                 </div>
                 <div className="text-center p-4 bg-muted rounded-lg">
                   <Package className="h-6 w-6 mx-auto mb-2 text-purple-500" />
-                  <p className="text-lg font-bold">{restorePreview.stock?.length || 0}</p>
+                  <p className="text-lg font-bold">
+                    {restorePreview.stock?.length || 0}
+                  </p>
                   <p className="text-sm text-muted-foreground">Stock Items</p>
                 </div>
               </div>
@@ -410,8 +444,9 @@ export function BackupSystem() {
               <Alert className="border-red-200 bg-red-50">
                 <AlertTriangle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-800">
-                  <strong>Warning:</strong> Restoring this backup will permanently replace all current data.
-                  Make sure to create a backup of your current data if needed.
+                  <strong>Warning:</strong> Restoring this backup will
+                  permanently replace all current data. Make sure to create a
+                  backup of your current data if needed.
                 </AlertDescription>
               </Alert>
 
@@ -423,10 +458,7 @@ export function BackupSystem() {
                   <X className="h-4 w-4 mr-2" />
                   Cancel
                 </Button>
-                <Button
-                  variant="destructive"
-                  onClick={restoreFromBackup}
-                >
+                <Button variant="destructive" onClick={restoreFromBackup}>
                   <Check className="h-4 w-4 mr-2" />
                   Restore Data
                 </Button>

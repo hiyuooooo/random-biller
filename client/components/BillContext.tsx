@@ -170,7 +170,10 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
           const diff = Math.abs(newTotal - targetTotal);
 
           // Accept if within tolerance or better than current best
-          if (diff <= tolerance || (diff < bestDiff && newTotal <= targetTotal + tolerance)) {
+          if (
+            diff <= tolerance ||
+            (diff < bestDiff && newTotal <= targetTotal + tolerance)
+          ) {
             bestQty = qty;
             bestQtyTotal = itemCost;
             bestDiff = diff;
@@ -276,7 +279,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
     // If still no good match, create a proportional bill as fallback
     if (!bestMatch || closestDiff > tolerance) {
-      console.log("No match within tolerance found, creating proportional bill");
+      console.log(
+        "No match within tolerance found, creating proportional bill",
+      );
 
       const selectedItems: BillItem[] = [];
       let currentTotal = 0;
@@ -322,7 +327,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       "difference:",
       closestDiff,
       "within tolerance:",
-      closestDiff <= tolerance
+      closestDiff <= tolerance,
     );
     return bestMatch;
   };
@@ -434,13 +439,15 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         const retryResult = generateOptimalBillItems(
           targetTotal,
           stockToUse,
-          [] // Don't avoid previous items on retry
+          [], // Don't avoid previous items on retry
         );
 
         if (Math.abs(retryResult.total - targetTotal) < difference) {
           selectedItems = retryResult.items;
           currentTotal = retryResult.total;
-          console.log(`Retry improved result: ${retryResult.total} (diff: ${Math.abs(retryResult.total - targetTotal)})`);
+          console.log(
+            `Retry improved result: ${retryResult.total} (diff: ${Math.abs(retryResult.total - targetTotal)})`,
+          );
         }
       }
 
@@ -474,7 +481,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         selectedItems.forEach((billItem) => {
           const success = reduceStockCallback(billItem.id, billItem.quantity);
           if (success) {
-            console.log(`Reduced stock for ${billItem.name}: -${billItem.quantity}`);
+            console.log(
+              `Reduced stock for ${billItem.name}: -${billItem.quantity}`,
+            );
           } else {
             console.warn(`Failed to reduce stock for ${billItem.name}`);
           }

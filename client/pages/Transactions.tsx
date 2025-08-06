@@ -184,7 +184,8 @@ export default function Transactions() {
   const [isGenerateBillsOpen, setIsGenerateBillsOpen] = useState(false);
   const [startingBillNumber, setStartingBillNumber] = useState("");
   const [billsToBlock, setBillsToBlock] = useState("");
-  const [isTransactionListMinimized, setIsTransactionListMinimized] = useState(false);
+  const [isTransactionListMinimized, setIsTransactionListMinimized] =
+    useState(false);
 
   // Validate date format (DD-MM-YYYY)
   const isValidDate = (date: string) => {
@@ -738,23 +739,28 @@ export default function Transactions() {
               <div>
                 <CardTitle>Transaction List</CardTitle>
                 <CardDescription>
-                  Double-click any cell to edit. Blue outlined transactions have been used for bill generation.
-                  Payment mode is automatically determined by customer name (_c suffix for cash).
+                  Double-click any cell to edit. Blue outlined transactions have
+                  been used for bill generation. Payment mode is automatically
+                  determined by customer name (_c suffix for cash).
                 </CardDescription>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setIsTransactionListMinimized(!isTransactionListMinimized)}
+                onClick={() =>
+                  setIsTransactionListMinimized(!isTransactionListMinimized)
+                }
               >
                 {isTransactionListMinimized ? "Expand" : "Minimize"} List
               </Button>
             </div>
           </CardHeader>
-          <CardContent className={cn(
-            "transition-all duration-300",
-            isTransactionListMinimized && "max-h-20 overflow-hidden"
-          )}>
+          <CardContent
+            className={cn(
+              "transition-all duration-300",
+              isTransactionListMinimized && "max-h-20 overflow-hidden",
+            )}
+          >
             {!isTransactionListMinimized ? (
               <>
                 <div className="flex items-center justify-between mb-4">
@@ -763,7 +769,9 @@ export default function Transactions() {
                       variant="outline"
                       size="sm"
                       onClick={selectAllTransactions}
-                      disabled={transactions.filter((t) => t.isValid).length === 0}
+                      disabled={
+                        transactions.filter((t) => t.isValid).length === 0
+                      }
                     >
                       <Check className="h-4 w-4 mr-2" />
                       Select All Valid
@@ -779,8 +787,8 @@ export default function Transactions() {
                     </Button>
                   </div>
                   <div className="text-sm text-muted-foreground">
-                    {getSelectedTransactions().length} of {summary.validCount} valid
-                    transactions selected
+                    {getSelectedTransactions().length} of {summary.validCount}{" "}
+                    valid transactions selected
                   </div>
                 </div>
                 <div className="overflow-x-auto">
@@ -809,9 +817,13 @@ export default function Transactions() {
                           </div>
                         </th>
                         <th className="text-left p-3 font-medium">Date</th>
-                        <th className="text-left p-3 font-medium">Customer Name</th>
+                        <th className="text-left p-3 font-medium">
+                          Customer Name
+                        </th>
                         <th className="text-left p-3 font-medium">Total</th>
-                        <th className="text-left p-3 font-medium">Payment Mode</th>
+                        <th className="text-left p-3 font-medium">
+                          Payment Mode
+                        </th>
                         <th className="text-left p-3 font-medium">Status</th>
                         <th className="text-left p-3 font-medium">Actions</th>
                       </tr>
@@ -849,7 +861,8 @@ export default function Transactions() {
                                 placeholder="DD-MM-YYYY"
                                 className={cn(
                                   "w-32",
-                                  !isValidDate(editValues.date) && "border-red-500",
+                                  !isValidDate(editValues.date) &&
+                                    "border-red-500",
                                 )}
                               />
                             ) : (
@@ -920,7 +933,10 @@ export default function Transactions() {
                                 onValueChange={(value) =>
                                   setEditValues((prev) => ({
                                     ...prev,
-                                    paymentMode: value as "Cash" | "GPay" | "Bank",
+                                    paymentMode: value as
+                                      | "Cash"
+                                      | "GPay"
+                                      | "Bank",
                                   }))
                                 }
                               >
@@ -957,7 +973,9 @@ export default function Transactions() {
                               variant={
                                 transaction.isValid ? "default" : "destructive"
                               }
-                              className={transaction.isValid ? "bg-green-500" : ""}
+                              className={
+                                transaction.isValid ? "bg-green-500" : ""
+                              }
                             >
                               {transaction.isValid ? "Valid" : "Invalid"}
                             </Badge>
@@ -1018,8 +1036,15 @@ export default function Transactions() {
               </>
             ) : (
               <div className="text-center py-4 text-muted-foreground">
-                <p>Transaction list minimized. Click "Expand List" to show all transactions.</p>
-                <p className="text-sm">Total: {filteredTransactions.length} transactions ({filteredTransactions.filter(t => t.billGenerated).length} used for bills)</p>
+                <p>
+                  Transaction list minimized. Click "Expand List" to show all
+                  transactions.
+                </p>
+                <p className="text-sm">
+                  Total: {filteredTransactions.length} transactions (
+                  {filteredTransactions.filter((t) => t.billGenerated).length}{" "}
+                  used for bills)
+                </p>
               </div>
             )}
           </CardContent>
