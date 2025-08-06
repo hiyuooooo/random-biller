@@ -152,6 +152,11 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     for (let attempt = 0; attempt < 200; attempt++) {
       iterationsPerformed++;
 
+      // Log iteration progress
+      if (monitorId && iterationMonitor) {
+        iterationMonitor.logIteration(monitorId, attempt + 1, `Iteration ${attempt + 1}/200: Trying new combination...`, "info");
+      }
+
       // Shuffle items randomly each iteration (equivalent to pandas sample(frac=1))
       const shuffledItems = [...availableItems];
       for (let i = shuffledItems.length - 1; i > 0; i--) {
