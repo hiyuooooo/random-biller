@@ -16,11 +16,14 @@ interface StockContextType {
   updateStockItem: (id: number, updates: Partial<StockItem>) => void;
   deleteStockItem: (id: number) => void;
   reduceStock: (id: number, quantity: number) => boolean;
+  restoreStock: (id: number, quantity: number) => boolean;
+  adjustStock: (id: number, quantityDifference: number) => boolean;
   importStockItems: (items: StockItem[]) => void;
   getAvailableStock: () => StockItem[];
   toggleBlockItem: (id: number) => void;
   getUnblockedStock: () => StockItem[];
   deleteAllStock: () => void;
+  isStockUsedInBills: (id: number) => boolean;
 }
 
 // Default stock data
@@ -212,6 +215,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
   };
 
   const deleteStockItem = (id: number) => {
+    // Note: The component should check isStockUsedInBills before calling this
     setStockItems((prev) => prev.filter((item) => item.id !== id));
   };
 
@@ -229,6 +233,50 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       ),
     );
     return true;
+  };
+
+  const restoreStock = (id: number, quantity: number): boolean => {
+    const item = stockItems.find((item) => item.id === id);
+    if (!item) {
+      return false;
+    }
+
+    setStockItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, availableQuantity: item.availableQuantity + quantity }
+          : item,
+      ),
+    );
+    return true;
+  };
+
+  const adjustStock = (id: number, quantityDifference: number): boolean => {
+    const item = stockItems.find((item) => item.id === id);
+    if (!item) {
+      return false;
+    }
+
+    // If reducing stock, check if there's enough
+    if (quantityDifference < 0 && item.availableQuantity < Math.abs(quantityDifference)) {
+      return false;
+    }
+
+    setStockItems((prev) =>
+      prev.map((item) =>
+        item.id === id
+          ? { ...item, availableQuantity: Math.max(0, item.availableQuantity + quantityDifference) }
+          : item,
+      ),
+    );
+    return true;
+  };
+
+  const isStockUsedInBills = (id: number): boolean => {
+    // This will be checked by the component using context
+    // We need access to bills to check if stock item is used
+    // For now, return false - this will be implemented in the component
+    return false;
   };
 
   const importStockItems = (items: StockItem[]) => {
@@ -265,11 +313,14 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         updateStockItem,
         deleteStockItem,
         reduceStock,
+        restoreStock,
+        adjustStock,
         importStockItems,
         getAvailableStock,
         toggleBlockItem,
         getUnblockedStock,
         deleteAllStock,
+        isStockUsedInBills,
       }}
     >
       {children}
