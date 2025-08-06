@@ -40,6 +40,7 @@ interface BackupData {
   bills: any[];
   transactions: any[];
   stock: any[];
+  invoiceSettings?: any;
 }
 
 export function BackupSystem() {
