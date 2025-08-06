@@ -497,6 +497,13 @@ export default function Stock() {
             </p>
           </div>
           <div className="flex space-x-2">
+            <Button
+              onClick={() => setIsQuickAddOpen(true)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Quick Add Stock
+            </Button>
             <Button variant="outline" onClick={exportToExcel}>
               <Download className="h-4 w-4 mr-2" />
               Export Excel
