@@ -51,6 +51,7 @@ const BillContext = createContext<BillContextType | null>(null);
 
 export function BillProvider({ children }: { children: React.ReactNode }) {
   const { activeAccount } = useAccount();
+  const iterationMonitor = useIterationMonitor();
 
   // Initialize with empty array and load data in useEffect
   const [bills, setBills] = useState<Bill[]>([]);
