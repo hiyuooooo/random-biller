@@ -1,6 +1,7 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { useBill } from "@/components/BillContext";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useStock } from "@/components/StockContext";
 import { useIterationMonitor } from "@/components/IterationMonitor";
 import { useCustomer } from "@/components/CustomerContext";
@@ -132,6 +133,23 @@ export default function Bills() {
   const iterationMonitor = useIterationMonitor();
   const { stockItems, reduceStock } = useStock();
   const { getCustomerSuggestions } = useCustomer();
+  const [searchParams] = useSearchParams();
+  const [highlightedBillNumber, setHighlightedBillNumber] = useState<number | null>(null);
+
+  // Handle highlighting from URL parameter
+  useEffect(() => {
+    const highlightParam = searchParams.get('highlight');
+    if (highlightParam) {
+      const billNumber = parseInt(highlightParam);
+      if (!isNaN(billNumber)) {
+        setHighlightedBillNumber(billNumber);
+        // Clear highlight after 5 seconds
+        setTimeout(() => {
+          setHighlightedBillNumber(null);
+        }, 5000);
+      }
+    }
+  }, [searchParams]);
 
   const handleDeleteBill = (billId: string) => {
     if (
@@ -1598,7 +1616,10 @@ export default function Bills() {
                       {filteredBills.map((bill) => (
                         <tr
                           key={bill.id}
-                          className="border-b hover:bg-accent/50 transition-colors"
+                          className={cn(
+                            "border-b hover:bg-accent/50 transition-colors",
+                            highlightedBillNumber === bill.billNumber && "bg-yellow-100 border-yellow-300 animate-pulse"
+                          )}
                         >
                           <td className="p-3 font-medium">{bill.billNumber}</td>
                           <td className="p-3">{bill.date}</td>
