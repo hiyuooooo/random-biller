@@ -52,6 +52,7 @@ import {
 import { cn } from "@/lib/utils";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { IterationMonitorTab } from "@/components/IterationMonitorTab";
 
 // Mock stock data
 const mockStock = [
