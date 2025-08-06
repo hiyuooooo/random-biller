@@ -182,9 +182,13 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       let currentTotal = 0;
       const maxItems = 7; // Maximum 7 items per bill
 
+      // First, ensure we get at least 2 items by being more lenient
+      let itemsAdded = 0;
+      const maxItemsToTry = Math.min(shuffledItems.length, maxItems);
+
       // Try to select items in shuffled order
-      for (const item of shuffledItems) {
-        if (selectedItems.length >= maxItems) break;
+      for (let itemIndex = 0; itemIndex < shuffledItems.length && selectedItems.length < maxItems; itemIndex++) {
+        const item = shuffledItems[itemIndex];
 
         // Try different quantities (up to 2 as per requirements)
         let bestQty = 0;
@@ -194,8 +198,11 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
           const itemCost = item.price * qty;
           const newTotal = currentTotal + itemCost;
 
+          // Be more lenient for the first 2 items to ensure minimum requirement
+          const currentTolerance = selectedItems.length < 2 ? tolerance * 2 : tolerance;
+
           // Check if this addition keeps us within bounds
-          if (newTotal <= targetTotal + tolerance) {
+          if (newTotal <= targetTotal + currentTolerance) {
             bestQty = qty;
             bestQtyTotal = itemCost;
           } else {
@@ -215,6 +222,31 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
           selectedItems.push(billItem);
           currentTotal += bestQtyTotal;
+          itemsAdded++;
+        }
+      }
+
+      // If we still don't have 2 items, force add the cheapest available items
+      if (selectedItems.length < 2 && shuffledItems.length >= 2) {
+        const remainingItems = shuffledItems.filter(
+          item => !selectedItems.some(selected => selected.id === item.id)
+        );
+
+        const sortedRemaining = remainingItems.sort((a, b) => a.price - b.price);
+
+        for (const item of sortedRemaining) {
+          if (selectedItems.length >= 2) break;
+
+          const billItem: BillItem = {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: 1,
+            total: item.price,
+          };
+
+          selectedItems.push(billItem);
+          currentTotal += billItem.total;
         }
       }
 
