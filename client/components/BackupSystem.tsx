@@ -223,7 +223,8 @@ export function BackupSystem() {
         `Backup restored successfully!\n\n` +
           `✓ ${restorePreview.bills?.length || 0} bills restored\n` +
           `✓ ${restorePreview.transactions?.length || 0} transactions restored\n` +
-          `✓ ${restorePreview.stock?.length || 0} stock items restored\n\n` +
+          `✓ ${restorePreview.stock?.length || 0} stock items restored\n` +
+          `✓ Invoice settings ${restorePreview.invoiceSettings ? 'restored' : 'not included'}\n\n` +
           `Data has been refreshed automatically.`,
       );
     } catch (error) {
