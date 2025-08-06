@@ -184,6 +184,7 @@ export default function Transactions() {
   const [isGenerateBillsOpen, setIsGenerateBillsOpen] = useState(false);
   const [startingBillNumber, setStartingBillNumber] = useState("");
   const [billsToBlock, setBillsToBlock] = useState("");
+  const [isTransactionListMinimized, setIsTransactionListMinimized] = useState(false);
 
   // Validate date format (DD-MM-YYYY)
   const isValidDate = (date: string) => {
