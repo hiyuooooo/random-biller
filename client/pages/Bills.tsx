@@ -316,7 +316,208 @@ export default function Bills() {
     return name.endsWith("_c") ? name.slice(0, -2) : name;
   };
 
-  // Enhanced bill generator with improved constraints
+  // Enhanced 200-iteration algorithm for auto-select
+  const generate200IterationBillItems = (
+    targetTotal: number,
+    stockToUse: any[],
+    previousItems: string[] = [],
+    billNumber?: number,
+  ): { items: BillItem[]; total: number } => {
+    console.log("Starting 200-iteration algorithm for target:", targetTotal);
+
+    // Get available items that aren't in previous bill to avoid repetition
+    let availableItems = stockToUse.filter(
+      (item) =>
+        !previousItems.includes(item.name) && item.availableQuantity > 0,
+    );
+
+    if (availableItems.length < 2) {
+      // If not enough unique items available, use all available items with stock
+      availableItems = stockToUse.filter((item) => item.availableQuantity > 0);
+      console.log(`Not enough unique items, using all available items with stock: ${availableItems.length}`);
+    }
+
+    if (availableItems.length === 0) {
+      return { items: [], total: 0 };
+    }
+
+    let bestMatch: { items: BillItem[]; total: number } | null = null;
+    let closestDiff = Infinity;
+    const tolerance = 30; // ±30 tolerance
+    let iterationsPerformed = 0;
+
+    // Start iteration monitoring
+    let monitorId: string | null = null;
+    if (billNumber && iterationMonitor) {
+      monitorId = iterationMonitor.startIteration(billNumber, targetTotal);
+      iterationMonitor.updateIteration(monitorId, { status: "running" });
+      iterationMonitor.logIteration(monitorId, 0, `Starting 200 iterations for auto-select with target ₹${targetTotal}`, "info");
+    }
+
+    // Complete 200 iterations to find the best combination
+    for (let attempt = 0; attempt < 200; attempt++) {
+      iterationsPerformed++;
+
+      // Log iteration progress
+      if (monitorId && iterationMonitor && attempt % 20 === 0) {
+        iterationMonitor.logIteration(monitorId, attempt + 1, `Iteration ${attempt + 1}/200: Trying new combination...`, "info");
+      }
+
+      // Shuffle items randomly each iteration
+      const shuffledItems = [...availableItems];
+      for (let i = shuffledItems.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledItems[i], shuffledItems[j]] = [shuffledItems[j], shuffledItems[i]];
+      }
+
+      const selectedItems: BillItem[] = [];
+      let currentTotal = 0;
+      const maxItems = 7; // Maximum 7 items per bill
+
+      // First, ensure we get at least 2 items by being more lenient
+      for (let itemIndex = 0; itemIndex < shuffledItems.length && selectedItems.length < maxItems; itemIndex++) {
+        const item = shuffledItems[itemIndex];
+
+        // Try different quantities (up to 2 as per requirements)
+        let bestQty = 0;
+        let bestQtyTotal = 0;
+
+        for (let qty = 1; qty <= Math.min(2, item.availableQuantity); qty++) {
+          const itemCost = item.price * qty;
+          const newTotal = currentTotal + itemCost;
+
+          // Be more lenient for the first 2 items to ensure minimum requirement
+          const currentTolerance = selectedItems.length < 2 ? tolerance * 2 : tolerance;
+
+          // Check if this addition keeps us within bounds
+          if (newTotal <= targetTotal + currentTolerance) {
+            bestQty = qty;
+            bestQtyTotal = itemCost;
+          } else {
+            break;
+          }
+        }
+
+        // Add the item if we found a valid quantity
+        if (bestQty > 0) {
+          const billItem: BillItem = {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: bestQty,
+            total: bestQtyTotal,
+          };
+
+          selectedItems.push(billItem);
+          currentTotal += bestQtyTotal;
+        }
+      }
+
+      // If we still don't have 2 items, force add the cheapest available items
+      if (selectedItems.length < 2 && shuffledItems.length >= 2) {
+        const remainingItems = shuffledItems.filter(
+          item => !selectedItems.some(selected => selected.id === item.id)
+        );
+
+        const sortedRemaining = remainingItems.sort((a, b) => a.price - b.price);
+
+        for (const item of sortedRemaining) {
+          if (selectedItems.length >= 2) break;
+
+          const billItem: BillItem = {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: 1,
+            total: item.price,
+          };
+
+          selectedItems.push(billItem);
+          currentTotal += billItem.total;
+        }
+      }
+
+      // Enforce minimum 2 items per bill rule
+      if (selectedItems.length < 2) {
+        continue; // Skip this combination, try next iteration
+      }
+
+      // Calculate difference from target
+      const finalDiff = Math.abs(currentTotal - targetTotal);
+
+      // Check if this is our best match so far
+      if (finalDiff < closestDiff) {
+        bestMatch = { items: [...selectedItems], total: currentTotal };
+        closestDiff = finalDiff;
+
+        // Log progress to monitor
+        if (monitorId && iterationMonitor) {
+          iterationMonitor.updateIteration(monitorId, {
+            bestMatch: {
+              items: selectedItems,
+              total: currentTotal,
+              difference: finalDiff,
+            }
+          });
+        }
+
+        if (finalDiff === 0) {
+          if (monitorId && iterationMonitor) {
+            iterationMonitor.logIteration(monitorId, attempt + 1, `Perfect match found! Total: ₹${currentTotal}, difference: ₹0`, "success");
+          }
+        } else if (finalDiff <= tolerance && selectedItems.length >= 2) {
+          if (monitorId && iterationMonitor) {
+            iterationMonitor.logIteration(monitorId, attempt + 1, `Good match found! Total: ₹${currentTotal}, difference: ₹${finalDiff}`, "success");
+          }
+        }
+      }
+    }
+
+    // Fallback if no good match found
+    if (!bestMatch || bestMatch.items.length < 2) {
+      console.log("No suitable match found in 200 iterations, creating fallback");
+
+      const selectedItems: BillItem[] = [];
+      let currentTotal = 0;
+
+      // Sort items by price and take cheapest items to ensure minimum 2 items
+      const sortedItems = availableItems.sort((a, b) => a.price - b.price);
+
+      for (let i = 0; i < Math.min(2, sortedItems.length); i++) {
+        const item = sortedItems[i];
+        const billItem: BillItem = {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: 1,
+          total: item.price,
+        };
+        selectedItems.push(billItem);
+        currentTotal += billItem.total;
+      }
+
+      bestMatch = { items: selectedItems, total: currentTotal };
+      closestDiff = Math.abs(currentTotal - targetTotal);
+    }
+
+    // Complete iteration monitoring
+    if (monitorId && iterationMonitor) {
+      iterationMonitor.completeIteration(monitorId, {
+        bestMatch: bestMatch ? {
+          items: bestMatch.items,
+          total: bestMatch.total,
+          difference: closestDiff,
+        } : null,
+        currentIteration: 200,
+      });
+      iterationMonitor.logIteration(monitorId, 200, `Completed all 200 iterations. Final result: ${bestMatch.items.length} items, total: ₹${bestMatch.total}, difference: ₹${closestDiff}`, "success");
+    }
+
+    console.log(`Auto-select completed: ${bestMatch.items.length} items, total: ₹${bestMatch.total}, difference: ₹${closestDiff}`);
+    return bestMatch;
+  };
+
+  // Enhanced bill generator with improved constraints (legacy function, keeping for compatibility)
   const generateOptimalBillItems = (
     targetTotal: number,
     previousItems: string[] = [],
