@@ -177,14 +177,22 @@ export function BackupSystem() {
         );
       }
 
-      alert(
-        "Backup restored successfully! Please refresh the page to see the changes.",
-      );
+      // Close dialog first
       setIsRestoreDialogOpen(false);
       setRestorePreview(null);
 
-      // Refresh the page to reload all data
-      window.location.reload();
+      alert(
+        `Backup restored successfully!\n\n` +
+        `✓ ${restorePreview.bills?.length || 0} bills restored\n` +
+        `✓ ${restorePreview.transactions?.length || 0} transactions restored\n` +
+        `✓ ${restorePreview.stock?.length || 0} stock items restored\n\n` +
+        `The page will now refresh to load the restored data.`,
+      );
+
+      // Short delay then refresh to ensure localStorage write is complete
+      setTimeout(() => {
+        window.location.reload();
+      }, 500);
     } catch (error) {
       console.error("Error restoring backup:", error);
       alert("Error restoring backup. Please try again.");
