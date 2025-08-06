@@ -20,7 +20,7 @@ interface TransactionContextType {
   importTransactions: (transactions: Transaction[]) => void;
   getValidTransactions: () => Transaction[];
   toggleTransactionSelection: (id: number) => void;
-  selectAllTransactions: () => void;
+  selectAllTransactions: (filteredTransactions?: Transaction[]) => void;
   deselectAllTransactions: () => void;
   getSelectedTransactions: () => Transaction[];
   markBillsGenerated: (transactionIds: number[]) => void;
@@ -236,11 +236,19 @@ export function TransactionProvider({
     );
   };
 
-  const selectAllTransactions = () => {
+  const selectAllTransactions = (filteredTransactions?: Transaction[]) => {
     setTransactions((prev) =>
-      prev.map((transaction) =>
-        transaction.isValid ? { ...transaction, selected: true } : transaction,
-      ),
+      prev.map((transaction) => {
+        // If filteredTransactions is provided, only select those that are in the filtered list
+        if (filteredTransactions) {
+          const isInFilteredList = filteredTransactions.some(ft => ft.id === transaction.id);
+          return transaction.isValid && isInFilteredList
+            ? { ...transaction, selected: true }
+            : transaction;
+        }
+        // Default behavior: select all valid transactions
+        return transaction.isValid ? { ...transaction, selected: true } : transaction;
+      }),
     );
   };
 
