@@ -53,6 +53,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
   const { activeAccount } = useAccount();
   const iterationMonitor = useIterationMonitor();
 
+  // Import useStock hook
+  const stockContext = React.useContext(React.createContext<any>(null));
+
   // Initialize with empty array and load data in useEffect
   const [bills, setBills] = useState<Bill[]>([]);
 
@@ -139,12 +142,78 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateBill = (id: string, billData: Partial<Bill>) => {
+    // Find the original bill to compare stock changes
+    const originalBill = bills.find((bill) => bill.id === id);
+
     setBills((prev) =>
       prev.map((bill) => (bill.id === id ? { ...bill, ...billData } : bill)),
     );
+
+    // If items have changed, we need to adjust stock
+    if (originalBill && billData.items && stockContext?.adjustStock) {
+      const originalItems = originalBill.items;
+      const newItems = billData.items;
+
+      // Create maps for easier comparison
+      const originalItemMap = new Map();
+      originalItems.forEach(item => {
+        originalItemMap.set(item.id, item.quantity);
+      });
+
+      const newItemMap = new Map();
+      newItems.forEach(item => {
+        newItemMap.set(item.id, item.quantity);
+      });
+
+      // Check for quantity changes
+      originalItems.forEach(originalItem => {
+        const newQuantity = newItemMap.get(originalItem.id) || 0;
+        const quantityDifference = originalItem.quantity - newQuantity;
+
+        if (quantityDifference !== 0) {
+          // Positive difference means we need to restore stock
+          // Negative difference means we need to reduce more stock
+          stockContext.adjustStock(originalItem.id, quantityDifference);
+          console.log(`Adjusted stock for ${originalItem.name}: ${quantityDifference > 0 ? '+' : ''}${quantityDifference}`);
+        }
+      });
+
+      // Check for new items added
+      newItems.forEach(newItem => {
+        if (!originalItemMap.has(newItem.id)) {
+          // This is a new item, reduce stock
+          stockContext.reduceStock(newItem.id, newItem.quantity);
+          console.log(`Reduced stock for new item ${newItem.name}: -${newItem.quantity}`);
+        }
+      });
+
+      // Check for items removed
+      originalItems.forEach(originalItem => {
+        if (!newItemMap.has(originalItem.id)) {
+          // This item was removed, restore stock
+          stockContext.restoreStock(originalItem.id, originalItem.quantity);
+          console.log(`Restored stock for removed item ${originalItem.name}: +${originalItem.quantity}`);
+        }
+      });
+    }
   };
 
   const deleteBill = (id: string) => {
+    // Find the bill being deleted to restore its stock
+    const billToDelete = bills.find((bill) => bill.id === id);
+
+    if (billToDelete && stockContext?.restoreStock) {
+      // Restore stock for all items in the bill
+      billToDelete.items.forEach((item) => {
+        const success = stockContext.restoreStock(item.id, item.quantity);
+        if (success) {
+          console.log(`Restored stock for ${item.name}: +${item.quantity}`);
+        } else {
+          console.warn(`Failed to restore stock for ${item.name}`);
+        }
+      });
+    }
+
     setBills((prev) => prev.filter((bill) => bill.id !== id));
   };
 
