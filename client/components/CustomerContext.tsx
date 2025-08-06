@@ -174,6 +174,80 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const syncCustomersFromTransactions = (transactions: any[]) => {
+    const customerMap = new Map<string, any>();
+
+    // Group transactions by customer name
+    transactions.forEach(transaction => {
+      const customerName = transaction.customerName?.trim();
+      if (!customerName || customerName.toLowerCase() === 'cash') return;
+
+      const cleanName = customerName.endsWith('_c') ? customerName.slice(0, -2) : customerName;
+      const paymentMode = customerName.endsWith('_c') ? 'Cash' : transaction.paymentMode || 'GPay';
+
+      if (!customerMap.has(cleanName)) {
+        customerMap.set(cleanName, {
+          name: cleanName,
+          transactions: [],
+          totalAmount: 0,
+          totalTransactions: 0,
+          preferredPayment: paymentMode,
+          lastTransaction: transaction.date,
+        });
+      }
+
+      const customer = customerMap.get(cleanName);
+      customer.transactions.push({
+        id: transaction.id,
+        date: transaction.date,
+        amount: transaction.total,
+        paymentMode: paymentMode,
+        items: []
+      });
+      customer.totalAmount += transaction.total;
+      customer.totalTransactions += 1;
+
+      // Update last transaction if this one is more recent
+      if (new Date(transaction.date) > new Date(customer.lastTransaction)) {
+        customer.lastTransaction = transaction.date;
+      }
+    });
+
+    // Update existing customers or create new ones
+    customerMap.forEach((customerData, customerName) => {
+      const existingCustomer = getCustomerByName(customerName);
+
+      if (existingCustomer) {
+        // Update existing customer
+        updateCustomer(existingCustomer.id, {
+          totalTransactions: customerData.totalTransactions,
+          totalAmount: customerData.totalAmount,
+          lastTransaction: customerData.lastTransaction,
+          transactions: customerData.transactions,
+          preferredPayment: customerData.preferredPayment,
+        });
+      } else {
+        // Create new customer
+        addCustomer({
+          name: customerName,
+          preferredPayment: customerData.preferredPayment,
+          totalTransactions: customerData.totalTransactions,
+          totalAmount: customerData.totalAmount,
+          lastTransaction: customerData.lastTransaction,
+          transactions: customerData.transactions,
+        });
+      }
+    });
+  };
+
+  const getCustomerSuggestions = (prefix: string) => {
+    if (prefix.length < 2) return [];
+
+    return customers.filter(customer =>
+      customer.name.toLowerCase().includes(prefix.toLowerCase())
+    ).slice(0, 5); // Limit to 5 suggestions
+  };
+
   return (
     <CustomerContext.Provider
       value={{
