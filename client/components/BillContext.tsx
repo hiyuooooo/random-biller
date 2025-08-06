@@ -137,8 +137,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     );
 
     if (availableItems.length < 2) {
-      // If not enough unique items available, use all available items
+      // If not enough unique items available, use all available items with stock
       availableItems = stockToUse.filter((item) => item.availableQuantity > 0);
+      console.log(`Not enough unique items (${availableItems.length}), using all available items with stock: ${availableItems.length}`);
     }
 
     if (availableItems.length === 0) {
