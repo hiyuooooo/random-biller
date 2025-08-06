@@ -268,7 +268,7 @@ export default function Bills() {
   const [editingBill, setEditingBill] = useState<any>(null);
   const [editItems, setEditItems] = useState<any[]>([]);
   const [isDateRangeDialogOpen, setIsDateRangeDialogOpen] = useState(false);
-  const [dateRange, setDateRange] = useState({ from: '', to: '' });
+  const [dateRange, setDateRange] = useState({ from: "", to: "" });
 
   // New bill form state
   const [newBill, setNewBill] = useState({
@@ -752,24 +752,35 @@ export default function Bills() {
   };
 
   // Filter bills by date range
-  const filterBillsByDateRange = (billsList: any[], fromDate: string, toDate: string) => {
+  const filterBillsByDateRange = (
+    billsList: any[],
+    fromDate: string,
+    toDate: string,
+  ) => {
     if (!fromDate && !toDate) return billsList;
 
-    return billsList.filter(bill => {
-      const billDate = new Date(bill.date.split('-').reverse().join('-')); // Convert DD-MM-YYYY to YYYY-MM-DD
-      const from = fromDate ? new Date(fromDate) : new Date('1900-01-01');
-      const to = toDate ? new Date(toDate) : new Date('2100-12-31');
+    return billsList.filter((bill) => {
+      const billDate = new Date(bill.date.split("-").reverse().join("-")); // Convert DD-MM-YYYY to YYYY-MM-DD
+      const from = fromDate ? new Date(fromDate) : new Date("1900-01-01");
+      const to = toDate ? new Date(toDate) : new Date("2100-12-31");
 
       return billDate >= from && billDate <= to;
     });
   };
 
   // Enhanced batch PDF download with date range filtering
-  const generateBatchPDF = async (billsToGenerate: any[], useCustomRange = false) => {
+  const generateBatchPDF = async (
+    billsToGenerate: any[],
+    useCustomRange = false,
+  ) => {
     let filteredBills = billsToGenerate;
 
     if (useCustomRange && (dateRange.from || dateRange.to)) {
-      filteredBills = filterBillsByDateRange(billsToGenerate, dateRange.from, dateRange.to);
+      filteredBills = filterBillsByDateRange(
+        billsToGenerate,
+        dateRange.from,
+        dateRange.to,
+      );
 
       if (filteredBills.length === 0) {
         alert("No bills found in the selected date range.");
@@ -783,7 +794,7 @@ export default function Bills() {
     }
 
     const confirmed = confirm(
-      `Generate ${filteredBills.length} PDF files?${useCustomRange ? ` (Date range: ${dateRange.from || 'All'} to ${dateRange.to || 'All'})` : ''} This may take a few moments.`,
+      `Generate ${filteredBills.length} PDF files?${useCustomRange ? ` (Date range: ${dateRange.from || "All"} to ${dateRange.to || "All"})` : ""} This may take a few moments.`,
     );
 
     if (!confirmed) return;
@@ -803,7 +814,10 @@ export default function Bills() {
             await new Promise((resolve) => setTimeout(resolve, 800));
           }
         } catch (error) {
-          console.error(`Error generating PDF for bill ${bill.billNumber}:`, error);
+          console.error(
+            `Error generating PDF for bill ${bill.billNumber}:`,
+            error,
+          );
           errorCount++;
         }
       }
@@ -811,7 +825,9 @@ export default function Bills() {
       if (errorCount === 0) {
         alert(`Successfully generated ${successCount} PDF files!`);
       } else {
-        alert(`Generated ${successCount} PDF files successfully. ${errorCount} files failed to generate.`);
+        alert(
+          `Generated ${successCount} PDF files successfully. ${errorCount} files failed to generate.`,
+        );
       }
     } catch (error) {
       console.error("Error in batch PDF generation:", error);
@@ -1876,7 +1892,10 @@ export default function Bills() {
         )}
 
         {/* Date Range PDF Download Dialog */}
-        <Dialog open={isDateRangeDialogOpen} onOpenChange={setIsDateRangeDialogOpen}>
+        <Dialog
+          open={isDateRangeDialogOpen}
+          onOpenChange={setIsDateRangeDialogOpen}
+        >
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Download PDFs by Date Range</DialogTitle>
@@ -1893,7 +1912,10 @@ export default function Bills() {
                     type="date"
                     value={dateRange.from}
                     onChange={(e) =>
-                      setDateRange((prev) => ({ ...prev, from: e.target.value }))
+                      setDateRange((prev) => ({
+                        ...prev,
+                        from: e.target.value,
+                      }))
                     }
                   />
                 </div>
@@ -1916,7 +1938,7 @@ export default function Bills() {
                     const filteredBills = filterBillsByDateRange(
                       bills.filter((b) => b.status === "generated"),
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
                     );
                     return (
                       <>
@@ -1927,7 +1949,7 @@ export default function Bills() {
                         <div className="flex justify-between">
                           <span>Date range:</span>
                           <span>
-                            {dateRange.from || 'All'} to {dateRange.to || 'All'}
+                            {dateRange.from || "All"} to {dateRange.to || "All"}
                           </span>
                         </div>
                       </>
@@ -1947,7 +1969,7 @@ export default function Bills() {
                   onClick={() => {
                     generateBatchPDF(
                       bills.filter((b) => b.status === "generated"),
-                      true
+                      true,
                     );
                     setIsDateRangeDialogOpen(false);
                   }}
@@ -1955,7 +1977,7 @@ export default function Bills() {
                     filterBillsByDateRange(
                       bills.filter((b) => b.status === "generated"),
                       dateRange.from,
-                      dateRange.to
+                      dateRange.to,
                     ).length === 0
                   }
                 >

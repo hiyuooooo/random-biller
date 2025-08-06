@@ -103,7 +103,11 @@ export function BackupSystem() {
         const backupData = JSON.parse(jsonString) as BackupData;
 
         // Validate backup data structure
-        if (!backupData.version || !backupData.timestamp || !backupData.accountName) {
+        if (
+          !backupData.version ||
+          !backupData.timestamp ||
+          !backupData.accountName
+        ) {
           alert("Invalid backup file format: Missing required fields.");
           return;
         }
@@ -183,10 +187,10 @@ export function BackupSystem() {
 
       alert(
         `Backup restored successfully!\n\n` +
-        `✓ ${restorePreview.bills?.length || 0} bills restored\n` +
-        `✓ ${restorePreview.transactions?.length || 0} transactions restored\n` +
-        `✓ ${restorePreview.stock?.length || 0} stock items restored\n\n` +
-        `The page will now refresh to load the restored data.`,
+          `✓ ${restorePreview.bills?.length || 0} bills restored\n` +
+          `✓ ${restorePreview.transactions?.length || 0} transactions restored\n` +
+          `✓ ${restorePreview.stock?.length || 0} stock items restored\n\n` +
+          `The page will now refresh to load the restored data.`,
       );
 
       // Short delay then refresh to ensure localStorage write is complete
@@ -295,11 +299,11 @@ export function BackupSystem() {
                   </span>
                 </Button>
                 <input
-                type="file"
-                accept=".json"
-                onChange={handleFileUpload}
-                className="hidden"
-              />
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
               </label>
             </div>
 
@@ -309,9 +313,7 @@ export function BackupSystem() {
               <AlertDescription>
                 <strong>Backup Information:</strong>
                 <ul className="mt-2 space-y-1 text-sm">
-                  <li>
-                    • Backups are saved as JSON files with complete data
-                  </li>
+                  <li>• Backups are saved as JSON files with complete data</li>
                   <li>• Includes all bills, transactions, and stock data</li>
                   <li>• Account-specific backups preserve data separately</li>
                   <li>• Restoration will replace all current data</li>

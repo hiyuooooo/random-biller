@@ -178,10 +178,10 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
         `transactions_${id}`,
         `stockItems_${id}`,
         `billBlocker_startingNumber_${id}`,
-        `billBlocker_blockedNumbers_${id}`
+        `billBlocker_blockedNumbers_${id}`,
       ];
 
-      keysToRemove.forEach(key => {
+      keysToRemove.forEach((key) => {
         localStorage.removeItem(key);
       });
 

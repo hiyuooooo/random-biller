@@ -119,12 +119,13 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
     // Get available items that aren't in previous bill to avoid repetition
     let availableItems = stockToUse.filter(
-      (item) => !previousItems.includes(item.name) && item.availableQuantity > 0,
+      (item) =>
+        !previousItems.includes(item.name) && item.availableQuantity > 0,
     );
 
     if (availableItems.length < 2) {
       // If not enough unique items available, use all available items
-      availableItems = stockToUse.filter(item => item.availableQuantity > 0);
+      availableItems = stockToUse.filter((item) => item.availableQuantity > 0);
     }
 
     if (availableItems.length === 0) {
@@ -205,9 +206,13 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
         // Continue all 200 iterations to find the absolute best match
         if (finalDiff === 0) {
-          console.log(`Found perfect match on iteration ${attempt + 1}, continuing for optimization...`);
+          console.log(
+            `Found perfect match on iteration ${attempt + 1}, continuing for optimization...`,
+          );
         } else if (finalDiff <= tolerance && selectedItems.length >= 2) {
-          console.log(`Found good match within ±${tolerance} on iteration ${attempt + 1}, continuing for optimization...`);
+          console.log(
+            `Found good match within ±${tolerance} on iteration ${attempt + 1}, continuing for optimization...`,
+          );
         }
       }
     }
@@ -295,7 +300,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         currentBillNumber++;
       }
 
-      console.log(`Using bill number: ${currentBillNumber} for transaction ${transaction.id}`);
+      console.log(
+        `Using bill number: ${currentBillNumber} for transaction ${transaction.id}`,
+      );
 
       // Validate transaction total - must be greater than 0
       const targetTotal =
@@ -407,9 +414,14 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
               `Reduced stock for ${billItem.name}: -${billItem.quantity}`,
             );
             // Update available quantity in stockToUse for subsequent bills
-            const stockItem = stockToUse.find(item => item.id === billItem.id);
+            const stockItem = stockToUse.find(
+              (item) => item.id === billItem.id,
+            );
             if (stockItem) {
-              stockItem.availableQuantity = Math.max(0, stockItem.availableQuantity - billItem.quantity);
+              stockItem.availableQuantity = Math.max(
+                0,
+                stockItem.availableQuantity - billItem.quantity,
+              );
             }
           } else {
             console.warn(`Failed to reduce stock for ${billItem.name}`);
@@ -417,7 +429,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         });
       } else {
         // Log warning if no callback provided
-        console.warn("No stock reduction callback provided - stock quantities will not be updated");
+        console.warn(
+          "No stock reduction callback provided - stock quantities will not be updated",
+        );
       }
 
       // Update previous items for next bill to avoid consecutive repeats
