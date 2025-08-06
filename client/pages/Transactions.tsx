@@ -1161,6 +1161,7 @@ export default function Transactions() {
                       startBillNum,
                       blockedNumbers,
                       getUnblockedStock(),
+                      reduceStock,
                     );
 
                     // Mark selected transactions as having bills generated
