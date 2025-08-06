@@ -172,6 +172,7 @@ export default function Transactions() {
   };
   const { generateBillsFromTransactions } = useBill();
   const { getUnblockedStock, reduceStock } = useStock();
+  const { activeAccount } = useAccount();
   const [editingId, setEditingId] = useState<number | null>(null);
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
   const [customerFilter, setCustomerFilter] = useState("");
