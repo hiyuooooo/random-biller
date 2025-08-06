@@ -272,6 +272,11 @@ export default function Bills() {
   const [editItems, setEditItems] = useState<any[]>([]);
   const [isDateRangeDialogOpen, setIsDateRangeDialogOpen] = useState(false);
   const [dateRange, setDateRange] = useState({ from: "", to: "" });
+  const [isMegaReportOptionsOpen, setIsMegaReportOptionsOpen] = useState(false);
+  const [megaReportOptions, setMegaReportOptions] = useState({
+    hideCustomerNames: false,
+    totalAtLastPage: true,
+  });
 
   // New bill form state
   const [newBill, setNewBill] = useState({
