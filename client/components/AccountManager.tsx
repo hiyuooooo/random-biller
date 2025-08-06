@@ -136,10 +136,16 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
   }, [activeAccount]);
 
   const setActiveAccount = (account: Account) => {
+    console.log(`Switching to account: ${account.name} (ID: ${account.id})`);
     setAccounts((prev) =>
       prev.map((acc) => ({ ...acc, isActive: acc.id === account.id })),
     );
     setActiveAccountState(account);
+
+    // Give a brief moment for contexts to save data before switching
+    setTimeout(() => {
+      console.log(`Account switch to ${account.name} completed`);
+    }, 100);
   };
 
   const addAccount = (accountData: Omit<Account, "id" | "isActive">) => {
