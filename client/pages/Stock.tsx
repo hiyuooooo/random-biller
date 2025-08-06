@@ -244,6 +244,67 @@ export default function Stock() {
     });
   };
 
+  // Handle prefix search for items
+  const handlePrefixSearch = (prefix: string) => {
+    setQuickAddData(prev => ({ ...prev, itemPrefix: prefix }));
+
+    if (prefix.length >= 2) {
+      const matches = stockItems.filter(item =>
+        item.itemName.toLowerCase().includes(prefix.toLowerCase())
+      );
+      setSuggestions(matches);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  // Handle quick add quantity to existing item
+  const handleQuickAdd = () => {
+    if (!quickAddData.itemPrefix || !quickAddData.quantity) {
+      alert("Please enter item name and quantity");
+      return;
+    }
+
+    const quantity = parseInt(quickAddData.quantity);
+    if (isNaN(quantity) || quantity <= 0) {
+      alert("Please enter a valid quantity");
+      return;
+    }
+
+    // Check if item exists
+    const existingItem = stockItems.find(item =>
+      item.itemName.toLowerCase() === quickAddData.itemPrefix.toLowerCase()
+    );
+
+    if (existingItem) {
+      // Add quantity to existing item
+      updateStockItem(existingItem.id, {
+        availableQuantity: existingItem.availableQuantity + quantity
+      });
+      alert(`Added ${quantity} units to ${existingItem.itemName}`);
+    } else {
+      // Create new item
+      const newStockItem = {
+        id: Math.max(...stockItems.map(item => item.id), 0) + 1,
+        itemName: quickAddData.itemPrefix,
+        price: 0, // Default price, user can edit later
+        availableQuantity: quantity,
+        lowStockThreshold: 10 // Default threshold
+      };
+      addStockItem(newStockItem);
+      alert(`Created new item: ${quickAddData.itemPrefix} with ${quantity} units`);
+    }
+
+    // Reset form but keep date
+    setQuickAddData(prev => ({
+      itemPrefix: "",
+      quantity: "",
+      date: prev.date
+    }));
+    setSuggestions([]);
+    setIsQuickAddOpen(false);
+  };
+
   const saveEdit = () => {
     if (editingId === null) return;
 
