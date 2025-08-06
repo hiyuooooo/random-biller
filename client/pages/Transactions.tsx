@@ -1079,7 +1079,10 @@ export default function Transactions() {
               summary.invalidCount > 0 || getSelectedTransactions().length === 0
             }
             className="bg-green-600 hover:bg-green-700"
-            onClick={() => setIsGenerateBillsOpen(true)}
+            onClick={() => {
+              setIsGenerateBillsOpen(true);
+              loadBlockedBills();
+            }}
           >
             <FileText className="h-4 w-4 mr-2" />
             Generate Bills ({getSelectedTransactions().length} selected)
