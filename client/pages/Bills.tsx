@@ -695,17 +695,27 @@ export default function Bills() {
         availableQuantity: item.availableQuantity
       }));
 
+    // Switch to iteration monitor tab to show progress
+    setActiveTab("monitor");
+
     const result = generate200IterationBillItems(targetTotal, stockForAlgorithm, previousItems, mockBillNumber);
 
     if (result.items.length === 0) {
       alert(
         "Unable to generate bill items. Please check stock availability or try manual mode.",
       );
+      // Switch back to bills tab
+      setActiveTab("view");
       return;
     }
 
     console.log("Generated items:", result.items);
     setSelectedItems(result.items);
+
+    // Switch back to bills tab after a short delay to show the result
+    setTimeout(() => {
+      setActiveTab("view");
+    }, 1000);
 
     // Provide feedback about the generation
     const difference = Math.abs(result.total - targetTotal);
