@@ -1742,18 +1742,53 @@ export default function Bills() {
                     </div>
                     <div className="space-y-2">
                       <Label>Customer Name</Label>
-                      <Input
-                        value={newBill.customerName}
-                        onChange={(e) => {
-                          const name = e.target.value;
-                          setNewBill((prev) => ({
-                            ...prev,
-                            customerName: name,
-                            paymentMode: getPaymentMode(name),
-                          }));
-                        }}
-                        placeholder="Enter customer name (use _c suffix for cash)"
-                      />
+                      <div className="relative">
+                        <Input
+                          value={newBill.customerName}
+                          onChange={(e) => {
+                            const name = e.target.value;
+                            setNewBill((prev) => ({
+                              ...prev,
+                              customerName: name,
+                              paymentMode: getPaymentMode(name),
+                            }));
+
+                            // Update customer suggestions
+                            if (name.length >= 2) {
+                              const suggestions = getCustomerSuggestions(name);
+                              setCustomerSuggestions(suggestions);
+                            } else {
+                              setCustomerSuggestions([]);
+                            }
+                          }}
+                          placeholder="Enter customer name (use _c suffix for cash)"
+                        />
+
+                        {/* Customer suggestions dropdown */}
+                        {customerSuggestions.length > 0 && (
+                          <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                            {customerSuggestions.map((customer) => (
+                              <div
+                                key={customer.id}
+                                className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                                onClick={() => {
+                                  setNewBill((prev) => ({
+                                    ...prev,
+                                    customerName: customer.name,
+                                    paymentMode: customer.preferredPayment,
+                                  }));
+                                  setCustomerSuggestions([]);
+                                }}
+                              >
+                                <div className="font-medium">{customer.name}</div>
+                                <div className="text-sm text-gray-500">
+                                  {customer.totalTransactions} transactions • ₹{customer.totalAmount.toLocaleString()} total
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label>Target Total (₹)</Label>
