@@ -56,31 +56,34 @@ const App = () => {
                   <BillProvider>
                     <Toaster />
                     <Sonner />
-                  {!isLoggedIn ? (
-                    <Login onLogin={handleLogin} />
-                  ) : (
-                    <BrowserRouter>
-                      <Routes>
-                        <Route path="/" element={<Index />} />
-                        <Route
-                          path="/transactions"
-                          element={<Transactions />}
-                        />
-                        <Route path="/bills" element={<Bills />} />
-                        <Route path="/bill-blocker" element={<BillBlocker />} />
-                        <Route path="/stock" element={<Stock />} />
-                        <Route path="/customers" element={<Customers />} />
-                        <Route path="/reports" element={<Reports />} />
-                        <Route path="/analytics" element={<Analytics />} />
-                        <Route
-                          path="/data-management"
-                          element={<DataManagement />}
-                        />
-                        <Route path="/settings" element={<Settings />} />
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                  )}
+                    {!isLoggedIn ? (
+                      <Login onLogin={handleLogin} />
+                    ) : (
+                      <BrowserRouter>
+                        <Routes>
+                          <Route path="/" element={<Index />} />
+                          <Route
+                            path="/transactions"
+                            element={<Transactions />}
+                          />
+                          <Route path="/bills" element={<Bills />} />
+                          <Route
+                            path="/bill-blocker"
+                            element={<BillBlocker />}
+                          />
+                          <Route path="/stock" element={<Stock />} />
+                          <Route path="/customers" element={<Customers />} />
+                          <Route path="/reports" element={<Reports />} />
+                          <Route path="/analytics" element={<Analytics />} />
+                          <Route
+                            path="/data-management"
+                            element={<DataManagement />}
+                          />
+                          <Route path="/settings" element={<Settings />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </BrowserRouter>
+                    )}
                   </BillProvider>
                 </IterationMonitorProvider>
               </CustomerProvider>

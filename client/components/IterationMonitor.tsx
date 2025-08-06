@@ -27,16 +27,30 @@ interface IterationMonitorContextType {
   completedIterations: IterationData[];
   startIteration: (billNumber: number, targetTotal: number) => string;
   updateIteration: (id: string, data: Partial<IterationData>) => void;
-  logIteration: (id: string, iteration: number, message: string, type?: "info" | "success" | "warning" | "error") => void;
+  logIteration: (
+    id: string,
+    iteration: number,
+    message: string,
+    type?: "info" | "success" | "warning" | "error",
+  ) => void;
   completeIteration: (id: string, finalData: Partial<IterationData>) => void;
   clearHistory: () => void;
 }
 
-const IterationMonitorContext = createContext<IterationMonitorContextType | null>(null);
+const IterationMonitorContext =
+  createContext<IterationMonitorContextType | null>(null);
 
-export function IterationMonitorProvider({ children }: { children: React.ReactNode }) {
-  const [currentIterations, setCurrentIterations] = useState<IterationData[]>([]);
-  const [completedIterations, setCompletedIterations] = useState<IterationData[]>([]);
+export function IterationMonitorProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [currentIterations, setCurrentIterations] = useState<IterationData[]>(
+    [],
+  );
+  const [completedIterations, setCompletedIterations] = useState<
+    IterationData[]
+  >([]);
 
   const startIteration = (billNumber: number, targetTotal: number): string => {
     const id = `iter_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -52,17 +66,22 @@ export function IterationMonitorProvider({ children }: { children: React.ReactNo
       logs: [],
     };
 
-    setCurrentIterations(prev => [...prev, newIteration]);
+    setCurrentIterations((prev) => [...prev, newIteration]);
     return id;
   };
 
   const updateIteration = (id: string, data: Partial<IterationData>) => {
-    setCurrentIterations(prev =>
-      prev.map(iter => iter.id === id ? { ...iter, ...data } : iter)
+    setCurrentIterations((prev) =>
+      prev.map((iter) => (iter.id === id ? { ...iter, ...data } : iter)),
     );
   };
 
-  const logIteration = (id: string, iteration: number, message: string, type: "info" | "success" | "warning" | "error" = "info") => {
+  const logIteration = (
+    id: string,
+    iteration: number,
+    message: string,
+    type: "info" | "success" | "warning" | "error" = "info",
+  ) => {
     const logEntry = {
       iteration,
       message,
@@ -70,22 +89,22 @@ export function IterationMonitorProvider({ children }: { children: React.ReactNo
       type,
     };
 
-    setCurrentIterations(prev =>
-      prev.map(iter => 
-        iter.id === id 
-          ? { 
-              ...iter, 
+    setCurrentIterations((prev) =>
+      prev.map((iter) =>
+        iter.id === id
+          ? {
+              ...iter,
               logs: [...iter.logs, logEntry],
-              currentIteration: Math.max(iter.currentIteration, iteration)
+              currentIteration: Math.max(iter.currentIteration, iteration),
             }
-          : iter
-      )
+          : iter,
+      ),
     );
   };
 
   const completeIteration = (id: string, finalData: Partial<IterationData>) => {
-    setCurrentIterations(prev => {
-      const iterationToComplete = prev.find(iter => iter.id === id);
+    setCurrentIterations((prev) => {
+      const iterationToComplete = prev.find((iter) => iter.id === id);
       if (iterationToComplete) {
         const completedIteration = {
           ...iterationToComplete,
@@ -93,9 +112,12 @@ export function IterationMonitorProvider({ children }: { children: React.ReactNo
           status: "completed" as const,
           endTime: Date.now(),
         };
-        
-        setCompletedIterations(prevCompleted => [...prevCompleted, completedIteration]);
-        return prev.filter(iter => iter.id !== id);
+
+        setCompletedIterations((prevCompleted) => [
+          ...prevCompleted,
+          completedIteration,
+        ]);
+        return prev.filter((iter) => iter.id !== id);
       }
       return prev;
     });
@@ -126,7 +148,9 @@ export function IterationMonitorProvider({ children }: { children: React.ReactNo
 export function useIterationMonitor() {
   const context = useContext(IterationMonitorContext);
   if (!context) {
-    throw new Error("useIterationMonitor must be used within IterationMonitorProvider");
+    throw new Error(
+      "useIterationMonitor must be used within IterationMonitorProvider",
+    );
   }
   return context;
 }

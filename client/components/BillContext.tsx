@@ -79,13 +79,17 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
           // Ensure we have valid bill data
           if (Array.isArray(parsedBills)) {
             setBills(parsedBills);
-            console.log(`Loaded ${parsedBills.length} bills for account ${activeAccount.name}`);
+            console.log(
+              `Loaded ${parsedBills.length} bills for account ${activeAccount.name}`,
+            );
           } else {
             console.warn("Invalid bills data found, starting with empty array");
             setBills([]);
           }
         } else {
-          console.log(`No saved bills found for account ${activeAccount.name}, starting with empty array`);
+          console.log(
+            `No saved bills found for account ${activeAccount.name}, starting with empty array`,
+          );
           setBills([]);
         }
       } catch (error) {
@@ -111,7 +115,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
             const parsedBills = JSON.parse(saved);
             if (Array.isArray(parsedBills)) {
               setBills(parsedBills);
-              console.log(`Force reloaded ${parsedBills.length} bills for account ${activeAccount.name}`);
+              console.log(
+                `Force reloaded ${parsedBills.length} bills for account ${activeAccount.name}`,
+              );
             }
           } else {
             setBills([]);
@@ -123,8 +129,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       }
     };
 
-    window.addEventListener('account-switched', handleAccountSwitch);
-    return () => window.removeEventListener('account-switched', handleAccountSwitch);
+    window.addEventListener("account-switched", handleAccountSwitch);
+    return () =>
+      window.removeEventListener("account-switched", handleAccountSwitch);
   }, [activeAccount]);
 
   const addBill = (bill: Bill) => {
@@ -168,7 +175,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     if (availableItems.length < 2) {
       // If not enough unique items available, use all available items with stock
       availableItems = stockToUse.filter((item) => item.availableQuantity > 0);
-      console.log(`Not enough unique items (${availableItems.length}), using all available items with stock: ${availableItems.length}`);
+      console.log(
+        `Not enough unique items (${availableItems.length}), using all available items with stock: ${availableItems.length}`,
+      );
     }
 
     if (availableItems.length === 0) {
@@ -185,7 +194,12 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     if (billNumber && iterationMonitor) {
       monitorId = iterationMonitor.startIteration(billNumber, targetTotal);
       iterationMonitor.updateIteration(monitorId, { status: "running" });
-      iterationMonitor.logIteration(monitorId, 0, `Starting 200 iterations for bill ${billNumber} with target ₹${targetTotal}`, "info");
+      iterationMonitor.logIteration(
+        monitorId,
+        0,
+        `Starting 200 iterations for bill ${billNumber} with target ₹${targetTotal}`,
+        "info",
+      );
     }
 
     // Complete 200 iterations to find the best combination
@@ -194,7 +208,12 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
       // Log iteration progress
       if (monitorId && iterationMonitor) {
-        iterationMonitor.logIteration(monitorId, attempt + 1, `Iteration ${attempt + 1}/200: Trying new combination...`, "info");
+        iterationMonitor.logIteration(
+          monitorId,
+          attempt + 1,
+          `Iteration ${attempt + 1}/200: Trying new combination...`,
+          "info",
+        );
       }
 
       // Shuffle items randomly each iteration (equivalent to pandas sample(frac=1))
@@ -217,7 +236,11 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       const maxItemsToTry = Math.min(shuffledItems.length, maxItems);
 
       // Try to select items in shuffled order
-      for (let itemIndex = 0; itemIndex < shuffledItems.length && selectedItems.length < maxItems; itemIndex++) {
+      for (
+        let itemIndex = 0;
+        itemIndex < shuffledItems.length && selectedItems.length < maxItems;
+        itemIndex++
+      ) {
         const item = shuffledItems[itemIndex];
 
         // Try different quantities (up to 2 as per requirements)
@@ -229,7 +252,8 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
           const newTotal = currentTotal + itemCost;
 
           // Be more lenient for the first 2 items to ensure minimum requirement
-          const currentTolerance = selectedItems.length < 2 ? tolerance * 2 : tolerance;
+          const currentTolerance =
+            selectedItems.length < 2 ? tolerance * 2 : tolerance;
 
           // Check if this addition keeps us within bounds
           if (newTotal <= targetTotal + currentTolerance) {
@@ -259,10 +283,12 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       // If we still don't have 2 items, force add the cheapest available items
       if (selectedItems.length < 2 && shuffledItems.length >= 2) {
         const remainingItems = shuffledItems.filter(
-          item => !selectedItems.some(selected => selected.id === item.id)
+          (item) => !selectedItems.some((selected) => selected.id === item.id),
         );
 
-        const sortedRemaining = remainingItems.sort((a, b) => a.price - b.price);
+        const sortedRemaining = remainingItems.sort(
+          (a, b) => a.price - b.price,
+        );
 
         for (const item of sortedRemaining) {
           if (selectedItems.length >= 2) break;
@@ -300,7 +326,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
               items: selectedItems,
               total: currentTotal,
               difference: finalDiff,
-            }
+            },
           });
         }
 
@@ -310,14 +336,24 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
             `Found perfect match on iteration ${attempt + 1}, continuing for optimization...`,
           );
           if (monitorId && iterationMonitor) {
-            iterationMonitor.logIteration(monitorId, attempt + 1, `Perfect match found! Total: ₹${currentTotal}, difference: ₹0`, "success");
+            iterationMonitor.logIteration(
+              monitorId,
+              attempt + 1,
+              `Perfect match found! Total: ₹${currentTotal}, difference: ₹0`,
+              "success",
+            );
           }
         } else if (finalDiff <= tolerance && selectedItems.length >= 2) {
           console.log(
             `Found good match within ±${tolerance} on iteration ${attempt + 1}, continuing for optimization...`,
           );
           if (monitorId && iterationMonitor) {
-            iterationMonitor.logIteration(monitorId, attempt + 1, `Good match found! Total: ₹${currentTotal}, difference: ₹${finalDiff}`, "success");
+            iterationMonitor.logIteration(
+              monitorId,
+              attempt + 1,
+              `Good match found! Total: ₹${currentTotal}, difference: ₹${finalDiff}`,
+              "success",
+            );
           }
         }
       }
@@ -362,14 +398,21 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     // Complete iteration monitoring
     if (monitorId && iterationMonitor) {
       iterationMonitor.completeIteration(monitorId, {
-        bestMatch: bestMatch ? {
-          items: bestMatch.items,
-          total: bestMatch.total,
-          difference: closestDiff,
-        } : null,
+        bestMatch: bestMatch
+          ? {
+              items: bestMatch.items,
+              total: bestMatch.total,
+              difference: closestDiff,
+            }
+          : null,
         currentIteration: 200,
       });
-      iterationMonitor.logIteration(monitorId, 200, `Completed all 200 iterations. Final result: ${bestMatch.items.length} items, total: ₹${bestMatch.total}, difference: ₹${closestDiff}`, "success");
+      iterationMonitor.logIteration(
+        monitorId,
+        200,
+        `Completed all 200 iterations. Final result: ${bestMatch.items.length} items, total: ₹${bestMatch.total}, difference: ₹${closestDiff}`,
+        "success",
+      );
     }
 
     return bestMatch;
@@ -398,9 +441,19 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
             }))
         : [
             { id: 1, name: "Rice (1kg)", price: 80, availableQuantity: 150 },
-            { id: 2, name: "Wheat Flour (1kg)", price: 45, availableQuantity: 200 },
+            {
+              id: 2,
+              name: "Wheat Flour (1kg)",
+              price: 45,
+              availableQuantity: 200,
+            },
             { id: 3, name: "Sugar (1kg)", price: 60, availableQuantity: 100 },
-            { id: 4, name: "Cooking Oil (1L)", price: 120, availableQuantity: 80 },
+            {
+              id: 4,
+              name: "Cooking Oil (1L)",
+              price: 120,
+              availableQuantity: 80,
+            },
             { id: 5, name: "Pulses (1kg)", price: 95, availableQuantity: 120 },
             { id: 6, name: "Tea (250g)", price: 180, availableQuantity: 60 },
             { id: 7, name: "Salt (1kg)", price: 25, availableQuantity: 300 },
@@ -459,11 +512,15 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         currentTotal = 0;
 
         // Get available items with stock
-        const availableForFallback = stockToUse.filter(item => item.availableQuantity > 0);
+        const availableForFallback = stockToUse.filter(
+          (item) => item.availableQuantity > 0,
+        );
 
         if (availableForFallback.length >= 2) {
           // Sort by price and take 2 cheapest items
-          const sortedItems = availableForFallback.sort((a, b) => a.price - b.price);
+          const sortedItems = availableForFallback.sort(
+            (a, b) => a.price - b.price,
+          );
 
           for (let i = 0; i < Math.min(2, sortedItems.length); i++) {
             const item = sortedItems[i];
