@@ -1263,6 +1263,275 @@ export default function Bills() {
     }
   };
 
+  // Generate PDF Book with date range
+  const generatePdfBook = async () => {
+    let filteredBills = bills.filter((b) => b.status === "generated");
+
+    // Filter by date range if provided
+    if (pdfBookOptions.fromDate || pdfBookOptions.toDate) {
+      filteredBills = filterBillsByDateRange(
+        filteredBills,
+        pdfBookOptions.fromDate,
+        pdfBookOptions.toDate,
+      );
+
+      if (filteredBills.length === 0) {
+        alert("No bills found in the selected date range.");
+        return;
+      }
+    }
+
+    if (filteredBills.length === 0) {
+      alert("No generated bills found for PDF book creation.");
+      return;
+    }
+
+    const confirmed = confirm(
+      `Create PDF book with ${filteredBills.length} bills?${(pdfBookOptions.fromDate || pdfBookOptions.toDate) ? ` (Date range: ${pdfBookOptions.fromDate || "All"} to ${pdfBookOptions.toDate || "All"})` : ""} Each bill will be on a separate page.`,
+    );
+
+    if (!confirmed) return;
+
+    try {
+      // Get invoice settings from localStorage
+      const activeAccount = JSON.parse(localStorage.getItem("activeAccount") || "null");
+      let invoiceSettings = null;
+      if (activeAccount) {
+        try {
+          const storageKey = `settings_invoice_${activeAccount.id}`;
+          const saved = localStorage.getItem(storageKey);
+          if (saved) {
+            invoiceSettings = JSON.parse(saved);
+          }
+        } catch (error) {
+          console.warn("Could not load invoice settings for PDF book:", error);
+        }
+      }
+
+      // Create PDF with jsPDF
+      const pdf = new jsPDF("p", "mm", "a4");
+      let isFirstPage = true;
+
+      for (const bill of filteredBills) {
+        if (!isFirstPage) {
+          pdf.addPage();
+        }
+
+        // Create HTML content for each bill
+        const htmlContent = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <title>Bill ${bill.billNumber}</title>
+            <style>
+              body {
+                font-family: Arial, sans-serif;
+                margin: 20mm;
+                color: #333;
+                line-height: 1.6;
+              }
+              .header {
+                text-align: center;
+                margin-bottom: 30px;
+                border-bottom: 2px solid #333;
+                padding-bottom: 15px;
+              }
+              .header h1 {
+                margin: 0 0 8px 0;
+                font-size: 20px;
+                color: #333;
+              }
+              .header h2 {
+                margin: 0 0 4px 0;
+                font-size: 16px;
+                color: #666;
+              }
+              .header p {
+                margin: 0;
+                color: #888;
+                font-size: 12px;
+              }
+              .bill-info {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 15px;
+                margin: 20px 0;
+                padding: 15px;
+                background-color: #f9f9f9;
+                border-radius: 6px;
+              }
+              .bill-info div {
+                margin: 3px 0;
+                font-size: 14px;
+              }
+              .bill-info strong {
+                color: #333;
+              }
+              .items-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 20px 0;
+                box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+              }
+              .items-table th, .items-table td {
+                border: 1px solid #ddd;
+                padding: 8px 6px;
+                text-align: left;
+                font-size: 13px;
+              }
+              .items-table th {
+                background-color: #f8f9fa;
+                font-weight: bold;
+                color: #333;
+              }
+              .items-table tr:nth-child(even) {
+                background-color: #f9f9f9;
+              }
+              .total-row {
+                background-color: #e9ecef !important;
+                font-weight: bold;
+                font-size: 14px;
+              }
+              .footer {
+                margin-top: 40px;
+                padding-top: 15px;
+                border-top: 1px solid #ddd;
+                font-size: 11px;
+                color: #666;
+                text-align: center;
+              }
+              .signature-container {
+                display: flex;
+                justify-content: space-between;
+                align-items: end;
+                margin-top: 30px;
+              }
+              .signature-image {
+                max-width: 120px;
+                max-height: 50px;
+              }
+              .authorized-signature {
+                text-align: center;
+                font-size: 9px;
+                margin-top: 3px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>Bill of Supply</h1>
+              <h2>${invoiceSettings?.agencyName || bill.headerInfo?.agencyName || "Sadhana Agency"}</h2>
+              <p>${invoiceSettings?.agencyAddress || bill.headerInfo?.address || "Harsila (Dewalchaura), Bageshwar, Uttarakhand"}</p>
+              ${invoiceSettings?.phone ? `<p>Phone: ${invoiceSettings.phone}</p>` : ''}
+              ${invoiceSettings?.email ? `<p>Email: ${invoiceSettings.email}</p>` : ''}
+              ${invoiceSettings?.gstNumber ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ''}
+            </div>
+
+            <div class="bill-info">
+              <div><strong>Bill No:</strong> ${bill.billNumber}</div>
+              <div><strong>Date:</strong> ${bill.date}</div>
+              <div><strong>Customer:</strong> ${bill.customerName}</div>
+              <div><strong>Payment Mode:</strong> ${bill.paymentMode}</div>
+            </div>
+
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Sr. No.</th>
+                  <th>Item</th>
+                  <th>Qty</th>
+                  <th>Rate</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${bill.items
+                  .map(
+                    (item: any, index: number) => `
+                  <tr>
+                    <td>${index + 1}</td>
+                    <td>${item.name}</td>
+                    <td>${item.quantity}</td>
+                    <td>₹${item.price}</td>
+                    <td>₹${item.total}</td>
+                  </tr>
+                `,
+                  )
+                  .join("")}
+              </tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td colspan="4"><strong>Sub Total:</strong></td>
+                  <td><strong>₹${bill.subTotal}</strong></td>
+                </tr>
+              </tfoot>
+            </table>
+
+            <div class="footer">
+              <p>${invoiceSettings?.declaration || bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
+              ${invoiceSettings?.signatureImageUrl ? `
+                <div class="signature-container">
+                  <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+                  <div>
+                    <img src="${invoiceSettings.signatureImageUrl}" alt="Signature" class="signature-image" />
+                    ${invoiceSettings.authorizedSignatureText ? `<div class="authorized-signature">${invoiceSettings.authorizedSignatureText}</div>` : ''}
+                  </div>
+                </div>
+              ` : `
+                <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+              `}
+            </div>
+          </body>
+          </html>
+        `;
+
+        // Create temporary element for html2canvas
+        const tempDiv = document.createElement("div");
+        tempDiv.innerHTML = htmlContent;
+        tempDiv.style.position = "absolute";
+        tempDiv.style.left = "-9999px";
+        tempDiv.style.width = "170mm";
+        tempDiv.style.backgroundColor = "white";
+        document.body.appendChild(tempDiv);
+
+        // Wait for styles to load
+        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        // Generate canvas
+        const canvas = await html2canvas(tempDiv, {
+          scale: 1.2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+        });
+
+        // Remove temporary element
+        document.body.removeChild(tempDiv);
+
+        // Add page to PDF
+        const imgData = canvas.toDataURL("image/png");
+        const pdfWidth = 210;
+        const imgWidth = pdfWidth;
+        const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+        isFirstPage = false;
+
+        // Add a small delay between pages
+        await new Promise((resolve) => setTimeout(resolve, 200));
+      }
+
+      // Save the PDF book
+      const fileName = `Bills_Book_${pdfBookOptions.fromDate || 'All'}_to_${pdfBookOptions.toDate || 'All'}_${new Date().toISOString().split("T")[0]}.pdf`;
+      pdf.save(fileName);
+
+      alert(`PDF book with ${filteredBills.length} bills created successfully!`);
+      setIsPdfBookDialogOpen(false);
+    } catch (error) {
+      console.error("Error generating PDF book:", error);
+      alert("Error generating PDF book. Please try again.");
+    }
+  };
+
   const generateMegaReport = async (format: "pdf" | "excel") => {
     const generatedBills = bills.filter((b) => b.status === "generated");
 
