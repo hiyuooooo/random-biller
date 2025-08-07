@@ -131,8 +131,14 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
             setCustomers(defaultCustomers);
           }
         } else {
-          // If no data for this account, start with default customers
-          setCustomers(defaultCustomers);
+          // If no data for this account, start with account-specific defaults
+          if (activeAccount.id === "2") {
+            // Himalaya Traders - different customers
+            setCustomers([]);
+          } else {
+            // Sadhana Agency - default customers
+            setCustomers(defaultCustomers);
+          }
         }
       } catch {
         setCustomers(defaultCustomers);
