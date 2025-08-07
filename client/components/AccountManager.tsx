@@ -136,12 +136,13 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
   }, [activeAccount]);
 
   const setActiveAccount = (account: Account) => {
-    console.log(`Switching to account: ${account.name} (ID: ${account.id})`);
+    console.log(`AccountManager: Switching to account: ${account.name} (ID: ${account.id})`);
+    console.log(`AccountManager: Previous account:`, activeAccount?.name);
 
     // Force save current account data before switching
     try {
       if (activeAccount) {
-        console.log(`Saving data for current account: ${activeAccount.name}`);
+        console.log(`AccountManager: Saving data for current account: ${activeAccount.name} (ID: ${activeAccount.id})`);
         // Force all contexts to save their current data
         window.dispatchEvent(
           new CustomEvent("force-save-account-data", {
@@ -150,7 +151,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
         );
       }
     } catch (error) {
-      console.warn("Error during account switch preparation:", error);
+      console.warn("AccountManager: Error during account switch preparation:", error);
     }
 
     // Update account states
@@ -161,7 +162,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
 
     // Force immediate data refresh for new account
     setTimeout(() => {
-      console.log(`Account switch to ${account.name} completed`);
+      console.log(`AccountManager: Account switch to ${account.name} (ID: ${account.id}) completed, dispatching events`);
       // Dispatch multiple events to ensure all contexts refresh
       window.dispatchEvent(new Event("account-switched"));
       window.dispatchEvent(
