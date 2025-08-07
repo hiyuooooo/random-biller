@@ -194,17 +194,18 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
           if (saved) {
             const parsedStock = JSON.parse(saved);
             if (Array.isArray(parsedStock)) {
-              setStockItems(parsedStock);
+              setStockItems([...parsedStock]); // Create new array reference to force re-render
               console.log(
                 `Force reloaded ${parsedStock.length} stock items for account ${activeAccount.name}`,
               );
             }
           } else {
-            setStockItems(defaultStock);
+            setStockItems([...defaultStock]); // Create new array reference to force re-render
+            console.log(`No data found for account ${activeAccount.name}, loading default stock`);
           }
         } catch (error) {
           console.error("Error force reloading stock:", error);
-          setStockItems(defaultStock);
+          setStockItems([...defaultStock]); // Create new array reference to force re-render
         }
       }
     };
