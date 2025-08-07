@@ -200,24 +200,10 @@ export default function Settings() {
         }
 
         if (savedInvoice) {
-          setInvoiceSettings(JSON.parse(savedInvoice));
+          setInvoiceSettings(ensureInvoiceSettingsDefaults(JSON.parse(savedInvoice), activeAccount));
         } else {
           // Use account data as defaults for new accounts
-          setInvoiceSettings({
-            headerTitle: "Bill of Supply",
-            agencyName: activeAccount.name || "",
-            agencyAddress: activeAccount.address || "",
-            phone: activeAccount.phone || "+91 98765 43210",
-            email: activeAccount.email || "contact@agency.com",
-            declaration:
-              activeAccount.footerText ||
-              "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
-            signatureText: "Authorized Signature",
-            logoUrl: "",
-            signatureImageUrl: "",
-            authorizedSignatureText: "",
-            gstNumber: "",
-          });
+          setInvoiceSettings(ensureInvoiceSettingsDefaults(null, activeAccount));
         }
       } catch {
         // Reset to defaults on error - using account data when available
