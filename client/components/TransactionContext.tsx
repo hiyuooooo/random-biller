@@ -146,13 +146,14 @@ export function TransactionProvider({
         if (saved) {
           setTransactions(JSON.parse(saved));
         } else {
-          // Create account-specific transaction data
+          // Create account-specific transaction data and save immediately
           if (activeAccount.id === "1") {
             // Sadhana Agency - default transactions
             setTransactions(defaultTransactions);
+            localStorage.setItem(storageKey, JSON.stringify(defaultTransactions));
           } else {
             // Himalaya Traders - different transactions
-            setTransactions([
+            const himalayaTransactions = [
               {
                 id: 201,
                 date: "22-01-2024",
@@ -169,7 +170,9 @@ export function TransactionProvider({
                 paymentMode: "GPay" as const,
                 isValid: true,
               },
-            ]);
+            ];
+            setTransactions(himalayaTransactions);
+            localStorage.setItem(storageKey, JSON.stringify(himalayaTransactions));
           }
         }
       } catch (error) {
