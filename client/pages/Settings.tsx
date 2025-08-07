@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { useAccount } from "@/components/AccountManager";
 import {
   Card,
   CardContent,
