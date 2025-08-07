@@ -154,7 +154,6 @@ export function TransactionProvider({
           setTransactions(defaultTransactions);
         }
       } catch (error) {
-        console.error(`TransactionContext: Error loading transactions:`, error);
         setTransactions(defaultTransactions);
       }
     } else {
