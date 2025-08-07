@@ -190,6 +190,58 @@ export default function Reports() {
     });
   }, [bills, searchTerm]);
 
+  const getInvoiceSettings = () => {
+    if (!activeAccount) return null;
+    try {
+      const storageKey = `settings_invoice_${activeAccount.id}`;
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+      console.warn("Could not load invoice settings:", error);
+      return null;
+    }
+  };
+
+  const generateMegaReportExcel = () => {
+    const invoiceSettings = getInvoiceSettings();
+    const reportData = bills.map((bill) => ({
+      "Date": bill.date,
+      "Bill No": bill.billNumber,
+      "Customer Name": bill.customerName,
+      "Sub Total": bill.subTotal,
+      "Payment Mode": bill.paymentMode,
+      ...(includeGST && invoiceSettings?.gstNumber ? {"GST Number": invoiceSettings.gstNumber} : {})
+    }));
+
+    // Add summary row
+    const totalSum = bills.reduce((sum, bill) => sum + bill.subTotal, 0);
+    reportData.push({
+      "Date": "",
+      "Bill No": "",
+      "Customer Name": "TOTAL",
+      "Sub Total": totalSum,
+      "Payment Mode": "",
+      ...(includeGST && invoiceSettings?.gstNumber ? {"GST Number": ""} : {})
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(reportData);
+    const workbook = XLSX.utils.book_new();
+
+    // Add account information as header
+    const headerInfo = [
+      [`Mega Report - ${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}`],
+      [invoiceSettings?.agencyAddress || activeAccount?.address || ""],
+      ...(includeGST && invoiceSettings?.gstNumber ? [[`GST: ${invoiceSettings.gstNumber}`]] : []),
+      [""], // Empty row
+    ];
+
+    XLSX.utils.sheet_add_aoa(worksheet, headerInfo, { origin: "A1" });
+    XLSX.utils.sheet_add_json(worksheet, reportData, { origin: `A${headerInfo.length + 1}`, skipHeader: false });
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Mega Report");
+    XLSX.writeFile(workbook, `Mega_Report_${new Date().toISOString().split("T")[0]}.xlsx`);
+  };
+
   const generateBillReport = () => {
     const reportData = bills.map((bill) => ({
       "Bill No": bill.billNumber,
