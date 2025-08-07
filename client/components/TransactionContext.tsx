@@ -148,7 +148,6 @@ export function TransactionProvider({
             setTransactions(defaultTransactions);
           } else {
             setTransactions(parsedTransactions);
-            console.log(`TransactionContext: Loaded ${parsedTransactions.length} saved transactions`);
           }
         } else {
           // Start with default transactions for new accounts
