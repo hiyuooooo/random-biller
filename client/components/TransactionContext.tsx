@@ -240,8 +240,7 @@ export function TransactionProvider({
         }
       } catch (error) {
         console.error("Error force reloading transactions:", error);
-        const accountDefaults = getDefaultTransactionsForAccount(accountId);
-        setTransactions([...accountDefaults]); // Create new array reference to force re-render
+        setTransactions([...defaultTransactions]); // Create new array reference to force re-render
       }
     };
 
