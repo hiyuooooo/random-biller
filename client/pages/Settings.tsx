@@ -111,8 +111,8 @@ export default function Settings() {
         ? JSON.parse(saved)
         : {
             headerTitle: "Bill of Supply",
-            agencyName: activeAccount.name,
-            agencyAddress: activeAccount.address,
+            agencyName: activeAccount.name || "",
+            agencyAddress: activeAccount.address || "",
             phone: activeAccount.phone || "+91 98765 43210",
             email: activeAccount.email || "contact@agency.com",
             declaration:
