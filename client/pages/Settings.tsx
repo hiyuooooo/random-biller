@@ -521,6 +521,11 @@ export default function Settings() {
                             Email: {invoiceSettings.email}
                           </p>
                         )}
+                        {invoiceSettings.gstNumber && (
+                          <p className="text-xs">
+                            GST: {invoiceSettings.gstNumber}
+                          </p>
+                        )}
                       </div>
                       <div className="mt-8 pt-4 border-t text-xs">
                         <p>{invoiceSettings.declaration}</p>
