@@ -584,6 +584,17 @@ export default function Transactions() {
             </p>
           </div>
           <div className="flex space-x-2">
+            <Button
+              onClick={() => {
+                const otherAccount = accounts.find(acc => acc.id !== activeAccount?.id);
+                if (otherAccount) setActiveAccount(otherAccount);
+              }}
+              variant="secondary"
+              size="sm"
+              className="bg-green-100 hover:bg-green-200 text-green-800"
+            >
+              🔄 Switch to {accounts.find(acc => acc.id !== activeAccount?.id)?.name}
+            </Button>
             <label>
               <Button variant="outline" size="sm" asChild>
                 <span>
