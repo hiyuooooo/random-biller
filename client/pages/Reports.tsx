@@ -677,6 +677,10 @@ export default function Reports() {
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </Button>
+              <Button onClick={generateMegaReportExcel} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Download Excel
+              </Button>
               <Button variant="outline" onClick={() => setActiveTab("processor")}>
                 <Code className="h-4 w-4 mr-2" />
                 HTML Processor
