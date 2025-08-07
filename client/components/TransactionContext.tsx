@@ -237,7 +237,7 @@ export function TransactionProvider({
                 date: "22-01-2024",
                 customerName: "Mountain Resort",
                 total: 2800,
-                paymentMode: "Bank",
+                paymentMode: "Bank" as const,
                 isValid: true,
               },
               {
@@ -245,7 +245,7 @@ export function TransactionProvider({
                 date: "21-01-2024",
                 customerName: "Hill Station Shop",
                 total: 1650,
-                paymentMode: "GPay",
+                paymentMode: "GPay" as const,
                 isValid: true,
               },
             ];
