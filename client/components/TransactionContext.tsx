@@ -141,16 +141,24 @@ export function TransactionProvider({
       try {
         const storageKey = `transactions_${activeAccount.id}`;
         const saved = localStorage.getItem(storageKey);
+        console.log(`TransactionContext: Loading data for account ${activeAccount.name} (ID: ${activeAccount.id})`);
+        console.log(`TransactionContext: Storage key: ${storageKey}`);
+        console.log(`TransactionContext: Saved data exists:`, !!saved);
         if (saved) {
-          setTransactions(JSON.parse(saved));
+          const parsedTransactions = JSON.parse(saved);
+          setTransactions(parsedTransactions);
+          console.log(`TransactionContext: Loaded ${parsedTransactions.length} saved transactions`);
         } else {
           // Start with default transactions for new accounts
           setTransactions(defaultTransactions);
+          console.log(`TransactionContext: No saved data, loaded ${defaultTransactions.length} default transactions`);
         }
-      } catch {
+      } catch (error) {
+        console.error(`TransactionContext: Error loading transactions:`, error);
         setTransactions(defaultTransactions);
       }
     } else {
+      console.log(`TransactionContext: No active account, clearing transactions`);
       setTransactions([]);
     }
   }, [activeAccount?.id]);
