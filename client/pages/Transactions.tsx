@@ -194,24 +194,6 @@ export default function Transactions() {
   };
   const [editingId, setEditingId] = useState<number | null>(null);
 
-  // Auto-trigger test if URL parameter is present
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('test') === 'switch' && activeAccount && accounts.length > 1) {
-      // Remove the parameter and trigger test after brief delay
-      window.history.replaceState({}, '', window.location.pathname);
-      setTimeout(() => {
-        const currentStats = `Current: ${activeAccount?.name} - ${transactions.length} transactions, ₹${transactions.reduce((sum, t) => sum + Number(t.total), 0).toLocaleString()}`;
-        console.log(`BEFORE SWITCH - ${currentStats}`);
-
-        const otherAccount = accounts.find(acc => acc.id !== activeAccount?.id);
-        if (otherAccount) {
-          console.log(`SWITCHING from ${activeAccount?.name} to ${otherAccount.name}`);
-          setActiveAccount(otherAccount);
-        }
-      }, 1000);
-    }
-  }, [activeAccount, accounts, transactions, setActiveAccount]);
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
   const [customerFilter, setCustomerFilter] = useState("");
   const [paymentModeFilter, setPaymentModeFilter] = useState("all");
