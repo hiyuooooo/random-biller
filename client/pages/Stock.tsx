@@ -584,6 +584,17 @@ export default function Stock() {
           </div>
           <div className="flex space-x-2">
             <Button
+              onClick={() => {
+                const otherAccount = accounts.find(acc => acc.id !== activeAccount?.id);
+                if (otherAccount) setActiveAccount(otherAccount);
+              }}
+              variant="secondary"
+              size="sm"
+              className="bg-blue-100 hover:bg-blue-200 text-blue-800"
+            >
+              🔄 Switch to {accounts.find(acc => acc.id !== activeAccount?.id)?.name}
+            </Button>
+            <Button
               onClick={() => setIsQuickAddOpen(true)}
               className="bg-green-600 hover:bg-green-700"
             >
