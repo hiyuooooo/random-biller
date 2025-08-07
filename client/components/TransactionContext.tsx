@@ -118,7 +118,15 @@ export function TransactionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { activeAccount } = useAccount();
+  // Use a try-catch to handle context initialization timing
+  let activeAccount: any = null;
+  try {
+    const accountContext = useAccount();
+    activeAccount = accountContext.activeAccount;
+  } catch (error) {
+    // Context not ready yet, will retry when it becomes available
+    console.log("AccountContext not ready in TransactionProvider:", error.message);
+  }
 
   // Initialize with empty array and load data in useEffect
   const [transactions, setTransactions] = useState<Transaction[]>([]);
