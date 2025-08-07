@@ -122,6 +122,7 @@ export default function Settings() {
             logoUrl: "",
             signatureImageUrl: "",
             authorizedSignatureText: "",
+            gstNumber: "",
           };
     } catch {
       return {
