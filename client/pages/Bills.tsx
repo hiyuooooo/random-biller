@@ -2711,6 +2711,24 @@ export default function Bills() {
                     </Label>
                   </div>
 
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="includeGST"
+                      checked={megaReportOptions.includeGST}
+                      onChange={(e) =>
+                        setMegaReportOptions((prev) => ({
+                          ...prev,
+                          includeGST: e.target.checked,
+                        }))
+                      }
+                      className="rounded"
+                    />
+                    <Label htmlFor="includeGST">
+                      Include GST Information
+                    </Label>
+                  </div>
+
                   <div className="bg-muted/30 p-3 rounded-lg">
                     <h4 className="font-medium mb-2 text-sm">
                       Preview Settings
