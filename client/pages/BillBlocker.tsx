@@ -71,6 +71,29 @@ export default function BillBlocker() {
     }
   }, [blockedNumbers, activeAccount]);
 
+  // Function to load account-specific data
+  const loadAccountData = (accountId: string) => {
+    try {
+      const numberKey = `billBlocker_startingNumber_${accountId}`;
+      const numbersKey = `billBlocker_blockedNumbers_${accountId}`;
+
+      const savedNumber = localStorage.getItem(numberKey);
+      const savedNumbers = localStorage.getItem(numbersKey);
+
+      if (savedNumber) setStartingBillNumber(savedNumber);
+      else setStartingBillNumber("1001");
+
+      if (savedNumbers) setBlockedNumbers(JSON.parse(savedNumbers));
+      else setBlockedNumbers([1005, 1010, 1015, 1020, 1025]);
+
+      console.log(`Force reloaded BillBlocker data for account ${accountId}`);
+    } catch (error) {
+      console.error("Error force reloading BillBlocker data:", error);
+      setStartingBillNumber("1001");
+      setBlockedNumbers([1005, 1010, 1015, 1020, 1025]);
+    }
+  };
+
   // Load data when switching accounts
   useEffect(() => {
     if (activeAccount) {
@@ -108,28 +131,6 @@ export default function BillBlocker() {
       const accountId = event.detail?.accountId;
       if (accountId) {
         loadAccountData(accountId);
-      }
-    };
-
-    const loadAccountData = (accountId: string) => {
-      try {
-        const numberKey = `billBlocker_startingNumber_${accountId}`;
-        const numbersKey = `billBlocker_blockedNumbers_${accountId}`;
-
-        const savedNumber = localStorage.getItem(numberKey);
-        const savedNumbers = localStorage.getItem(numbersKey);
-
-        if (savedNumber) setStartingBillNumber(savedNumber);
-        else setStartingBillNumber("1001");
-
-        if (savedNumbers) setBlockedNumbers(JSON.parse(savedNumbers));
-        else setBlockedNumbers([1005, 1010, 1015, 1020, 1025]);
-
-        console.log(`Force reloaded BillBlocker data for account ${accountId}`);
-      } catch (error) {
-        console.error("Error force reloading BillBlocker data:", error);
-        setStartingBillNumber("1001");
-        setBlockedNumbers([1005, 1010, 1015, 1020, 1025]);
       }
     };
 
