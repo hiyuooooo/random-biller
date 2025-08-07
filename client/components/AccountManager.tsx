@@ -148,7 +148,6 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
         );
       }
     } catch (error) {
-      console.warn("AccountManager: Error during account switch preparation:", error);
     }
 
     // Update account states
