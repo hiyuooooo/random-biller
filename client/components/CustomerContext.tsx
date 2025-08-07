@@ -207,8 +207,13 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
             );
           }
         } else {
-          setCustomers([...defaultCustomers]); // Create new array reference to force re-render
-          console.log(`No customers found for account ${accountId}, loading defaults`);
+          if (accountId === "2") {
+            setCustomers([]); // Himalaya Traders - empty customers
+            console.log(`No customers found for account ${accountId}, starting empty`);
+          } else {
+            setCustomers([...defaultCustomers]); // Sadhana Agency - default customers
+            console.log(`No customers found for account ${accountId}, loading defaults`);
+          }
         }
       } catch (error) {
         console.error("Error force reloading customers:", error);
