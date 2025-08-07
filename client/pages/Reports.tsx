@@ -164,6 +164,7 @@ export default function Reports() {
     from: "",
     to: "",
   });
+  const [includeGST, setIncludeGST] = useState(false);
   const { bills } = useBill();
   const navigate = useNavigate();
 
