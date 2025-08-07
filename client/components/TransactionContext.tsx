@@ -177,6 +177,11 @@ export function TransactionProvider({
       try {
         const storageKey = `transactions_${activeAccount.id}`;
         const saved = localStorage.getItem(storageKey);
+
+        // Clear and reload for testing - remove this after demo
+        if (activeAccount.id === "2" && saved === "[]") {
+          localStorage.removeItem(storageKey);
+        }
         if (saved) {
           const parsedTransactions = JSON.parse(saved);
           // If saved data is empty array, load account-specific defaults
