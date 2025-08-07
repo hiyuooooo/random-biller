@@ -1258,12 +1258,28 @@ export default function Bills() {
     }
 
     if (format === "excel") {
-      // Excel export
+      // Get invoice settings for account-specific data
+      const activeAccount = JSON.parse(localStorage.getItem("activeAccount") || "null");
+      let invoiceSettings = null;
+      if (activeAccount) {
+        try {
+          const storageKey = `settings_invoice_${activeAccount.id}`;
+          const saved = localStorage.getItem(storageKey);
+          if (saved) {
+            invoiceSettings = JSON.parse(saved);
+          }
+        } catch (error) {
+          console.warn("Could not load invoice settings for mega report:", error);
+        }
+      }
+
+      // Excel export with account data and GST
       const reportData = generatedBills.map((bill) => ({
         Date: bill.date,
         "Bill Number": bill.billNumber,
         "Customer Name": bill.customerName,
         "Bill Total": bill.subTotal,
+        "Payment Mode": bill.paymentMode,
       }));
 
       // Add total sum row
@@ -1276,15 +1292,28 @@ export default function Bills() {
         "Bill Number": "",
         "Customer Name": "TOTAL",
         "Bill Total": totalSum,
+        "Payment Mode": "",
       });
 
       const XLSX = await import("xlsx");
       const worksheet = XLSX.utils.json_to_sheet(reportData);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Bill Report");
+
+      // Add account information as header
+      const headerInfo = [
+        [`Mega Report - ${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}`],
+        [invoiceSettings?.agencyAddress || activeAccount?.address || ""],
+        ...(invoiceSettings?.gstNumber ? [[`GST: ${invoiceSettings.gstNumber}`]] : []),
+        [""], // Empty row
+      ];
+
+      XLSX.utils.sheet_add_aoa(worksheet, headerInfo, { origin: "A1" });
+      XLSX.utils.sheet_add_json(worksheet, reportData, { origin: `A${headerInfo.length + 1}`, skipHeader: false });
+
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Mega Report");
       XLSX.writeFile(
         workbook,
-        `Bill_Report_${new Date().toISOString().split("T")[0]}.xlsx`,
+        `Mega_Report_${new Date().toISOString().split("T")[0]}.xlsx`,
       );
     } else {
       // PDF export using HTML
