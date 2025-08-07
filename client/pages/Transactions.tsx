@@ -587,7 +587,14 @@ export default function Transactions() {
             <Button
               onClick={() => {
                 const otherAccount = accounts.find(acc => acc.id !== activeAccount?.id);
-                if (otherAccount) setActiveAccount(otherAccount);
+                console.log(`🔄 SWITCHING: From ${activeAccount?.name} (${activeAccount?.id}) to ${otherAccount?.name} (${otherAccount?.id})`);
+                console.log(`📊 BEFORE SWITCH: ${transactions.length} transactions`);
+                if (otherAccount) {
+                  setActiveAccount(otherAccount);
+                  setTimeout(() => {
+                    console.log(`📊 AFTER SWITCH: ${transactions.length} transactions`);
+                  }, 500);
+                }
               }}
               variant="secondary"
               size="sm"
