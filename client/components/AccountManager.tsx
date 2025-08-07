@@ -140,7 +140,6 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     // Force save current account data before switching
     try {
       if (activeAccount) {
-        console.log(`AccountManager: Saving data for current account: ${activeAccount.name} (ID: ${activeAccount.id})`);
         // Force all contexts to save their current data
         window.dispatchEvent(
           new CustomEvent("force-save-account-data", {
