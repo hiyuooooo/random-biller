@@ -178,22 +178,9 @@ export function TransactionProvider({
         const storageKey = `transactions_${activeAccount.id}`;
         const saved = localStorage.getItem(storageKey);
 
-        // Clear and reload for testing - remove this after demo
-        if (activeAccount.id === "2" && saved === "[]") {
-          localStorage.removeItem(storageKey);
-          const accountDefaults = getDefaultTransactionsForAccount(activeAccount.id);
-          setTransactions(accountDefaults);
-          return;
-        }
         if (saved) {
           const parsedTransactions = JSON.parse(saved);
-          // If saved data is empty array, load account-specific defaults
-          if (Array.isArray(parsedTransactions) && parsedTransactions.length === 0) {
-            const accountDefaults = getDefaultTransactionsForAccount(activeAccount.id);
-            setTransactions(accountDefaults);
-          } else {
-            setTransactions(parsedTransactions);
-          }
+          setTransactions(parsedTransactions);
         } else {
           // Start with account-specific default transactions for new accounts
           const accountDefaults = getDefaultTransactionsForAccount(activeAccount.id);
