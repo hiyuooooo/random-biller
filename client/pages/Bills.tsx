@@ -2600,8 +2600,17 @@ export default function Bills() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => generatePDF(bill)}
+                                title="Download PDF"
                               >
                                 <Download className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => generateBillHTML(bill)}
+                                title="Download HTML"
+                              >
+                                <FileText className="h-3 w-3" />
                               </Button>
                               <Button
                                 size="sm"
