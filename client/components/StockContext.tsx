@@ -305,7 +305,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Error force reloading stock:", error);
-        setStockItems([...defaultStock]); // Create new array reference to force re-render
+        const accountStock = getStockForAccount(accountId);
+        setStockItems([...accountStock]); // Create new array reference to force re-render
       }
     };
 
