@@ -143,15 +143,17 @@ export function TransactionProvider({
         const saved = localStorage.getItem(storageKey);
         if (saved) {
           const parsedTransactions = JSON.parse(saved);
-          // If saved data is empty array, load defaults instead for better testing
+          // If saved data is empty array, load account-specific defaults
           if (Array.isArray(parsedTransactions) && parsedTransactions.length === 0) {
-            setTransactions(defaultTransactions);
+            const accountDefaults = getDefaultTransactionsForAccount(activeAccount.id);
+            setTransactions(accountDefaults);
           } else {
             setTransactions(parsedTransactions);
           }
         } else {
-          // Start with default transactions for new accounts
-          setTransactions(defaultTransactions);
+          // Start with account-specific default transactions for new accounts
+          const accountDefaults = getDefaultTransactionsForAccount(activeAccount.id);
+          setTransactions(accountDefaults);
         }
       } catch (error) {
         setTransactions(defaultTransactions);
