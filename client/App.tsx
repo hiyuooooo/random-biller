@@ -49,9 +49,9 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AccountProvider>
-          <StockProvider>
-            <TransactionProvider>
-              <CustomerProvider>
+          <CustomerProvider>
+            <StockProvider>
+              <TransactionProvider>
                 <IterationMonitorProvider>
                   <BillProvider>
                     <Toaster />
@@ -86,9 +86,9 @@ const App = () => {
                     </BrowserRouter>
                   </BillProvider>
                 </IterationMonitorProvider>
-              </CustomerProvider>
-            </TransactionProvider>
-          </StockProvider>
+              </TransactionProvider>
+            </StockProvider>
+          </CustomerProvider>
         </AccountProvider>
       </TooltipProvider>
     </QueryClientProvider>
