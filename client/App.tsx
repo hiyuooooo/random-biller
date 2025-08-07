@@ -31,8 +31,9 @@ const queryClient = new QueryClient();
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    // Check if user was previously logged in
-    return localStorage.getItem("isLoggedIn") === "true";
+    // Check if user was previously logged in, default to true for development
+    const savedLoginState = localStorage.getItem("isLoggedIn");
+    return savedLoginState === "true" || savedLoginState === null; // Default to logged in if no state exists
   });
 
   const handleLogin = () => {
