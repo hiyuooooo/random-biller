@@ -230,9 +230,10 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
             `Loaded ${parsedStock.length} stock items for account ${activeAccount.name} (ID: ${activeAccount.id})`,
           );
         } else {
-          setStockItems(defaultStock);
+          const accountStock = getStockForAccount(activeAccount.id);
+          setStockItems(accountStock);
           console.log(
-            `No existing data found for account ${activeAccount.name}, loading default stock`,
+            `No existing data found for account ${activeAccount.name}, loading account-specific stock (${accountStock.length} items)`,
           );
         }
       } catch (error) {
