@@ -146,7 +146,6 @@ export function TransactionProvider({
           // If saved data is empty array, load defaults instead for better testing
           if (Array.isArray(parsedTransactions) && parsedTransactions.length === 0) {
             setTransactions(defaultTransactions);
-            console.log(`TransactionContext: Found empty saved data, loaded ${defaultTransactions.length} default transactions instead`);
           } else {
             setTransactions(parsedTransactions);
             console.log(`TransactionContext: Loaded ${parsedTransactions.length} saved transactions`);
