@@ -30,6 +30,8 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useBill } from "@/components/BillContext";
+import { useAccount } from "@/components/AccountManager";
+import { Switch } from "@/components/ui/switch";
 
 // Mock data for reports
 const mockBillReports = [
