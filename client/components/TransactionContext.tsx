@@ -162,32 +162,62 @@ export function TransactionProvider({
         "Account switch event detected in TransactionContext, forcing data refresh",
       );
       if (activeAccount) {
-        // Force reload data for current account
+        loadAccountData(activeAccount.id);
+      }
+    };
+
+    const handleForceSave = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId && transactions.length > 0) {
         try {
-          const storageKey = `transactions_${activeAccount.id}`;
-          const saved = localStorage.getItem(storageKey);
-          if (saved) {
-            const parsedTransactions = JSON.parse(saved);
-            if (Array.isArray(parsedTransactions)) {
-              setTransactions(parsedTransactions);
-              console.log(
-                `Force reloaded ${parsedTransactions.length} transactions for account ${activeAccount.name}`,
-              );
-            }
-          } else {
-            setTransactions(defaultTransactions);
-          }
+          const storageKey = `transactions_${accountId}`;
+          localStorage.setItem(storageKey, JSON.stringify(transactions));
+          console.log(`Force saved ${transactions.length} transactions for account ${accountId}`);
         } catch (error) {
-          console.error("Error force reloading transactions:", error);
-          setTransactions(defaultTransactions);
+          console.error("Error force saving transactions:", error);
         }
       }
     };
 
+    const handleLoadAccountData = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId) {
+        loadAccountData(accountId);
+      }
+    };
+
+    const loadAccountData = (accountId: string) => {
+      try {
+        const storageKey = `transactions_${accountId}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsedTransactions = JSON.parse(saved);
+          if (Array.isArray(parsedTransactions)) {
+            setTransactions([...parsedTransactions]); // Create new array reference to force re-render
+            console.log(
+              `Force reloaded ${parsedTransactions.length} transactions for account ${accountId}`,
+            );
+          }
+        } else {
+          setTransactions([...defaultTransactions]); // Create new array reference to force re-render
+          console.log(`No transactions found for account ${accountId}, loading defaults`);
+        }
+      } catch (error) {
+        console.error("Error force reloading transactions:", error);
+        setTransactions([...defaultTransactions]); // Create new array reference to force re-render
+      }
+    };
+
     window.addEventListener("account-switched", handleAccountSwitch);
-    return () =>
+    window.addEventListener("force-save-account-data", handleForceSave);
+    window.addEventListener("load-account-data", handleLoadAccountData);
+
+    return () => {
       window.removeEventListener("account-switched", handleAccountSwitch);
-  }, [activeAccount]);
+      window.removeEventListener("force-save-account-data", handleForceSave);
+      window.removeEventListener("load-account-data", handleLoadAccountData);
+    };
+  }, [activeAccount, transactions]);
 
   const addTransaction = (transaction: Transaction) => {
     setTransactions((prev) => [...prev, transaction]);
