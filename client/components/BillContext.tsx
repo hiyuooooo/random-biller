@@ -118,34 +118,64 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
   // Listen for account switch events to force refresh
   useEffect(() => {
     const handleAccountSwitch = () => {
-      console.log("Account switch event detected, forcing data refresh");
+      console.log("Account switch event detected in BillContext, forcing data refresh");
       if (activeAccount) {
-        // Force reload data for current account
+        loadAccountData(activeAccount.id);
+      }
+    };
+
+    const handleForceSave = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId && bills.length > 0) {
         try {
-          const storageKey = `bills_${activeAccount.id}`;
-          const saved = localStorage.getItem(storageKey);
-          if (saved) {
-            const parsedBills = JSON.parse(saved);
-            if (Array.isArray(parsedBills)) {
-              setBills(parsedBills);
-              console.log(
-                `Force reloaded ${parsedBills.length} bills for account ${activeAccount.name}`,
-              );
-            }
-          } else {
-            setBills([]);
-          }
+          const storageKey = `bills_${accountId}`;
+          localStorage.setItem(storageKey, JSON.stringify(bills));
+          console.log(`Force saved ${bills.length} bills for account ${accountId}`);
         } catch (error) {
-          console.error("Error force reloading bills:", error);
-          setBills([]);
+          console.error("Error force saving bills:", error);
         }
       }
     };
 
+    const handleLoadAccountData = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId) {
+        loadAccountData(accountId);
+      }
+    };
+
+    const loadAccountData = (accountId: string) => {
+      try {
+        const storageKey = `bills_${accountId}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsedBills = JSON.parse(saved);
+          if (Array.isArray(parsedBills)) {
+            setBills([...parsedBills]); // Create new array reference to force re-render
+            console.log(
+              `Force reloaded ${parsedBills.length} bills for account ${accountId}`,
+            );
+          }
+        } else {
+          setBills([]);
+          console.log(`No bills found for account ${accountId}, starting with empty array`);
+        }
+      } catch (error) {
+        console.error("Error force reloading bills:", error);
+        setBills([]);
+      }
+    };
+
     window.addEventListener("account-switched", handleAccountSwitch);
-    return () =>
+    window.addEventListener("force-save-account-data", handleForceSave);
+    window.addEventListener("load-account-data", handleLoadAccountData);
+
+    return () => {
       window.removeEventListener("account-switched", handleAccountSwitch);
-  }, [activeAccount]);
+      window.removeEventListener("force-save-account-data", handleForceSave);
+      window.removeEventListener("load-account-data", handleLoadAccountData);
+    };
+  }, [activeAccount, bills]);
 
   const addBill = (bill: Bill) => {
     setBills((prev) => [...prev, bill]);
