@@ -141,9 +141,6 @@ export function TransactionProvider({
       try {
         const storageKey = `transactions_${activeAccount.id}`;
 
-        // Force clear localStorage to load account-specific defaults
-        localStorage.removeItem(storageKey);
-
         const saved = localStorage.getItem(storageKey);
 
         if (saved) {
