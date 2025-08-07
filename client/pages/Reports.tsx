@@ -168,6 +168,7 @@ export default function Reports() {
   });
   const [includeGST, setIncludeGST] = useState(false);
   const { bills } = useBill();
+  const { activeAccount } = useAccount();
   const navigate = useNavigate();
 
   const navigateToBill = (billNumber: number) => {
