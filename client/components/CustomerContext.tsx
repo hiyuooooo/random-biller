@@ -141,7 +141,11 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch {
-        setCustomers(defaultCustomers);
+        if (activeAccount.id === "2") {
+          setCustomers([]);
+        } else {
+          setCustomers(defaultCustomers);
+        }
       }
     } else {
       // If no active account, start with empty array
