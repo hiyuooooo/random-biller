@@ -322,6 +322,11 @@ export default function Bills() {
     totalAtLastPage: true,
     includeGST: false,
   });
+  const [isPdfBookDialogOpen, setIsPdfBookDialogOpen] = useState(false);
+  const [pdfBookOptions, setPdfBookOptions] = useState({
+    fromDate: "",
+    toDate: "",
+  });
   const [customerSuggestions, setCustomerSuggestions] = useState<any[]>([]);
 
   // New bill form state
