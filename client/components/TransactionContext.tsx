@@ -157,7 +157,6 @@ export function TransactionProvider({
         setTransactions(defaultTransactions);
       }
     } else {
-      console.log(`TransactionContext: No active account, clearing transactions`);
       setTransactions([]);
     }
   }, [activeAccount?.id]);
