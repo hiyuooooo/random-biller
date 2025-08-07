@@ -1291,7 +1291,7 @@ export default function Bills() {
       reportData.push({
         Date: "",
         "Bill Number": "",
-        "Customer Name": "TOTAL",
+        ...(megaReportOptions.hideCustomerNames ? {} : {"Customer Name": "TOTAL"}),
         "Bill Total": totalSum,
         "Payment Mode": "",
       });
