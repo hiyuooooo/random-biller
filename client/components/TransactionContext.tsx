@@ -146,8 +146,14 @@ export function TransactionProvider({
         console.log(`TransactionContext: Saved data exists:`, !!saved);
         if (saved) {
           const parsedTransactions = JSON.parse(saved);
-          setTransactions(parsedTransactions);
-          console.log(`TransactionContext: Loaded ${parsedTransactions.length} saved transactions`);
+          // If saved data is empty array, load defaults instead for better testing
+          if (Array.isArray(parsedTransactions) && parsedTransactions.length === 0) {
+            setTransactions(defaultTransactions);
+            console.log(`TransactionContext: Found empty saved data, loaded ${defaultTransactions.length} default transactions instead`);
+          } else {
+            setTransactions(parsedTransactions);
+            console.log(`TransactionContext: Loaded ${parsedTransactions.length} saved transactions`);
+          }
         } else {
           // Start with default transactions for new accounts
           setTransactions(defaultTransactions);
