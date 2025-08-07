@@ -164,6 +164,18 @@ interface StockItem {
 
 export default function Stock() {
   const { activeAccount, accounts, setActiveAccount } = useAccount();
+
+  // Auto-switch to test different accounts via URL parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('switch') === 'himalaya' && activeAccount?.id === "1") {
+      const himalayaAccount = accounts.find(acc => acc.id === "2");
+      if (himalayaAccount) {
+        setActiveAccount(himalayaAccount);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [activeAccount, accounts, setActiveAccount]);
   const {
     stockItems,
     updateStockItem,
