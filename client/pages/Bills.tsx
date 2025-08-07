@@ -1552,6 +1552,274 @@ export default function Bills() {
     }
   };
 
+  // Generate HTML Book with date range
+  const generateHtmlBook = async () => {
+    let filteredBills = bills.filter((b) => b.status === "generated");
+
+    // Filter by date range if provided
+    if (pdfBookOptions.fromDate || pdfBookOptions.toDate) {
+      filteredBills = filterBillsByDateRange(
+        filteredBills,
+        pdfBookOptions.fromDate,
+        pdfBookOptions.toDate,
+      );
+
+      if (filteredBills.length === 0) {
+        alert("No bills found in the selected date range.");
+        return;
+      }
+    }
+
+    if (filteredBills.length === 0) {
+      alert("No generated bills found for HTML book creation.");
+      return;
+    }
+
+    try {
+      // Get invoice settings from localStorage
+      const activeAccount = JSON.parse(
+        localStorage.getItem("activeAccount") || "null",
+      );
+      let invoiceSettings = null;
+      if (activeAccount) {
+        try {
+          const storageKey = `settings_invoice_${activeAccount.id}`;
+          const saved = localStorage.getItem(storageKey);
+          if (saved) {
+            invoiceSettings = JSON.parse(saved);
+          }
+        } catch (error) {
+          console.warn("Could not load invoice settings for HTML book:", error);
+        }
+      }
+
+      // Create complete HTML book content
+      const htmlBookContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Bills Book - ${pdfBookOptions.fromDate || "All"} to ${pdfBookOptions.toDate || "All"}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20mm;
+              color: #333;
+              line-height: 1.6;
+            }
+            .book-header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 3px solid #333;
+              padding-bottom: 20px;
+            }
+            .book-header h1 {
+              margin: 0 0 10px 0;
+              font-size: 28px;
+              color: #333;
+            }
+            .book-header p {
+              margin: 5px 0;
+              color: #666;
+              font-size: 14px;
+            }
+            .bill-page {
+              page-break-before: always;
+              margin-bottom: 60px;
+            }
+            .bill-page:first-child {
+              page-break-before: auto;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 15px;
+            }
+            .header h1 {
+              margin: 0 0 8px 0;
+              font-size: 20px;
+              color: #333;
+            }
+            .header h2 {
+              margin: 0 0 4px 0;
+              font-size: 16px;
+              color: #666;
+            }
+            .header p {
+              margin: 0;
+              color: #888;
+              font-size: 12px;
+            }
+            .bill-info {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 15px;
+              margin: 20px 0;
+              padding: 15px;
+              background-color: #f9f9f9;
+              border-radius: 6px;
+            }
+            .bill-info div {
+              margin: 3px 0;
+              font-size: 14px;
+            }
+            .bill-info strong {
+              color: #333;
+            }
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 20px 0;
+              box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+            }
+            .items-table th, .items-table td {
+              border: 1px solid #ddd;
+              padding: 8px 6px;
+              text-align: left;
+              font-size: 13px;
+            }
+            .items-table th {
+              background-color: #f8f9fa;
+              font-weight: bold;
+              color: #333;
+            }
+            .items-table tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .total-row {
+              background-color: #e9ecef !important;
+              font-weight: bold;
+              font-size: 14px;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 15px;
+              border-top: 1px solid #ddd;
+              font-size: 11px;
+              color: #666;
+              text-align: center;
+            }
+            .signature-container {
+              display: flex;
+              justify-content: space-between;
+              align-items: end;
+              margin-top: 30px;
+            }
+            .signature-image {
+              max-width: 120px;
+              max-height: 50px;
+            }
+            .authorized-signature {
+              text-align: center;
+              font-size: 9px;
+              margin-top: 3px;
+            }
+            @media print {
+              .bill-page {
+                page-break-before: always;
+              }
+              .bill-page:first-child {
+                page-break-before: auto;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="book-header">
+            <h1>Bills Book</h1>
+            <p><strong>Agency:</strong> ${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}</p>
+            <p><strong>Date Range:</strong> ${pdfBookOptions.fromDate || "All"} to ${pdfBookOptions.toDate || "All"}</p>
+            <p><strong>Total Bills:</strong> ${filteredBills.length}</p>
+            <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()}</p>
+          </div>
+
+          ${filteredBills.map((bill, index) => `
+            <div class="bill-page">
+              <div class="header">
+                <h1>Bill of Supply</h1>
+                <h2>${invoiceSettings?.agencyName || bill.headerInfo?.agencyName || "Sadhana Agency"}</h2>
+                <p>${invoiceSettings?.agencyAddress || bill.headerInfo?.address || "Harsila (Dewalchaura), Bageshwar, Uttarakhand"}</p>
+                ${invoiceSettings?.phone ? `<p>Phone: ${invoiceSettings.phone}</p>` : ""}
+                ${invoiceSettings?.email ? `<p>Email: ${invoiceSettings.email}</p>` : ""}
+                ${invoiceSettings?.gstNumber ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ""}
+              </div>
+
+              <div class="bill-info">
+                <div><strong>Bill No:</strong> ${bill.billNumber}</div>
+                <div><strong>Date:</strong> ${bill.date}</div>
+                <div><strong>Customer:</strong> ${bill.customerName}</div>
+                <div><strong>Payment Mode:</strong> ${bill.paymentMode}</div>
+              </div>
+
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>Sr. No.</th>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Rate</th>
+                    <th>Amount</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${bill.items.map((item: any, itemIndex: number) => `
+                    <tr>
+                      <td>${itemIndex + 1}</td>
+                      <td>${item.name}</td>
+                      <td>${item.quantity}</td>
+                      <td>₹${item.price}</td>
+                      <td>₹${item.total}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+                <tfoot>
+                  <tr class="total-row">
+                    <td colspan="4"><strong>Sub Total:</strong></td>
+                    <td><strong>₹${bill.subTotal}</strong></td>
+                  </tr>
+                </tfoot>
+              </table>
+
+              <div class="footer">
+                <p>${invoiceSettings?.declaration || bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
+                ${invoiceSettings?.signatureImageUrl ? `
+                  <div class="signature-container">
+                    <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+                    <div>
+                      <img src="${invoiceSettings.signatureImageUrl}" alt="Signature" class="signature-image" />
+                      ${invoiceSettings.authorizedSignatureText ? `<div class="authorized-signature">${invoiceSettings.authorizedSignatureText}</div>` : ""}
+                    </div>
+                  </div>
+                ` : `
+                  <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+                `}
+              </div>
+            </div>
+          `).join("")}
+        </body>
+        </html>
+      `;
+
+      // Create blob and download
+      const blob = new Blob([htmlBookContent], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Bills_Book_HTML_${pdfBookOptions.fromDate || "All"}_to_${pdfBookOptions.toDate || "All"}_${new Date().toISOString().split("T")[0]}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      alert(
+        `HTML book with ${filteredBills.length} bills downloaded successfully!`,
+      );
+    } catch (error) {
+      console.error("Error generating HTML book:", error);
+      alert("Error generating HTML book. Please try again.");
+    }
+  };
+
   const generateMegaReport = async (format: "pdf" | "excel") => {
     const generatedBills = bills.filter((b) => b.status === "generated");
 
