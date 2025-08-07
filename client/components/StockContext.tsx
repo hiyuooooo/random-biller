@@ -237,9 +237,6 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       try {
         const storageKey = `stockItems_${activeAccount.id}`;
 
-        // Force clear localStorage to ensure each account gets distinct data
-        localStorage.removeItem(storageKey);
-
         const saved = localStorage.getItem(storageKey);
         if (saved) {
           const parsedStock = JSON.parse(saved);
