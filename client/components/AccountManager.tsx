@@ -243,7 +243,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
         deleteAccount,
       }}
     >
-      {children}
+      {isInitialized ? children : <div>Loading accounts...</div>}
     </AccountContext.Provider>
   );
 }
