@@ -171,7 +171,9 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         try {
           const storageKey = `customers_${accountId}`;
           localStorage.setItem(storageKey, JSON.stringify(customers));
-          console.log(`Force saved ${customers.length} customers for account ${accountId}`);
+          console.log(
+            `Force saved ${customers.length} customers for account ${accountId}`,
+          );
         } catch (error) {
           console.error("Error force saving customers:", error);
         }
@@ -210,10 +212,14 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         } else {
           if (accountId === "2") {
             setCustomers([]); // Himalaya Traders - empty customers
-            console.log(`No customers found for account ${accountId}, starting empty`);
+            console.log(
+              `No customers found for account ${accountId}, starting empty`,
+            );
           } else {
             setCustomers([...defaultCustomers]); // Sadhana Agency - default customers
-            console.log(`No customers found for account ${accountId}, loading defaults`);
+            console.log(
+              `No customers found for account ${accountId}, loading defaults`,
+            );
           }
         }
       } catch (error) {

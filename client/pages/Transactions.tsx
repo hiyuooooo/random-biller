@@ -177,13 +177,15 @@ export default function Transactions() {
   // URL-based account switching for testing
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const targetAccountId = urlParams.get('account');
+    const targetAccountId = urlParams.get("account");
     if (targetAccountId && targetAccountId !== activeAccount?.id) {
-      const targetAccount = accounts.find(acc => acc.id === targetAccountId);
+      const targetAccount = accounts.find((acc) => acc.id === targetAccountId);
       if (targetAccount) {
-        console.log(`🔄 URL SWITCH: Switching to ${targetAccount.name} (${targetAccount.id})`);
+        console.log(
+          `🔄 URL SWITCH: Switching to ${targetAccount.name} (${targetAccount.id})`,
+        );
         setActiveAccount(targetAccount);
-        window.history.replaceState({}, '', window.location.pathname);
+        window.history.replaceState({}, "", window.location.pathname);
       }
     }
   }, [activeAccount, accounts, setActiveAccount]);
@@ -600,13 +602,21 @@ export default function Transactions() {
           <div className="flex space-x-2">
             <Button
               onClick={() => {
-                const otherAccount = accounts.find(acc => acc.id !== activeAccount?.id);
-                console.log(`🔄 SWITCHING: From ${activeAccount?.name} (${activeAccount?.id}) to ${otherAccount?.name} (${otherAccount?.id})`);
-                console.log(`📊 BEFORE SWITCH: ${transactions.length} transactions`);
+                const otherAccount = accounts.find(
+                  (acc) => acc.id !== activeAccount?.id,
+                );
+                console.log(
+                  `🔄 SWITCHING: From ${activeAccount?.name} (${activeAccount?.id}) to ${otherAccount?.name} (${otherAccount?.id})`,
+                );
+                console.log(
+                  `📊 BEFORE SWITCH: ${transactions.length} transactions`,
+                );
                 if (otherAccount) {
                   setActiveAccount(otherAccount);
                   setTimeout(() => {
-                    console.log(`📊 AFTER SWITCH: ${transactions.length} transactions`);
+                    console.log(
+                      `📊 AFTER SWITCH: ${transactions.length} transactions`,
+                    );
                   }, 500);
                 }
               }}
@@ -614,7 +624,8 @@ export default function Transactions() {
               size="sm"
               className="bg-green-100 hover:bg-green-200 text-green-800"
             >
-              🔄 Switch to {accounts.find(acc => acc.id !== activeAccount?.id)?.name}
+              🔄 Switch to{" "}
+              {accounts.find((acc) => acc.id !== activeAccount?.id)?.name}
             </Button>
             <label>
               <Button variant="outline" size="sm" asChild>

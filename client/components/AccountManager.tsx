@@ -136,7 +136,6 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
   }, [activeAccount]);
 
   const setActiveAccount = (account: Account) => {
-
     // Force save current account data before switching
     try {
       if (activeAccount) {
@@ -147,8 +146,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
           }),
         );
       }
-    } catch (error) {
-    }
+    } catch (error) {}
 
     // Update account states
     setAccounts((prev) =>

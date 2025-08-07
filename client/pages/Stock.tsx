@@ -168,11 +168,11 @@ export default function Stock() {
   // Auto-switch to test different accounts via URL parameter
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('switch') === 'himalaya' && activeAccount?.id === "1") {
-      const himalayaAccount = accounts.find(acc => acc.id === "2");
+    if (urlParams.get("switch") === "himalaya" && activeAccount?.id === "1") {
+      const himalayaAccount = accounts.find((acc) => acc.id === "2");
       if (himalayaAccount) {
         setActiveAccount(himalayaAccount);
-        window.history.replaceState({}, '', window.location.pathname);
+        window.history.replaceState({}, "", window.location.pathname);
       }
     }
   }, [activeAccount, accounts, setActiveAccount]);
@@ -597,14 +597,17 @@ export default function Stock() {
           <div className="flex space-x-2">
             <Button
               onClick={() => {
-                const otherAccount = accounts.find(acc => acc.id !== activeAccount?.id);
+                const otherAccount = accounts.find(
+                  (acc) => acc.id !== activeAccount?.id,
+                );
                 if (otherAccount) setActiveAccount(otherAccount);
               }}
               variant="secondary"
               size="sm"
               className="bg-blue-100 hover:bg-blue-200 text-blue-800"
             >
-              🔄 Switch to {accounts.find(acc => acc.id !== activeAccount?.id)?.name}
+              🔄 Switch to{" "}
+              {accounts.find((acc) => acc.id !== activeAccount?.id)?.name}
             </Button>
             <Button
               onClick={() => setIsQuickAddOpen(true)}

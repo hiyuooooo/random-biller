@@ -150,7 +150,10 @@ export function TransactionProvider({
           if (activeAccount.id === "1") {
             // Sadhana Agency - default transactions
             setTransactions(defaultTransactions);
-            localStorage.setItem(storageKey, JSON.stringify(defaultTransactions));
+            localStorage.setItem(
+              storageKey,
+              JSON.stringify(defaultTransactions),
+            );
           } else {
             // Himalaya Traders - different transactions
             const himalayaTransactions = [
@@ -172,7 +175,10 @@ export function TransactionProvider({
               },
             ];
             setTransactions(himalayaTransactions);
-            localStorage.setItem(storageKey, JSON.stringify(himalayaTransactions));
+            localStorage.setItem(
+              storageKey,
+              JSON.stringify(himalayaTransactions),
+            );
           }
         }
       } catch (error) {
@@ -200,7 +206,9 @@ export function TransactionProvider({
         try {
           const storageKey = `transactions_${accountId}`;
           localStorage.setItem(storageKey, JSON.stringify(transactions));
-          console.log(`Force saved ${transactions.length} transactions for account ${accountId}`);
+          console.log(
+            `Force saved ${transactions.length} transactions for account ${accountId}`,
+          );
         } catch (error) {
           console.error("Error force saving transactions:", error);
         }
@@ -229,7 +237,9 @@ export function TransactionProvider({
         } else {
           if (accountId === "1") {
             setTransactions([...defaultTransactions]); // Sadhana Agency defaults
-            console.log(`No transactions found for account ${accountId}, loading Sadhana defaults`);
+            console.log(
+              `No transactions found for account ${accountId}, loading Sadhana defaults`,
+            );
           } else {
             const himalayaTransactions = [
               {
@@ -250,7 +260,9 @@ export function TransactionProvider({
               },
             ];
             setTransactions([...himalayaTransactions]); // Himalaya Traders specific data
-            console.log(`No transactions found for account ${accountId}, loading Himalaya defaults`);
+            console.log(
+              `No transactions found for account ${accountId}, loading Himalaya defaults`,
+            );
           }
         }
       } catch (error) {

@@ -118,7 +118,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
   // Listen for account switch events to force refresh
   useEffect(() => {
     const handleAccountSwitch = () => {
-      console.log("Account switch event detected in BillContext, forcing data refresh");
+      console.log(
+        "Account switch event detected in BillContext, forcing data refresh",
+      );
       if (activeAccount) {
         loadAccountData(activeAccount.id);
       }
@@ -130,7 +132,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         try {
           const storageKey = `bills_${accountId}`;
           localStorage.setItem(storageKey, JSON.stringify(bills));
-          console.log(`Force saved ${bills.length} bills for account ${accountId}`);
+          console.log(
+            `Force saved ${bills.length} bills for account ${accountId}`,
+          );
         } catch (error) {
           console.error("Error force saving bills:", error);
         }
@@ -158,7 +162,9 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
           }
         } else {
           setBills([]);
-          console.log(`No bills found for account ${accountId}, starting with empty array`);
+          console.log(
+            `No bills found for account ${accountId}, starting with empty array`,
+          );
         }
       } catch (error) {
         console.error("Error force reloading bills:", error);
