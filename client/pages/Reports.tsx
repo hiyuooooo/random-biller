@@ -285,7 +285,9 @@ export default function Reports() {
       <body>
         <div class="header">
           <h2>Mega Sale Report</h2>
-          <h3>Sadhana Agency</h3>
+          <h3>${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}</h3>
+          ${invoiceSettings?.agencyAddress || activeAccount?.address ? `<p>${invoiceSettings?.agencyAddress || activeAccount?.address}</p>` : ''}
+          ${invoiceSettings?.gstNumber && includeGST ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ''}
         </div>
 
         ${bills
@@ -1276,7 +1278,7 @@ export default function Reports() {
                             {item.availableQuantity}
                           </td>
                           <td className="p-3">
-                            ₹{item.value.toLocaleString()}
+                            ���{item.value.toLocaleString()}
                           </td>
                           <td className="p-3">
                             <Badge
