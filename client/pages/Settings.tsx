@@ -32,7 +32,10 @@ const ensureInvoiceSettingsDefaults = (settings: any, activeAccount: any) => {
     agencyAddress: settings?.agencyAddress || activeAccount?.address || "",
     phone: settings?.phone || activeAccount?.phone || "+91 98765 43210",
     email: settings?.email || activeAccount?.email || "contact@agency.com",
-    declaration: settings?.declaration || activeAccount?.footerText || "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
+    declaration:
+      settings?.declaration ||
+      activeAccount?.footerText ||
+      "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
     signatureText: settings?.signatureText || "Authorized Signature",
     logoUrl: settings?.logoUrl || "",
     signatureImageUrl: settings?.signatureImageUrl || "",
@@ -200,10 +203,17 @@ export default function Settings() {
         }
 
         if (savedInvoice) {
-          setInvoiceSettings(ensureInvoiceSettingsDefaults(JSON.parse(savedInvoice), activeAccount));
+          setInvoiceSettings(
+            ensureInvoiceSettingsDefaults(
+              JSON.parse(savedInvoice),
+              activeAccount,
+            ),
+          );
         } else {
           // Use account data as defaults for new accounts
-          setInvoiceSettings(ensureInvoiceSettingsDefaults(null, activeAccount));
+          setInvoiceSettings(
+            ensureInvoiceSettingsDefaults(null, activeAccount),
+          );
         }
       } catch {
         // Reset to defaults on error - using account data when available
@@ -430,7 +440,8 @@ export default function Settings() {
                       }}
                     />
                     <p className="text-xs text-muted-foreground">
-                      Upload a PNG image for signature (will appear on right side of PDF)
+                      Upload a PNG image for signature (will appear on right
+                      side of PDF)
                     </p>
                     {invoiceSettings.signatureImageUrl && (
                       <div className="mt-2">

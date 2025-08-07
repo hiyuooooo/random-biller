@@ -205,23 +205,25 @@ export default function Reports() {
   const generateMegaReportExcel = () => {
     const invoiceSettings = getInvoiceSettings();
     const reportData = bills.map((bill) => ({
-      "Date": bill.date,
+      Date: bill.date,
       "Bill No": bill.billNumber,
       "Customer Name": bill.customerName,
       "Sub Total": bill.subTotal,
       "Payment Mode": bill.paymentMode,
-      ...(includeGST && invoiceSettings?.gstNumber ? {"GST Number": invoiceSettings.gstNumber} : {})
+      ...(includeGST && invoiceSettings?.gstNumber
+        ? { "GST Number": invoiceSettings.gstNumber }
+        : {}),
     }));
 
     // Add summary row
     const totalSum = bills.reduce((sum, bill) => sum + bill.subTotal, 0);
     reportData.push({
-      "Date": "",
+      Date: "",
       "Bill No": "",
       "Customer Name": "TOTAL",
       "Sub Total": totalSum,
       "Payment Mode": "",
-      ...(includeGST && invoiceSettings?.gstNumber ? {"GST Number": ""} : {})
+      ...(includeGST && invoiceSettings?.gstNumber ? { "GST Number": "" } : {}),
     });
 
     const worksheet = XLSX.utils.json_to_sheet(reportData);
@@ -229,17 +231,27 @@ export default function Reports() {
 
     // Add account information as header
     const headerInfo = [
-      [`Mega Report - ${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}`],
+      [
+        `Mega Report - ${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}`,
+      ],
       [invoiceSettings?.agencyAddress || activeAccount?.address || ""],
-      ...(includeGST && invoiceSettings?.gstNumber ? [[`GST: ${invoiceSettings.gstNumber}`]] : []),
+      ...(includeGST && invoiceSettings?.gstNumber
+        ? [[`GST: ${invoiceSettings.gstNumber}`]]
+        : []),
       [""], // Empty row
     ];
 
     XLSX.utils.sheet_add_aoa(worksheet, headerInfo, { origin: "A1" });
-    XLSX.utils.sheet_add_json(worksheet, reportData, { origin: `A${headerInfo.length + 1}`, skipHeader: false });
+    XLSX.utils.sheet_add_json(worksheet, reportData, {
+      origin: `A${headerInfo.length + 1}`,
+      skipHeader: false,
+    });
 
     XLSX.utils.book_append_sheet(workbook, worksheet, "Mega Report");
-    XLSX.writeFile(workbook, `Mega_Report_${new Date().toISOString().split("T")[0]}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `Mega_Report_${new Date().toISOString().split("T")[0]}.xlsx`,
+    );
   };
 
   const generateBillReport = () => {
@@ -338,8 +350,8 @@ export default function Reports() {
         <div class="header">
           <h2>Mega Sale Report</h2>
           <h3>${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}</h3>
-          ${invoiceSettings?.agencyAddress || activeAccount?.address ? `<p>${invoiceSettings?.agencyAddress || activeAccount?.address}</p>` : ''}
-          ${invoiceSettings?.gstNumber && includeGST ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ''}
+          ${invoiceSettings?.agencyAddress || activeAccount?.address ? `<p>${invoiceSettings?.agencyAddress || activeAccount?.address}</p>` : ""}
+          ${invoiceSettings?.gstNumber && includeGST ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ""}
         </div>
 
         ${bills
@@ -494,7 +506,9 @@ export default function Reports() {
         `Mega_Sale_Report_${new Date().toISOString().split("T")[0]}.pdf`,
       );
 
-      console.log("Mega report PDF downloaded successfully with 70mm left margin!");
+      console.log(
+        "Mega report PDF downloaded successfully with 70mm left margin!",
+      );
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Error generating PDF. Please try again.");
@@ -662,10 +676,7 @@ export default function Reports() {
           </div>
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2">
-              <Switch
-                checked={includeGST}
-                onCheckedChange={setIncludeGST}
-              />
+              <Switch checked={includeGST} onCheckedChange={setIncludeGST} />
               <label className="text-sm font-medium">Include GST</label>
             </div>
             <div className="flex space-x-2">
@@ -681,7 +692,10 @@ export default function Reports() {
                 <Download className="h-4 w-4 mr-2" />
                 Download Excel
               </Button>
-              <Button variant="outline" onClick={() => setActiveTab("processor")}>
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab("processor")}
+              >
                 <Code className="h-4 w-4 mr-2" />
                 HTML Processor
               </Button>
@@ -1201,7 +1215,10 @@ export default function Reports() {
                   <div className="max-h-[600px] overflow-y-auto border rounded-lg p-4 bg-white">
                     <div className="space-y-6">
                       {bills.map((bill, index) => (
-                        <div key={`mega-report-${bill.id}-${index}`} className="border-b pb-4">
+                        <div
+                          key={`mega-report-${bill.id}-${index}`}
+                          className="border-b pb-4"
+                        >
                           <div className="grid grid-cols-2 gap-4 mb-2">
                             <div>
                               <p className="font-medium">

@@ -178,8 +178,12 @@ export default function Stock() {
   // Log when account changes to help debug
   React.useEffect(() => {
     if (activeAccount) {
-      console.log(`Stock page: Account changed to ${activeAccount.name} (ID: ${activeAccount.id})`);
-      console.log(`Stock page: Current stock items count: ${stockItems.length}`);
+      console.log(
+        `Stock page: Account changed to ${activeAccount.name} (ID: ${activeAccount.id})`,
+      );
+      console.log(
+        `Stock page: Current stock items count: ${stockItems.length}`,
+      );
     }
   }, [activeAccount?.id, stockItems.length]);
 

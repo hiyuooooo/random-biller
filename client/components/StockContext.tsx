@@ -164,13 +164,20 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         if (saved) {
           const parsedStock = JSON.parse(saved);
           setStockItems(parsedStock);
-          console.log(`Loaded ${parsedStock.length} stock items for account ${activeAccount.name} (ID: ${activeAccount.id})`);
+          console.log(
+            `Loaded ${parsedStock.length} stock items for account ${activeAccount.name} (ID: ${activeAccount.id})`,
+          );
         } else {
           setStockItems(defaultStock);
-          console.log(`No existing data found for account ${activeAccount.name}, loading default stock`);
+          console.log(
+            `No existing data found for account ${activeAccount.name}, loading default stock`,
+          );
         }
       } catch (error) {
-        console.error(`Error loading stock for account ${activeAccount.name}:`, error);
+        console.error(
+          `Error loading stock for account ${activeAccount.name}:`,
+          error,
+        );
         setStockItems(defaultStock);
       }
     } else {
@@ -201,7 +208,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
             }
           } else {
             setStockItems([...defaultStock]); // Create new array reference to force re-render
-            console.log(`No data found for account ${activeAccount.name}, loading default stock`);
+            console.log(
+              `No data found for account ${activeAccount.name}, loading default stock`,
+            );
           }
         } catch (error) {
           console.error("Error force reloading stock:", error);

@@ -151,7 +151,9 @@ export default function Bills() {
 
         // If edit=true parameter is present, auto-open edit dialog for the highlighted bill
         if (editParam === "true") {
-          const billToEdit = bills.find(bill => bill.billNumber === billNumber);
+          const billToEdit = bills.find(
+            (bill) => bill.billNumber === billNumber,
+          );
           if (billToEdit) {
             setTimeout(() => {
               startEditBill(billToEdit);
@@ -856,8 +858,9 @@ export default function Bills() {
     const paymentMode = getPaymentMode(newBill.customerName);
     const displayName = cleanCustomerName(newBill.customerName);
 
-    const billNumber = parseInt(newBill.billNumber) ||
-        Math.max(...bills.map((b) => b.billNumber)) + 1;
+    const billNumber =
+      parseInt(newBill.billNumber) ||
+      Math.max(...bills.map((b) => b.billNumber)) + 1;
 
     const bill: any = {
       id: `BILL-${billNumber}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -913,7 +916,9 @@ export default function Bills() {
   const generatePDF = async (bill: any) => {
     try {
       // Get invoice settings from localStorage
-      const activeAccount = JSON.parse(localStorage.getItem("activeAccount") || "null");
+      const activeAccount = JSON.parse(
+        localStorage.getItem("activeAccount") || "null",
+      );
       let invoiceSettings = null;
       if (activeAccount) {
         try {
@@ -923,7 +928,10 @@ export default function Bills() {
             invoiceSettings = JSON.parse(saved);
           }
         } catch (error) {
-          console.warn("Could not load invoice settings for PDF generation:", error);
+          console.warn(
+            "Could not load invoice settings for PDF generation:",
+            error,
+          );
         }
       }
 
@@ -1074,9 +1082,9 @@ export default function Bills() {
             <h1>Bill of Supply</h1>
             <h2>${invoiceSettings?.agencyName || bill.headerInfo?.agencyName || "Sadhana Agency"}</h2>
             <p>${invoiceSettings?.agencyAddress || bill.headerInfo?.address || "Harsila (Dewalchaura), Bageshwar, Uttarakhand"}</p>
-            ${invoiceSettings?.phone ? `<p>Phone: ${invoiceSettings.phone}</p>` : ''}
-            ${invoiceSettings?.email ? `<p>Email: ${invoiceSettings.email}</p>` : ''}
-            ${invoiceSettings?.gstNumber ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ''}
+            ${invoiceSettings?.phone ? `<p>Phone: ${invoiceSettings.phone}</p>` : ""}
+            ${invoiceSettings?.email ? `<p>Email: ${invoiceSettings.email}</p>` : ""}
+            ${invoiceSettings?.gstNumber ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ""}
           </div>
 
           <div class="bill-info">
@@ -1121,17 +1129,21 @@ export default function Bills() {
 
           <div class="footer">
             <p>${invoiceSettings?.declaration || bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
-            ${invoiceSettings?.signatureImageUrl ? `
+            ${
+              invoiceSettings?.signatureImageUrl
+                ? `
               <div class="signature-container">
                 <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
                 <div>
                   <img src="${invoiceSettings.signatureImageUrl}" alt="Signature" class="signature-image" />
-                  ${invoiceSettings.authorizedSignatureText ? `<div class="authorized-signature">${invoiceSettings.authorizedSignatureText}</div>` : ''}
+                  ${invoiceSettings.authorizedSignatureText ? `<div class="authorized-signature">${invoiceSettings.authorizedSignatureText}</div>` : ""}
                 </div>
               </div>
-            ` : `
+            `
+                : `
               <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
-            `}
+            `
+            }
           </div>
         </body>
         </html>
@@ -1287,14 +1299,16 @@ export default function Bills() {
     }
 
     const confirmed = confirm(
-      `Create PDF book with ${filteredBills.length} bills?${(pdfBookOptions.fromDate || pdfBookOptions.toDate) ? ` (Date range: ${pdfBookOptions.fromDate || "All"} to ${pdfBookOptions.toDate || "All"})` : ""} Each bill will be on a separate page.`,
+      `Create PDF book with ${filteredBills.length} bills?${pdfBookOptions.fromDate || pdfBookOptions.toDate ? ` (Date range: ${pdfBookOptions.fromDate || "All"} to ${pdfBookOptions.toDate || "All"})` : ""} Each bill will be on a separate page.`,
     );
 
     if (!confirmed) return;
 
     try {
       // Get invoice settings from localStorage
-      const activeAccount = JSON.parse(localStorage.getItem("activeAccount") || "null");
+      const activeAccount = JSON.parse(
+        localStorage.getItem("activeAccount") || "null",
+      );
       let invoiceSettings = null;
       if (activeAccount) {
         try {
@@ -1422,9 +1436,9 @@ export default function Bills() {
               <h1>Bill of Supply</h1>
               <h2>${invoiceSettings?.agencyName || bill.headerInfo?.agencyName || "Sadhana Agency"}</h2>
               <p>${invoiceSettings?.agencyAddress || bill.headerInfo?.address || "Harsila (Dewalchaura), Bageshwar, Uttarakhand"}</p>
-              ${invoiceSettings?.phone ? `<p>Phone: ${invoiceSettings.phone}</p>` : ''}
-              ${invoiceSettings?.email ? `<p>Email: ${invoiceSettings.email}</p>` : ''}
-              ${invoiceSettings?.gstNumber ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ''}
+              ${invoiceSettings?.phone ? `<p>Phone: ${invoiceSettings.phone}</p>` : ""}
+              ${invoiceSettings?.email ? `<p>Email: ${invoiceSettings.email}</p>` : ""}
+              ${invoiceSettings?.gstNumber ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ""}
             </div>
 
             <div class="bill-info">
@@ -1469,17 +1483,21 @@ export default function Bills() {
 
             <div class="footer">
               <p>${invoiceSettings?.declaration || bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
-              ${invoiceSettings?.signatureImageUrl ? `
+              ${
+                invoiceSettings?.signatureImageUrl
+                  ? `
                 <div class="signature-container">
                   <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
                   <div>
                     <img src="${invoiceSettings.signatureImageUrl}" alt="Signature" class="signature-image" />
-                    ${invoiceSettings.authorizedSignatureText ? `<div class="authorized-signature">${invoiceSettings.authorizedSignatureText}</div>` : ''}
+                    ${invoiceSettings.authorizedSignatureText ? `<div class="authorized-signature">${invoiceSettings.authorizedSignatureText}</div>` : ""}
                   </div>
                 </div>
-              ` : `
+              `
+                  : `
                 <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
-              `}
+              `
+              }
             </div>
           </body>
           </html>
@@ -1521,10 +1539,12 @@ export default function Bills() {
       }
 
       // Save the PDF book
-      const fileName = `Bills_Book_${pdfBookOptions.fromDate || 'All'}_to_${pdfBookOptions.toDate || 'All'}_${new Date().toISOString().split("T")[0]}.pdf`;
+      const fileName = `Bills_Book_${pdfBookOptions.fromDate || "All"}_to_${pdfBookOptions.toDate || "All"}_${new Date().toISOString().split("T")[0]}.pdf`;
       pdf.save(fileName);
 
-      alert(`PDF book with ${filteredBills.length} bills created successfully!`);
+      alert(
+        `PDF book with ${filteredBills.length} bills created successfully!`,
+      );
       setIsPdfBookDialogOpen(false);
     } catch (error) {
       console.error("Error generating PDF book:", error);
@@ -1542,7 +1562,9 @@ export default function Bills() {
 
     if (format === "excel") {
       // Get invoice settings for account-specific data
-      const activeAccount = JSON.parse(localStorage.getItem("activeAccount") || "null");
+      const activeAccount = JSON.parse(
+        localStorage.getItem("activeAccount") || "null",
+      );
       let invoiceSettings = null;
       if (activeAccount) {
         try {
@@ -1552,7 +1574,10 @@ export default function Bills() {
             invoiceSettings = JSON.parse(saved);
           }
         } catch (error) {
-          console.warn("Could not load invoice settings for mega report:", error);
+          console.warn(
+            "Could not load invoice settings for mega report:",
+            error,
+          );
         }
       }
 
@@ -1560,7 +1585,9 @@ export default function Bills() {
       const reportData = generatedBills.map((bill) => ({
         Date: bill.date,
         "Bill Number": bill.billNumber,
-        ...(megaReportOptions.hideCustomerNames ? {} : {"Customer Name": bill.customerName}),
+        ...(megaReportOptions.hideCustomerNames
+          ? {}
+          : { "Customer Name": bill.customerName }),
         "Bill Total": bill.subTotal,
         "Payment Mode": bill.paymentMode,
       }));
@@ -1573,7 +1600,9 @@ export default function Bills() {
       reportData.push({
         Date: "",
         "Bill Number": "",
-        ...(megaReportOptions.hideCustomerNames ? {} : {"Customer Name": "TOTAL"}),
+        ...(megaReportOptions.hideCustomerNames
+          ? {}
+          : { "Customer Name": "TOTAL" }),
         "Bill Total": totalSum,
         "Payment Mode": "",
       });
@@ -1584,14 +1613,21 @@ export default function Bills() {
 
       // Add account information as header
       const headerInfo = [
-        [`Mega Report - ${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}`],
+        [
+          `Mega Report - ${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}`,
+        ],
         [invoiceSettings?.agencyAddress || activeAccount?.address || ""],
-        ...(megaReportOptions.includeGST && invoiceSettings?.gstNumber ? [[`GST: ${invoiceSettings.gstNumber}`]] : []),
+        ...(megaReportOptions.includeGST && invoiceSettings?.gstNumber
+          ? [[`GST: ${invoiceSettings.gstNumber}`]]
+          : []),
         [""], // Empty row
       ];
 
       XLSX.utils.sheet_add_aoa(worksheet, headerInfo, { origin: "A1" });
-      XLSX.utils.sheet_add_json(worksheet, reportData, { origin: `A${headerInfo.length + 1}`, skipHeader: false });
+      XLSX.utils.sheet_add_json(worksheet, reportData, {
+        origin: `A${headerInfo.length + 1}`,
+        skipHeader: false,
+      });
 
       XLSX.utils.book_append_sheet(workbook, worksheet, "Mega Report");
       XLSX.writeFile(
@@ -2206,8 +2242,9 @@ export default function Bills() {
                                       {customer.name}
                                     </div>
                                     <div className="text-sm text-gray-500 mt-1">
-                                      {customer.totalTransactions} transactions • ₹
-                                      {customer.totalAmount.toLocaleString()} total
+                                      {customer.totalTransactions} transactions
+                                      • ₹{customer.totalAmount.toLocaleString()}{" "}
+                                      total
                                     </div>
                                     {customer.phone && (
                                       <div className="text-xs text-gray-400 mt-1">
@@ -2224,11 +2261,13 @@ export default function Bills() {
                                     </div>
                                   </div>
                                   <div className="ml-2 flex flex-col items-end">
-                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                      customer.preferredPayment === 'Cash'
-                                        ? 'bg-green-100 text-green-800'
-                                        : 'bg-blue-100 text-blue-800'
-                                    }`}>
+                                    <span
+                                      className={`px-2 py-1 rounded text-xs font-medium ${
+                                        customer.preferredPayment === "Cash"
+                                          ? "bg-green-100 text-green-800"
+                                          : "bg-blue-100 text-blue-800"
+                                      }`}
+                                    >
                                       {customer.preferredPayment}
                                     </span>
                                     <div className="text-xs text-gray-400 mt-1">
@@ -2273,7 +2312,11 @@ export default function Bills() {
                       <div className="flex space-x-2">
                         <Button
                           type="button"
-                          variant={newBill.paymentMode === "GPay" ? "default" : "outline"}
+                          variant={
+                            newBill.paymentMode === "GPay"
+                              ? "default"
+                              : "outline"
+                          }
                           size="sm"
                           onClick={() =>
                             setNewBill((prev) => ({
@@ -2286,7 +2329,11 @@ export default function Bills() {
                         </Button>
                         <Button
                           type="button"
-                          variant={newBill.paymentMode === "Cash" ? "default" : "outline"}
+                          variant={
+                            newBill.paymentMode === "Cash"
+                              ? "default"
+                              : "outline"
+                          }
                           size="sm"
                           onClick={() =>
                             setNewBill((prev) => ({
@@ -2369,7 +2416,9 @@ export default function Bills() {
                             <SelectContent>
                               {stockItems
                                 .filter((item) => item.availableQuantity > 0)
-                                .sort((a, b) => a.itemName.localeCompare(b.itemName))
+                                .sort((a, b) =>
+                                  a.itemName.localeCompare(b.itemName),
+                                )
                                 .map((item) => (
                                   <SelectItem
                                     key={item.id}
@@ -3016,9 +3065,7 @@ export default function Bills() {
                       }
                       className="rounded"
                     />
-                    <Label htmlFor="includeGST">
-                      Include GST Information
-                    </Label>
+                    <Label htmlFor="includeGST">Include GST Information</Label>
                   </div>
 
                   <div className="bg-muted/30 p-3 rounded-lg">
@@ -3075,7 +3122,8 @@ export default function Bills() {
                 <DialogHeader>
                   <DialogTitle>Create PDF Book</DialogTitle>
                   <DialogDescription>
-                    Generate a PDF book with each bill on a separate page. Use date range to filter bills.
+                    Generate a PDF book with each bill on a separate page. Use
+                    date range to filter bills.
                   </DialogDescription>
                 </DialogHeader>
 
@@ -3125,8 +3173,13 @@ export default function Bills() {
                         <span>Bills to include:</span>
                         <span>
                           {(() => {
-                            let filteredBills = bills.filter((b) => b.status === "generated");
-                            if (pdfBookOptions.fromDate || pdfBookOptions.toDate) {
+                            let filteredBills = bills.filter(
+                              (b) => b.status === "generated",
+                            );
+                            if (
+                              pdfBookOptions.fromDate ||
+                              pdfBookOptions.toDate
+                            ) {
                               filteredBills = filterBillsByDateRange(
                                 filteredBills,
                                 pdfBookOptions.fromDate,
@@ -3134,7 +3187,8 @@ export default function Bills() {
                               );
                             }
                             return filteredBills.length;
-                          })()} bills
+                          })()}{" "}
+                          bills
                         </span>
                       </div>
                       <div className="flex justify-between">
@@ -3154,19 +3208,19 @@ export default function Bills() {
                   </Button>
                   <Button
                     onClick={generatePdfBook}
-                    disabled={
-                      (() => {
-                        let filteredBills = bills.filter((b) => b.status === "generated");
-                        if (pdfBookOptions.fromDate || pdfBookOptions.toDate) {
-                          filteredBills = filterBillsByDateRange(
-                            filteredBills,
-                            pdfBookOptions.fromDate,
-                            pdfBookOptions.toDate,
-                          );
-                        }
-                        return filteredBills.length === 0;
-                      })()
-                    }
+                    disabled={(() => {
+                      let filteredBills = bills.filter(
+                        (b) => b.status === "generated",
+                      );
+                      if (pdfBookOptions.fromDate || pdfBookOptions.toDate) {
+                        filteredBills = filterBillsByDateRange(
+                          filteredBills,
+                          pdfBookOptions.fromDate,
+                          pdfBookOptions.toDate,
+                        );
+                      }
+                      return filteredBills.length === 0;
+                    })()}
                   >
                     <FileText className="h-4 w-4 mr-2" />
                     Create PDF Book
