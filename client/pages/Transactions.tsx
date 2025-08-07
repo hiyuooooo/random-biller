@@ -172,7 +172,16 @@ export default function Transactions() {
   };
   const { generateBillsFromTransactions } = useBill();
   const { getUnblockedStock, reduceStock } = useStock();
-  const { activeAccount } = useAccount();
+  const { activeAccount, accounts, setActiveAccount } = useAccount();
+
+  // Test function for account switching
+  const testAccountSwitch = () => {
+    const otherAccount = accounts.find(acc => acc.id !== activeAccount?.id);
+    if (otherAccount) {
+      console.log(`Testing account switch from ${activeAccount?.name} to ${otherAccount.name}`);
+      setActiveAccount(otherAccount);
+    }
+  };
   const [editingId, setEditingId] = useState<number | null>(null);
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
   const [customerFilter, setCustomerFilter] = useState("");
