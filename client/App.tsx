@@ -102,4 +102,8 @@ if (!(window as any).__reactRoot) {
   (window as any).__reactRoot = createRoot(container);
 }
 
-(window as any).__reactRoot.render(<App />);
+// Ensure we only render once
+if (!(window as any).__appMounted) {
+  (window as any).__appMounted = true;
+  (window as any).__reactRoot.render(<App />);
+}
