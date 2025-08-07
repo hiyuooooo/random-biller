@@ -175,6 +175,14 @@ export default function Stock() {
   } = useStock();
   const { bills } = useBill();
 
+  // Log when account changes to help debug
+  React.useEffect(() => {
+    if (activeAccount) {
+      console.log(`Stock page: Account changed to ${activeAccount.name} (ID: ${activeAccount.id})`);
+      console.log(`Stock page: Current stock items count: ${stockItems.length}`);
+    }
+  }, [activeAccount?.id, stockItems.length]);
+
   // Function to check if a stock item is used in any bills
   const isStockUsedInBills = (
     stockId: number,
