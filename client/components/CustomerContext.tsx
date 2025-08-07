@@ -217,7 +217,11 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.error("Error force reloading customers:", error);
-        setCustomers([...defaultCustomers]); // Create new array reference to force re-render
+        if (accountId === "2") {
+          setCustomers([]); // Himalaya Traders - empty customers
+        } else {
+          setCustomers([...defaultCustomers]); // Sadhana Agency - default customers
+        }
       }
     };
 
