@@ -1304,7 +1304,7 @@ export default function Bills() {
       const headerInfo = [
         [`Mega Report - ${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}`],
         [invoiceSettings?.agencyAddress || activeAccount?.address || ""],
-        ...(invoiceSettings?.gstNumber ? [[`GST: ${invoiceSettings.gstNumber}`]] : []),
+        ...(megaReportOptions.includeGST && invoiceSettings?.gstNumber ? [[`GST: ${invoiceSettings.gstNumber}`]] : []),
         [""], // Empty row
       ];
 
