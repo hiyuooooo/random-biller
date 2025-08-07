@@ -584,14 +584,6 @@ export default function Transactions() {
             </p>
           </div>
           <div className="flex space-x-2">
-            <Button
-              onClick={testAccountSwitch}
-              variant="secondary"
-              size="sm"
-              className="bg-purple-100 hover:bg-purple-200"
-            >
-              🔄 Test Account Switch
-            </Button>
             <label>
               <Button variant="outline" size="sm" asChild>
                 <span>
