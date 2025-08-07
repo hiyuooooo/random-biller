@@ -1944,6 +1944,46 @@ export default function Bills() {
                     </div>
                   </div>
 
+                  {/* Payment Mode Selection */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Payment Mode</Label>
+                      <div className="flex space-x-2">
+                        <Button
+                          type="button"
+                          variant={newBill.paymentMode === "GPay" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() =>
+                            setNewBill((prev) => ({
+                              ...prev,
+                              paymentMode: "GPay",
+                            }))
+                          }
+                        >
+                          GPay
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={newBill.paymentMode === "Cash" ? "default" : "outline"}
+                          size="sm"
+                          onClick={() =>
+                            setNewBill((prev) => ({
+                              ...prev,
+                              paymentMode: "Cash",
+                            }))
+                          }
+                        >
+                          Cash
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex items-end">
+                      <Badge variant="outline" className="text-sm">
+                        Current: {newBill.paymentMode}
+                      </Badge>
+                    </div>
+                  </div>
+
                   {!manualMode ? (
                     <div className="space-y-3">
                       <div className="flex space-x-2">
