@@ -179,12 +179,9 @@ export function TransactionProvider({
         const saved = localStorage.getItem(storageKey);
 
         if (saved) {
-          const parsedTransactions = JSON.parse(saved);
-          setTransactions(parsedTransactions);
+          setTransactions(JSON.parse(saved));
         } else {
-          // Start with account-specific default transactions for new accounts
-          const accountDefaults = getDefaultTransactionsForAccount(activeAccount.id);
-          setTransactions(accountDefaults);
+          setTransactions(defaultTransactions);
         }
       } catch (error) {
         setTransactions(defaultTransactions);
