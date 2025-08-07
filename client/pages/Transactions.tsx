@@ -193,6 +193,16 @@ export default function Transactions() {
     }
   };
   const [editingId, setEditingId] = useState<number | null>(null);
+
+  // Auto-trigger test if URL parameter is present
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('test') === 'switch') {
+      // Remove the parameter and trigger test after brief delay
+      window.history.replaceState({}, '', window.location.pathname);
+      setTimeout(testAccountSwitch, 1000);
+    }
+  }, []);
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
   const [customerFilter, setCustomerFilter] = useState("");
   const [paymentModeFilter, setPaymentModeFilter] = useState("all");
