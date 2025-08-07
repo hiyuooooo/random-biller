@@ -174,6 +174,20 @@ export default function Transactions() {
   const { getUnblockedStock, reduceStock } = useStock();
   const { activeAccount, accounts, setActiveAccount } = useAccount();
 
+  // URL-based account switching for testing
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetAccountId = urlParams.get('account');
+    if (targetAccountId && targetAccountId !== activeAccount?.id) {
+      const targetAccount = accounts.find(acc => acc.id === targetAccountId);
+      if (targetAccount) {
+        console.log(`🔄 URL SWITCH: Switching to ${targetAccount.name} (${targetAccount.id})`);
+        setActiveAccount(targetAccount);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+  }, [activeAccount, accounts, setActiveAccount]);
+
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
