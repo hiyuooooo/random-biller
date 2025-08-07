@@ -150,42 +150,72 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
         "Account switch event detected in CustomerContext, forcing data refresh",
       );
       if (activeAccount) {
-        // Force reload data for current account
+        loadAccountData(activeAccount.id);
+      }
+    };
+
+    const handleForceSave = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId && customers.length > 0) {
         try {
-          const storageKey = `customers_${activeAccount.id}`;
-          const saved = localStorage.getItem(storageKey);
-          if (saved) {
-            const parsedCustomers = JSON.parse(saved);
-            if (Array.isArray(parsedCustomers)) {
-              // Deduplicate customers by ID and name to prevent duplicate keys
-              const uniqueCustomers = parsedCustomers.filter(
-                (customer, index, self) =>
-                  index ===
-                  self.findIndex(
-                    (c) =>
-                      c.id === customer.id ||
-                      c.name.toLowerCase() === customer.name.toLowerCase(),
-                  ),
-              );
-              setCustomers(uniqueCustomers);
-              console.log(
-                `Force reloaded ${uniqueCustomers.length} unique customers for account ${activeAccount.name}`,
-              );
-            }
-          } else {
-            setCustomers(defaultCustomers);
-          }
+          const storageKey = `customers_${accountId}`;
+          localStorage.setItem(storageKey, JSON.stringify(customers));
+          console.log(`Force saved ${customers.length} customers for account ${accountId}`);
         } catch (error) {
-          console.error("Error force reloading customers:", error);
-          setCustomers(defaultCustomers);
+          console.error("Error force saving customers:", error);
         }
       }
     };
 
+    const handleLoadAccountData = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId) {
+        loadAccountData(accountId);
+      }
+    };
+
+    const loadAccountData = (accountId: string) => {
+      try {
+        const storageKey = `customers_${accountId}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsedCustomers = JSON.parse(saved);
+          if (Array.isArray(parsedCustomers)) {
+            // Deduplicate customers by ID and name to prevent duplicate keys
+            const uniqueCustomers = parsedCustomers.filter(
+              (customer, index, self) =>
+                index ===
+                self.findIndex(
+                  (c) =>
+                    c.id === customer.id ||
+                    c.name.toLowerCase() === customer.name.toLowerCase(),
+                ),
+            );
+            setCustomers([...uniqueCustomers]); // Create new array reference to force re-render
+            console.log(
+              `Force reloaded ${uniqueCustomers.length} unique customers for account ${accountId}`,
+            );
+          }
+        } else {
+          setCustomers([...defaultCustomers]); // Create new array reference to force re-render
+          console.log(`No customers found for account ${accountId}, loading defaults`);
+        }
+      } catch (error) {
+        console.error("Error force reloading customers:", error);
+        setCustomers([...defaultCustomers]); // Create new array reference to force re-render
+      }
+    };
+
     window.addEventListener("account-switched", handleAccountSwitch);
-    return () =>
+    window.addEventListener("force-save-account-data", handleForceSave);
+    window.addEventListener("load-account-data", handleLoadAccountData);
+
+    return () => {
       window.removeEventListener("account-switched", handleAccountSwitch);
-  }, [activeAccount]);
+      window.removeEventListener("force-save-account-data", handleForceSave);
+      window.removeEventListener("load-account-data", handleLoadAccountData);
+    };
+  }, [activeAccount, customers]);
 
   const addCustomer = (customerData: Omit<Customer, "id">) => {
     setCustomers((prev) => {
