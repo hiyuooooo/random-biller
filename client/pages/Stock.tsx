@@ -163,7 +163,7 @@ interface StockItem {
 }
 
 export default function Stock() {
-  const { activeAccount } = useAccount();
+  const { activeAccount, accounts, setActiveAccount } = useAccount();
   const {
     stockItems,
     updateStockItem,
