@@ -160,8 +160,8 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     );
     setActiveAccountState(account);
 
-    // Force immediate data refresh for new account
-    setTimeout(() => {
+    // Force immediate data refresh for new account with Promise-based approach
+    Promise.resolve().then(() => {
       console.log(`AccountManager: Account switch to ${account.name} (ID: ${account.id}) completed, dispatching events`);
       // Dispatch multiple events to ensure all contexts refresh
       window.dispatchEvent(new Event("account-switched"));
@@ -170,7 +170,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
           detail: { accountId: account.id },
         }),
       );
-    }, 100);
+    });
   };
 
   const addAccount = (accountData: Omit<Account, "id" | "isActive">) => {
