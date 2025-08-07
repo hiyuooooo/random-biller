@@ -140,26 +140,32 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
 
     // Force save current account data before switching
     try {
-      // Force trigger a save by setting localStorage
       if (activeAccount) {
         console.log(`Saving data for current account: ${activeAccount.name}`);
-        // The individual contexts will handle their own saving via useEffect
+        // Force all contexts to save their current data
+        window.dispatchEvent(new CustomEvent("force-save-account-data", {
+          detail: { accountId: activeAccount.id }
+        }));
       }
     } catch (error) {
       console.warn("Error during account switch preparation:", error);
     }
 
+    // Update account states
     setAccounts((prev) =>
       prev.map((acc) => ({ ...acc, isActive: acc.id === account.id })),
     );
     setActiveAccountState(account);
 
-    // Give a brief moment for contexts to load new data
+    // Force immediate data refresh for new account
     setTimeout(() => {
       console.log(`Account switch to ${account.name} completed`);
-      // Force a small refresh to ensure all contexts have updated
+      // Dispatch multiple events to ensure all contexts refresh
       window.dispatchEvent(new Event("account-switched"));
-    }, 200);
+      window.dispatchEvent(new CustomEvent("load-account-data", {
+        detail: { accountId: account.id }
+      }));
+    }, 100);
   };
 
   const addAccount = (accountData: Omit<Account, "id" | "isActive">) => {
