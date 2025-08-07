@@ -241,7 +241,8 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
           `Error loading stock for account ${activeAccount.name}:`,
           error,
         );
-        setStockItems(defaultStock);
+        const accountStock = getStockForAccount(activeAccount.id);
+        setStockItems(accountStock);
       }
     } else {
       // If no active account, start with empty array
