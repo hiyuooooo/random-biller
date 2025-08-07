@@ -111,42 +111,6 @@ const defaultTransactions: Transaction[] = [
   },
 ];
 
-// Account-specific default data to make account switching obvious
-const getDefaultTransactionsForAccount = (accountId: string): Transaction[] => {
-  if (accountId === "1") {
-    // Sadhana Agency - Original data
-    return defaultTransactions;
-  } else {
-    // Himalaya Traders - Different data to show account isolation
-    return [
-      {
-        id: 101,
-        date: "20-01-2024",
-        customerName: "Mountain Supplier",
-        total: 5500,
-        paymentMode: "Bank",
-        isValid: true,
-      },
-      {
-        id: 102,
-        date: "19-01-2024",
-        customerName: "Valley Store",
-        total: 3200,
-        paymentMode: "GPay",
-        isValid: true,
-      },
-      {
-        id: 103,
-        date: "18-01-2024",
-        customerName: "Hill Trader_c",
-        total: 1800,
-        paymentMode: "Cash",
-        isValid: true,
-      },
-    ];
-  }
-};
-
 const TransactionContext = createContext<TransactionContextType | null>(null);
 
 export function TransactionProvider({
