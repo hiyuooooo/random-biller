@@ -1026,7 +1026,10 @@ export default function Bills() {
               margin-top: 5px;
             }
             @media print {
-              body { margin: 0; }
+              body {
+                margin: 0.70cm !important;
+                padding: 0 !important;
+              }
               .header {
                 page-break-inside: avoid;
                 page-break-after: avoid;
@@ -1043,6 +1046,11 @@ export default function Bills() {
               .footer {
                 page-break-before: avoid;
                 page-break-inside: avoid;
+                margin-left: 0 !important;
+                text-align: center !important;
+              }
+              .signature-container {
+                margin-left: 0 !important;
               }
               /* Prevent all page breaks for single bill */
               * {
