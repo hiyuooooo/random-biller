@@ -43,6 +43,7 @@ import { SampleDataGenerator } from "@/components/SampleDataGenerator";
 import * as XLSX from "xlsx";
 import { useStock } from "@/components/StockContext";
 import { useBill } from "@/components/BillContext";
+import { useAccount } from "@/components/AccountManager";
 
 // Mock stock data based on your Python code structure
 const mockStockData = [
