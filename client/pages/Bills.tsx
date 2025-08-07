@@ -3475,6 +3475,26 @@ export default function Bills() {
                     Cancel
                   </Button>
                   <Button
+                    variant="outline"
+                    onClick={generateHtmlBook}
+                    disabled={(() => {
+                      let filteredBills = bills.filter(
+                        (b) => b.status === "generated",
+                      );
+                      if (pdfBookOptions.fromDate || pdfBookOptions.toDate) {
+                        filteredBills = filterBillsByDateRange(
+                          filteredBills,
+                          pdfBookOptions.fromDate,
+                          pdfBookOptions.toDate,
+                        );
+                      }
+                      return filteredBills.length === 0;
+                    })()}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download HTML Book
+                  </Button>
+                  <Button
                     onClick={generatePdfBook}
                     disabled={(() => {
                       let filteredBills = bills.filter(
