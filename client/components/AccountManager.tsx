@@ -158,7 +158,6 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
 
     // Force immediate data refresh for new account with Promise-based approach
     Promise.resolve().then(() => {
-      console.log(`AccountManager: Account switch to ${account.name} (ID: ${account.id}) completed, dispatching events`);
       // Dispatch multiple events to ensure all contexts refresh
       window.dispatchEvent(new Event("account-switched"));
       window.dispatchEvent(
