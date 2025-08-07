@@ -235,7 +235,7 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("force-save-account-data", handleForceSave);
       window.removeEventListener("load-account-data", handleLoadAccountData);
     };
-  }, [activeAccount, customers]);
+  }, [activeAccount]);
 
   const addCustomer = (customerData: Omit<Customer, "id">) => {
     setCustomers((prev) => {
