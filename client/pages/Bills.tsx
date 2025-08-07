@@ -913,6 +913,227 @@ export default function Bills() {
     setActiveTab("view");
   };
 
+  // Generate HTML for single bill
+  const generateBillHTML = async (bill: any) => {
+    try {
+      // Get invoice settings from localStorage
+      const activeAccount = JSON.parse(
+        localStorage.getItem("activeAccount") || "null",
+      );
+      let invoiceSettings = null;
+      if (activeAccount) {
+        try {
+          const storageKey = `settings_invoice_${activeAccount.id}`;
+          const saved = localStorage.getItem(storageKey);
+          if (saved) {
+            invoiceSettings = JSON.parse(saved);
+          }
+        } catch (error) {
+          console.warn(
+            "Could not load invoice settings for HTML generation:",
+            error,
+          );
+        }
+      }
+
+      // Create HTML content for the bill
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Bill ${bill.billNumber}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 40px;
+              color: #333;
+              line-height: 1.6;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 40px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 20px;
+            }
+            .header h1 {
+              margin: 0 0 10px 0;
+              font-size: 24px;
+              color: #333;
+            }
+            .header h2 {
+              margin: 0 0 5px 0;
+              font-size: 18px;
+              color: #666;
+            }
+            .header p {
+              margin: 0;
+              color: #888;
+              font-size: 14px;
+            }
+            .bill-info {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin: 30px 0;
+              padding: 20px;
+              background-color: #f9f9f9;
+              border-radius: 8px;
+            }
+            .bill-info div {
+              margin: 5px 0;
+            }
+            .bill-info strong {
+              color: #333;
+            }
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 30px 0;
+              box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            }
+            .items-table th, .items-table td {
+              border: 1px solid #ddd;
+              padding: 12px 8px;
+              text-align: left;
+            }
+            .items-table th {
+              background-color: #f8f9fa;
+              font-weight: bold;
+              color: #333;
+            }
+            .items-table tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .total-row {
+              background-color: #e9ecef !important;
+              font-weight: bold;
+              font-size: 16px;
+            }
+            .footer {
+              margin-top: 60px;
+              padding-top: 20px;
+              border-top: 1px solid #ddd;
+              font-size: 12px;
+              color: #666;
+              text-align: center;
+            }
+            .signature-container {
+              display: flex;
+              justify-content: space-between;
+              align-items: end;
+              margin-top: 40px;
+            }
+            .signature-image {
+              max-width: 150px;
+              max-height: 60px;
+            }
+            .authorized-signature {
+              text-align: center;
+              font-size: 10px;
+              margin-top: 5px;
+            }
+            @media print {
+              body { margin: 0.70cm !important; }
+              .footer {
+                margin-left: 0 !important;
+                text-align: center !important;
+              }
+              .signature-container {
+                margin-left: 0 !important;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Bill of Supply</h1>
+            <h2>${invoiceSettings?.agencyName || bill.headerInfo?.agencyName || "Sadhana Agency"}</h2>
+            <p>${invoiceSettings?.agencyAddress || bill.headerInfo?.address || "Harsila (Dewalchaura), Bageshwar, Uttarakhand"}</p>
+            ${invoiceSettings?.phone ? `<p>Phone: ${invoiceSettings.phone}</p>` : ""}
+            ${invoiceSettings?.email ? `<p>Email: ${invoiceSettings.email}</p>` : ""}
+            ${invoiceSettings?.gstNumber ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ""}
+          </div>
+
+          <div class="bill-info">
+            <div><strong>Bill No:</strong> ${bill.billNumber}</div>
+            <div><strong>Date:</strong> ${bill.date}</div>
+            <div><strong>Customer:</strong> ${bill.customerName}</div>
+            <div><strong>Payment Mode:</strong> ${bill.paymentMode}</div>
+          </div>
+
+          <table class="items-table">
+            <thead>
+              <tr>
+                <th>Sr. No.</th>
+                <th>Item</th>
+                <th>Qty</th>
+                <th>Rate</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bill.items
+                .map(
+                  (item: any, index: number) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${item.name}</td>
+                  <td>${item.quantity}</td>
+                  <td>₹${item.price}</td>
+                  <td>₹${item.total}</td>
+                </tr>
+              `,
+                )
+                .join("")}
+            </tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="4"><strong>Sub Total:</strong></td>
+                <td><strong>₹${bill.subTotal}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="footer">
+            <p>${invoiceSettings?.declaration || bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
+            ${
+              invoiceSettings?.signatureImageUrl
+                ? `
+              <div class="signature-container">
+                <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+                <div>
+                  <img src="${invoiceSettings.signatureImageUrl}" alt="Signature" class="signature-image" />
+                  ${invoiceSettings.authorizedSignatureText ? `<div class="authorized-signature">${invoiceSettings.authorizedSignatureText}</div>` : ""}
+                </div>
+              </div>
+            `
+                : `
+              <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+            `
+            }
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Create blob and download
+      const blob = new Blob([htmlContent], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `Bill_${bill.billNumber}_HTML.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      console.log(`HTML generated successfully for bill: ${bill.billNumber}`);
+    } catch (error) {
+      console.error("Error generating HTML:", error);
+      alert("Error generating HTML. Please try again.");
+    }
+  };
+
   const generatePDF = async (bill: any) => {
     try {
       // Get invoice settings from localStorage
