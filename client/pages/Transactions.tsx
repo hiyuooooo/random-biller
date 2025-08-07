@@ -197,12 +197,14 @@ export default function Transactions() {
   // Auto-trigger test if URL parameter is present
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('test') === 'switch') {
+    if (urlParams.get('test') === 'switch' && activeAccount && accounts.length > 1) {
       // Remove the parameter and trigger test after brief delay
       window.history.replaceState({}, '', window.location.pathname);
-      setTimeout(testAccountSwitch, 1000);
+      setTimeout(() => {
+        testAccountSwitch();
+      }, 1000);
     }
-  }, []);
+  }, [activeAccount, accounts]);
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
   const [customerFilter, setCustomerFilter] = useState("");
   const [paymentModeFilter, setPaymentModeFilter] = useState("all");
