@@ -176,10 +176,20 @@ export default function Transactions() {
 
   // Test function for account switching
   const testAccountSwitch = () => {
+    const currentStats = `Current: ${activeAccount?.name} - ${transactions.length} transactions, ₹${transactions.reduce((sum, t) => sum + Number(t.total), 0).toLocaleString()}`;
+    console.log(`BEFORE SWITCH - ${currentStats}`);
+
     const otherAccount = accounts.find(acc => acc.id !== activeAccount?.id);
     if (otherAccount) {
-      console.log(`Testing account switch from ${activeAccount?.name} to ${otherAccount.name}`);
+      console.log(`SWITCHING from ${activeAccount?.name} to ${otherAccount.name}`);
       setActiveAccount(otherAccount);
+
+      // Check results after a brief delay
+      setTimeout(() => {
+        const newStats = `After: ${otherAccount.name} - ${transactions.length} transactions, ₹${transactions.reduce((sum, t) => sum + Number(t.total), 0).toLocaleString()}`;
+        console.log(`AFTER SWITCH - ${newStats}`);
+        alert(`Account Switch Test:\n\nBEFORE: ${currentStats}\nAFTER: ${newStats}`);
+      }, 200);
     }
   };
   const [editingId, setEditingId] = useState<number | null>(null);
