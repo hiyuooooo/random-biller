@@ -246,6 +246,19 @@ export default function Reports() {
   };
 
   const generateMegaReportHTML = () => {
+    // Get invoice settings for account-specific header
+    let invoiceSettings = null;
+    if (activeAccount) {
+      try {
+        const storageKey = `settings_invoice_${activeAccount.id}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          invoiceSettings = JSON.parse(saved);
+        }
+      } catch (error) {
+        console.warn("Could not load invoice settings for mega report:", error);
+      }
+    }
     return `
       <!DOCTYPE html>
       <html>
