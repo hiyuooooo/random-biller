@@ -194,35 +194,64 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         "Account switch event detected in StockContext, forcing data refresh",
       );
       if (activeAccount) {
-        // Force reload data for current account
+        loadAccountData(activeAccount.id);
+      }
+    };
+
+    const handleForceSave = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId && stockItems.length > 0) {
         try {
-          const storageKey = `stockItems_${activeAccount.id}`;
-          const saved = localStorage.getItem(storageKey);
-          if (saved) {
-            const parsedStock = JSON.parse(saved);
-            if (Array.isArray(parsedStock)) {
-              setStockItems([...parsedStock]); // Create new array reference to force re-render
-              console.log(
-                `Force reloaded ${parsedStock.length} stock items for account ${activeAccount.name}`,
-              );
-            }
-          } else {
-            setStockItems([...defaultStock]); // Create new array reference to force re-render
-            console.log(
-              `No data found for account ${activeAccount.name}, loading default stock`,
-            );
-          }
+          const storageKey = `stockItems_${accountId}`;
+          localStorage.setItem(storageKey, JSON.stringify(stockItems));
+          console.log(`Force saved ${stockItems.length} stock items for account ${accountId}`);
         } catch (error) {
-          console.error("Error force reloading stock:", error);
-          setStockItems([...defaultStock]); // Create new array reference to force re-render
+          console.error("Error force saving stock items:", error);
         }
       }
     };
 
+    const handleLoadAccountData = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId) {
+        loadAccountData(accountId);
+      }
+    };
+
+    const loadAccountData = (accountId: string) => {
+      try {
+        const storageKey = `stockItems_${accountId}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsedStock = JSON.parse(saved);
+          if (Array.isArray(parsedStock)) {
+            setStockItems([...parsedStock]); // Create new array reference to force re-render
+            console.log(
+              `Force reloaded ${parsedStock.length} stock items for account ${accountId}`,
+            );
+          }
+        } else {
+          setStockItems([...defaultStock]); // Create new array reference to force re-render
+          console.log(
+            `No data found for account ${accountId}, loading default stock`,
+          );
+        }
+      } catch (error) {
+        console.error("Error force reloading stock:", error);
+        setStockItems([...defaultStock]); // Create new array reference to force re-render
+      }
+    };
+
     window.addEventListener("account-switched", handleAccountSwitch);
-    return () =>
+    window.addEventListener("force-save-account-data", handleForceSave);
+    window.addEventListener("load-account-data", handleLoadAccountData);
+
+    return () => {
       window.removeEventListener("account-switched", handleAccountSwitch);
-  }, [activeAccount]);
+      window.removeEventListener("force-save-account-data", handleForceSave);
+      window.removeEventListener("load-account-data", handleLoadAccountData);
+    };
+  }, [activeAccount, stockItems]);
 
   const addStockItem = (item: StockItem) => {
     setStockItems((prev) => [...prev, item]);
