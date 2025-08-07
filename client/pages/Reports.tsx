@@ -593,19 +593,28 @@ export default function Reports() {
               analysis
             </p>
           </div>
-          <div className="flex space-x-2">
-            <Button onClick={downloadMegaReportHTML} variant="outline">
-              <FileText className="h-4 w-4 mr-2" />
-              Download HTML
-            </Button>
-            <Button onClick={generateMegaReportPDF}>
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
-            </Button>
-            <Button variant="outline" onClick={() => setActiveTab("processor")}>
-              <Code className="h-4 w-4 mr-2" />
-              HTML Processor
-            </Button>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Switch
+                checked={includeGST}
+                onCheckedChange={setIncludeGST}
+              />
+              <label className="text-sm font-medium">Include GST</label>
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={downloadMegaReportHTML} variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                Download HTML
+              </Button>
+              <Button onClick={generateMegaReportPDF}>
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
+              </Button>
+              <Button variant="outline" onClick={() => setActiveTab("processor")}>
+                <Code className="h-4 w-4 mr-2" />
+                HTML Processor
+              </Button>
+            </div>
           </div>
         </div>
 
