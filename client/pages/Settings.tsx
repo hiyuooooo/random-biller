@@ -125,22 +125,8 @@ export default function Settings() {
       const storageKey = `settings_invoice_${activeAccount.id}`;
       const saved = localStorage.getItem(storageKey);
       return saved
-        ? JSON.parse(saved)
-        : {
-            headerTitle: "Bill of Supply",
-            agencyName: activeAccount.name || "",
-            agencyAddress: activeAccount.address || "",
-            phone: activeAccount.phone || "+91 98765 43210",
-            email: activeAccount.email || "contact@agency.com",
-            declaration:
-              activeAccount.footerText ||
-              "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
-            signatureText: "Authorized Signature",
-            logoUrl: "",
-            signatureImageUrl: "",
-            authorizedSignatureText: "",
-            gstNumber: "",
-          };
+        ? ensureInvoiceSettingsDefaults(JSON.parse(saved), activeAccount)
+        : ensureInvoiceSettingsDefaults(null, activeAccount);
     } catch {
       return {
         headerTitle: "Bill of Supply",
