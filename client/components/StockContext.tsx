@@ -204,7 +204,9 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         try {
           const storageKey = `stockItems_${accountId}`;
           localStorage.setItem(storageKey, JSON.stringify(stockItems));
-          console.log(`Force saved ${stockItems.length} stock items for account ${accountId}`);
+          console.log(
+            `Force saved ${stockItems.length} stock items for account ${accountId}`,
+          );
         } catch (error) {
           console.error("Error force saving stock items:", error);
         }

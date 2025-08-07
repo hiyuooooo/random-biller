@@ -1954,7 +1954,9 @@ export default function Bills() {
             <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()}</p>
           </div>
 
-          ${filteredBills.map((bill, index) => `
+          ${filteredBills
+            .map(
+              (bill, index) => `
             <div class="bill-page">
               <div class="header">
                 <h1>Bill of Supply</h1>
@@ -1983,7 +1985,9 @@ export default function Bills() {
                   </tr>
                 </thead>
                 <tbody>
-                  ${bill.items.map((item: any, itemIndex: number) => `
+                  ${bill.items
+                    .map(
+                      (item: any, itemIndex: number) => `
                     <tr>
                       <td>${itemIndex + 1}</td>
                       <td>${item.name}</td>
@@ -1991,7 +1995,9 @@ export default function Bills() {
                       <td>₹${item.price}</td>
                       <td>₹${item.total}</td>
                     </tr>
-                  `).join("")}
+                  `,
+                    )
+                    .join("")}
                 </tbody>
                 <tfoot>
                   <tr class="total-row">
@@ -2003,7 +2009,9 @@ export default function Bills() {
 
               <div class="footer">
                 <p>${invoiceSettings?.declaration || bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
-                ${invoiceSettings?.signatureImageUrl ? `
+                ${
+                  invoiceSettings?.signatureImageUrl
+                    ? `
                   <div class="signature-container">
                     <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
                     <div>
@@ -2011,12 +2019,16 @@ export default function Bills() {
                       ${invoiceSettings.authorizedSignatureText ? `<div class="authorized-signature">${invoiceSettings.authorizedSignatureText}</div>` : ""}
                     </div>
                   </div>
-                ` : `
+                `
+                    : `
                   <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
-                `}
+                `
+                }
               </div>
             </div>
-          `).join("")}
+          `,
+            )
+            .join("")}
         </body>
         </html>
       `;

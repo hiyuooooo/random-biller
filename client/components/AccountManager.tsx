@@ -143,9 +143,11 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       if (activeAccount) {
         console.log(`Saving data for current account: ${activeAccount.name}`);
         // Force all contexts to save their current data
-        window.dispatchEvent(new CustomEvent("force-save-account-data", {
-          detail: { accountId: activeAccount.id }
-        }));
+        window.dispatchEvent(
+          new CustomEvent("force-save-account-data", {
+            detail: { accountId: activeAccount.id },
+          }),
+        );
       }
     } catch (error) {
       console.warn("Error during account switch preparation:", error);
@@ -162,9 +164,11 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       console.log(`Account switch to ${account.name} completed`);
       // Dispatch multiple events to ensure all contexts refresh
       window.dispatchEvent(new Event("account-switched"));
-      window.dispatchEvent(new CustomEvent("load-account-data", {
-        detail: { accountId: account.id }
-      }));
+      window.dispatchEvent(
+        new CustomEvent("load-account-data", {
+          detail: { accountId: account.id },
+        }),
+      );
     }, 100);
   };
 
