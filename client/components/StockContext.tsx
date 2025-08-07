@@ -26,7 +26,69 @@ interface StockContextType {
   isStockUsedInBills: (id: number) => boolean;
 }
 
-// Default stock data
+// Account-specific stock data function
+const getStockForAccount = (accountId: string): StockItem[] => {
+  if (accountId === "1") {
+    // Sadhana Agency - Traditional grocery items
+    return [
+      {
+        id: 1,
+        itemName: "Rice (1kg)",
+        price: 80,
+        availableQuantity: 150,
+        lowStockThreshold: 20,
+      },
+      {
+        id: 2,
+        itemName: "Wheat Flour (1kg)",
+        price: 45,
+        availableQuantity: 200,
+        lowStockThreshold: 30,
+      },
+      {
+        id: 3,
+        itemName: "Sugar (1kg)",
+        price: 60,
+        availableQuantity: 100,
+        lowStockThreshold: 25,
+      },
+    ];
+  } else {
+    // Himalaya Traders - Different mountain/trading items
+    return [
+      {
+        id: 101,
+        itemName: "Himalayan Pink Salt (500g)",
+        price: 150,
+        availableQuantity: 50,
+        lowStockThreshold: 10,
+      },
+      {
+        id: 102,
+        itemName: "Mountain Honey (250g)",
+        price: 280,
+        availableQuantity: 30,
+        lowStockThreshold: 5,
+      },
+      {
+        id: 103,
+        itemName: "Organic Tea Leaves (100g)",
+        price: 220,
+        availableQuantity: 75,
+        lowStockThreshold: 15,
+      },
+      {
+        id: 104,
+        itemName: "Dry Fruits Mix (500g)",
+        price: 450,
+        availableQuantity: 40,
+        lowStockThreshold: 8,
+      },
+    ];
+  }
+};
+
+// Default stock data (keeping for backward compatibility)
 const defaultStock: StockItem[] = [
   {
     id: 1,
