@@ -251,7 +251,29 @@ export function TransactionProvider({
         }
       } catch (error) {
         console.error("Error force reloading transactions:", error);
-        setTransactions([...defaultTransactions]); // Create new array reference to force re-render
+        if (accountId === "1") {
+          setTransactions([...defaultTransactions]); // Sadhana Agency defaults
+        } else {
+          const himalayaTransactions = [
+            {
+              id: 201,
+              date: "22-01-2024",
+              customerName: "Mountain Resort",
+              total: 2800,
+              paymentMode: "Bank",
+              isValid: true,
+            },
+            {
+              id: 202,
+              date: "21-01-2024",
+              customerName: "Hill Station Shop",
+              total: 1650,
+              paymentMode: "GPay",
+              isValid: true,
+            },
+          ];
+          setTransactions([...himalayaTransactions]); // Himalaya Traders specific data
+        }
       }
     };
 
