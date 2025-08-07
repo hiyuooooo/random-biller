@@ -996,10 +996,12 @@ export default function Bills() {
             }
             .footer {
               margin-top: 60px;
+              margin-left: 70mm;
               padding-top: 20px;
               border-top: 1px solid #ddd;
               font-size: 12px;
               color: #666;
+              text-align: center;
             }
             .signature {
               text-align: center;
@@ -1011,6 +1013,7 @@ export default function Bills() {
               justify-content: space-between;
               align-items: end;
               margin-top: 40px;
+              margin-left: 70mm;
             }
             .signature-image {
               max-width: 150px;
