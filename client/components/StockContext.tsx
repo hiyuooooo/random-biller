@@ -52,6 +52,20 @@ const getStockForAccount = (accountId: string): StockItem[] => {
         availableQuantity: 100,
         lowStockThreshold: 25,
       },
+      {
+        id: 4,
+        itemName: "Cooking Oil (1L)",
+        price: 120,
+        availableQuantity: 80,
+        lowStockThreshold: 15,
+      },
+      {
+        id: 5,
+        itemName: "Pulses (1kg)",
+        price: 95,
+        availableQuantity: 120,
+        lowStockThreshold: 20,
+      },
     ];
   } else {
     // Himalaya Traders - Different mountain/trading items
