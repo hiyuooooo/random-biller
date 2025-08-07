@@ -554,7 +554,7 @@ export default function Settings() {
 
                   <div className="flex justify-end">
                     <Button>
-                      <Settings className="h-4 w-4 mr-2" />
+                      <SettingsIcon className="h-4 w-4 mr-2" />
                       Save Invoice Settings
                     </Button>
                   </div>
