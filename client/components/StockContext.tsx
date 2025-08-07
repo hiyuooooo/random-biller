@@ -297,9 +297,10 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
             );
           }
         } else {
-          setStockItems([...defaultStock]); // Create new array reference to force re-render
+          const accountStock = getStockForAccount(accountId);
+          setStockItems([...accountStock]); // Create new array reference to force re-render
           console.log(
-            `No data found for account ${accountId}, loading default stock`,
+            `No data found for account ${accountId}, loading account-specific stock (${accountStock.length} items)`,
           );
         }
       } catch (error) {
