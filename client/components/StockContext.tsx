@@ -334,7 +334,7 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       window.removeEventListener("force-save-account-data", handleForceSave);
       window.removeEventListener("load-account-data", handleLoadAccountData);
     };
-  }, [activeAccount, stockItems]);
+  }, [activeAccount]);
 
   const addStockItem = (item: StockItem) => {
     setStockItems((prev) => [...prev, item]);
