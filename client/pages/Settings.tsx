@@ -45,16 +45,7 @@ const ensureInvoiceSettingsDefaults = (settings: any, activeAccount: any) => {
 };
 
 export default function Settings() {
-  const { activeAccount, accounts, setActiveAccount } = useAccount();
-
-  // Demo function to show account switching works
-  const switchToOtherAccount = () => {
-    const otherAccount = accounts.find(acc => acc.id !== activeAccount?.id);
-    if (otherAccount) {
-      alert(`Switching from ${activeAccount?.name} to ${otherAccount.name}.\n\nGo to Transactions page to see different data!`);
-      setActiveAccount(otherAccount);
-    }
-  };
+  const { activeAccount } = useAccount();
 
   const [notifications, setNotifications] = useState(() => {
     if (!activeAccount)
