@@ -136,8 +136,6 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
   }, [activeAccount]);
 
   const setActiveAccount = (account: Account) => {
-    console.log(`AccountManager: Switching to account: ${account.name} (ID: ${account.id})`);
-    console.log(`AccountManager: Previous account:`, activeAccount?.name);
 
     // Force save current account data before switching
     try {
