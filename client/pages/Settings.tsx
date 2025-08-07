@@ -364,6 +364,19 @@ export default function Settings() {
                         placeholder="contact@agency.com"
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label>GST Number</Label>
+                      <Input
+                        value={invoiceSettings.gstNumber}
+                        onChange={(e) =>
+                          setInvoiceSettings((prev) => ({
+                            ...prev,
+                            gstNumber: e.target.value,
+                          }))
+                        }
+                        placeholder="GST Number (e.g., 27ABCDE1234F1Z5)"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
