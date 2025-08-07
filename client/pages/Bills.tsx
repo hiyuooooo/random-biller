@@ -320,6 +320,7 @@ export default function Bills() {
   const [megaReportOptions, setMegaReportOptions] = useState({
     hideCustomerNames: false,
     totalAtLastPage: true,
+    includeGST: false,
   });
   const [customerSuggestions, setCustomerSuggestions] = useState<any[]>([]);
 
