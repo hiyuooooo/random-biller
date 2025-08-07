@@ -258,10 +258,10 @@ export function AccountSelector() {
           if (account) setActiveAccount(account);
         }}
       >
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-48" aria-label="Select account">
           <SelectValue placeholder="Select account" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" sideOffset={4}>
           {accounts.map((account) => (
             <SelectItem key={account.id} value={account.id}>
               {account.name}
