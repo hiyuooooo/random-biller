@@ -287,7 +287,7 @@ export function TransactionProvider({
       window.removeEventListener("force-save-account-data", handleForceSave);
       window.removeEventListener("load-account-data", handleLoadAccountData);
     };
-  }, [activeAccount, transactions]);
+  }, [activeAccount]);
 
   const addTransaction = (transaction: Transaction) => {
     setTransactions((prev) => [...prev, transaction]);
