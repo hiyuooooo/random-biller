@@ -141,9 +141,6 @@ export function TransactionProvider({
       try {
         const storageKey = `transactions_${activeAccount.id}`;
         const saved = localStorage.getItem(storageKey);
-        console.log(`TransactionContext: Loading data for account ${activeAccount.name} (ID: ${activeAccount.id})`);
-        console.log(`TransactionContext: Storage key: ${storageKey}`);
-        console.log(`TransactionContext: Saved data exists:`, !!saved);
         if (saved) {
           const parsedTransactions = JSON.parse(saved);
           // If saved data is empty array, load defaults instead for better testing
