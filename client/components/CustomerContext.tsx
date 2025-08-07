@@ -112,6 +112,12 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
     if (activeAccount) {
       try {
         const storageKey = `customers_${activeAccount.id}`;
+
+        // Clear Himalaya Traders data to show different content
+        if (activeAccount.id === "2") {
+          localStorage.removeItem(storageKey);
+        }
+
         const saved = localStorage.getItem(storageKey);
         if (saved) {
           const parsedCustomers = JSON.parse(saved);
