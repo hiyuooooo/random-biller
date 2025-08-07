@@ -174,15 +174,6 @@ export default function Transactions() {
   const { getUnblockedStock, reduceStock } = useStock();
   const { activeAccount, accounts, setActiveAccount } = useAccount();
 
-  // Test function for account switching
-  const testAccountSwitch = () => {
-    const otherAccount = accounts.find(acc => acc.id !== activeAccount?.id);
-    if (otherAccount) {
-      console.log(`🔄 TESTING ACCOUNT SWITCH from ${activeAccount?.name} to ${otherAccount.name}`);
-      console.log(`📊 BEFORE: ${activeAccount?.name} has ${transactions.length} transactions`);
-      setActiveAccount(otherAccount);
-    }
-  };
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
