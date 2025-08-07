@@ -162,16 +162,21 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
         const storageKey = `stockItems_${activeAccount.id}`;
         const saved = localStorage.getItem(storageKey);
         if (saved) {
-          setStockItems(JSON.parse(saved));
+          const parsedStock = JSON.parse(saved);
+          setStockItems(parsedStock);
+          console.log(`Loaded ${parsedStock.length} stock items for account ${activeAccount.name} (ID: ${activeAccount.id})`);
         } else {
           setStockItems(defaultStock);
+          console.log(`No existing data found for account ${activeAccount.name}, loading default stock`);
         }
-      } catch {
+      } catch (error) {
+        console.error(`Error loading stock for account ${activeAccount.name}:`, error);
         setStockItems(defaultStock);
       }
     } else {
       // If no active account, start with empty array
       setStockItems([]);
+      console.log("No active account, clearing stock items");
     }
   }, [activeAccount?.id]);
 
