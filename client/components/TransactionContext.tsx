@@ -181,6 +181,9 @@ export function TransactionProvider({
         // Clear and reload for testing - remove this after demo
         if (activeAccount.id === "2" && saved === "[]") {
           localStorage.removeItem(storageKey);
+          const accountDefaults = getDefaultTransactionsForAccount(activeAccount.id);
+          setTransactions(accountDefaults);
+          return;
         }
         if (saved) {
           const parsedTransactions = JSON.parse(saved);
