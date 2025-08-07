@@ -102,6 +102,7 @@ export default function Settings() {
         logoUrl: "",
         signatureImageUrl: "",
         authorizedSignatureText: "",
+        gstNumber: "",
       };
     try {
       const storageKey = `settings_invoice_${activeAccount.id}`;
