@@ -1835,6 +1835,16 @@ export default function Bills() {
               <Download className="h-4 w-4 mr-2" />
               Mega Report Excel
             </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsPdfBookDialogOpen(true)}
+              disabled={
+                bills.filter((b) => b.status === "generated").length === 0
+              }
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              PDF Book
+            </Button>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Create Bill
