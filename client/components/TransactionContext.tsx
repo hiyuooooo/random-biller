@@ -152,7 +152,6 @@ export function TransactionProvider({
         } else {
           // Start with default transactions for new accounts
           setTransactions(defaultTransactions);
-          console.log(`TransactionContext: No saved data, loaded ${defaultTransactions.length} default transactions`);
         }
       } catch (error) {
         console.error(`TransactionContext: Error loading transactions:`, error);
