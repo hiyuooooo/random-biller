@@ -87,6 +87,8 @@ const defaultAccounts: Account[] = [
 const AccountContext = createContext<AccountContextType | null>(null);
 
 export function AccountProvider({ children }: { children: React.ReactNode }) {
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Initialize from localStorage or use defaults
   const [accounts, setAccounts] = useState<Account[]>(() => {
     try {
@@ -117,6 +119,11 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       }
     },
   );
+
+  // Mark as initialized after first render
+  React.useEffect(() => {
+    setIsInitialized(true);
+  }, []);
 
   // Save to localStorage whenever data changes
   React.useEffect(() => {
