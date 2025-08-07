@@ -243,6 +243,12 @@ export default function Settings() {
               preferences
             </p>
           </div>
+          <Button
+            onClick={switchToOtherAccount}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            🔄 Demo Account Switch to {accounts.find(acc => acc.id !== activeAccount?.id)?.name}
+          </Button>
         </div>
 
         <Tabs defaultValue="accounts" className="space-y-6">
