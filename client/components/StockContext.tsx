@@ -223,9 +223,6 @@ export function StockProvider({ children }: { children: React.ReactNode }) {
       try {
         const storageKey = `stockItems_${activeAccount.id}`;
 
-        // Clear localStorage to force account-specific data loading (temporary for demo)
-        localStorage.removeItem(storageKey);
-
         const saved = localStorage.getItem(storageKey);
         if (saved) {
           const parsedStock = JSON.parse(saved);
