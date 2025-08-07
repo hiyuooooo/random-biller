@@ -235,9 +235,8 @@ export function TransactionProvider({
             );
           }
         } else {
-          const accountDefaults = getDefaultTransactionsForAccount(accountId);
-          setTransactions([...accountDefaults]); // Create new array reference to force re-render
-          console.log(`No transactions found for account ${accountId}, loading account-specific defaults`);
+          setTransactions([...defaultTransactions]); // Create new array reference to force re-render
+          console.log(`No transactions found for account ${accountId}, loading defaults`);
         }
       } catch (error) {
         console.error("Error force reloading transactions:", error);
