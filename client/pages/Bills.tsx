@@ -419,7 +419,7 @@ export default function Bills() {
       iterationMonitor.logIteration(
         monitorId,
         0,
-        `Starting 200 iterations for auto-select with target ���${targetTotal}`,
+        `Starting 200 iterations for auto-select with target ₹${targetTotal}`,
         "info",
       );
     }
@@ -1046,6 +1046,21 @@ export default function Bills() {
               font-size: 10px;
               margin-top: 5px;
             }
+            .declaration {
+              text-align: center;
+              margin-bottom: 40px;
+            }
+            .signature-left {
+              flex: 1;
+              text-align: center;
+            }
+            .signature-right {
+              flex: 1;
+              text-align: center;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            }
             @media print {
               body { margin: 0.70cm !important; }
               .footer {
@@ -1109,20 +1124,26 @@ export default function Bills() {
           </table>
 
           <div class="footer">
-            <p>${invoiceSettings?.declaration || bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
+            <div class="declaration">
+              <p>${invoiceSettings?.declaration || bill.footerInfo?.declaration || "We hereby declare that the tax on supplies has been paid by us under the composition scheme."}</p>
+            </div>
             ${
               invoiceSettings?.signatureImageUrl
                 ? `
               <div class="signature-container">
-                <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
-                <div>
+                <div class="signature-left">
+                  <div>${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+                </div>
+                <div class="signature-right">
                   <img src="${invoiceSettings.signatureImageUrl}" alt="Signature" class="signature-image" />
                   ${invoiceSettings.authorizedSignatureText ? `<div class="authorized-signature">${invoiceSettings.authorizedSignatureText}</div>` : ""}
                 </div>
               </div>
             `
                 : `
-              <div class="signature">${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+              <div style="text-align: center; margin-top: 40px;">
+                <div>${invoiceSettings?.signatureText || bill.footerInfo?.signature || "Authorized Signature"}</div>
+              </div>
             `
             }
           </div>
@@ -2902,7 +2923,7 @@ export default function Bills() {
                             • Avoids items from the previous bill to prevent
                             repeats
                           </li>
-                          <li>��� Ensures minimum 2 items per bill</li>
+                          <li>• Ensures minimum 2 items per bill</li>
                           <li>• Matches target total within ±₹30 tolerance</li>
                           <li>
                             • Maximum 7 items per bill, up to 2 quantity each
