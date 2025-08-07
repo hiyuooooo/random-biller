@@ -202,8 +202,8 @@ export default function Settings() {
           // Use account data as defaults for new accounts
           setInvoiceSettings({
             headerTitle: "Bill of Supply",
-            agencyName: activeAccount.name,
-            agencyAddress: activeAccount.address,
+            agencyName: activeAccount.name || "",
+            agencyAddress: activeAccount.address || "",
             phone: activeAccount.phone || "+91 98765 43210",
             email: activeAccount.email || "contact@agency.com",
             declaration:
