@@ -3065,6 +3065,115 @@ export default function Bills() {
                 </div>
               </DialogContent>
             </Dialog>
+
+            {/* PDF Book Dialog */}
+            <Dialog
+              open={isPdfBookDialogOpen}
+              onOpenChange={setIsPdfBookDialogOpen}
+            >
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create PDF Book</DialogTitle>
+                  <DialogDescription>
+                    Generate a PDF book with each bill on a separate page. Use date range to filter bills.
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>From Date (Optional)</Label>
+                    <Input
+                      type="date"
+                      value={pdfBookOptions.fromDate}
+                      onChange={(e) =>
+                        setPdfBookOptions((prev) => ({
+                          ...prev,
+                          fromDate: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>To Date (Optional)</Label>
+                    <Input
+                      type="date"
+                      value={pdfBookOptions.toDate}
+                      onChange={(e) =>
+                        setPdfBookOptions((prev) => ({
+                          ...prev,
+                          toDate: e.target.value,
+                        }))
+                      }
+                    />
+                  </div>
+
+                  <div className="bg-muted/30 p-3 rounded-lg">
+                    <h4 className="font-medium mb-2 text-sm">
+                      Preview Information
+                    </h4>
+                    <div className="text-xs space-y-1">
+                      <div className="flex justify-between">
+                        <span>Date Range:</span>
+                        <span>
+                          {pdfBookOptions.fromDate || pdfBookOptions.toDate
+                            ? `${pdfBookOptions.fromDate || "All"} to ${pdfBookOptions.toDate || "All"}`
+                            : "All bills"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Bills to include:</span>
+                        <span>
+                          {(() => {
+                            let filteredBills = bills.filter((b) => b.status === "generated");
+                            if (pdfBookOptions.fromDate || pdfBookOptions.toDate) {
+                              filteredBills = filterBillsByDateRange(
+                                filteredBills,
+                                pdfBookOptions.fromDate,
+                                pdfBookOptions.toDate,
+                              );
+                            }
+                            return filteredBills.length;
+                          })()} bills
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Format:</span>
+                        <span>Each bill on separate page</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsPdfBookDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={generatePdfBook}
+                    disabled={
+                      (() => {
+                        let filteredBills = bills.filter((b) => b.status === "generated");
+                        if (pdfBookOptions.fromDate || pdfBookOptions.toDate) {
+                          filteredBills = filterBillsByDateRange(
+                            filteredBills,
+                            pdfBookOptions.fromDate,
+                            pdfBookOptions.toDate,
+                          );
+                        }
+                        return filteredBills.length === 0;
+                      })()
+                    }
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Create PDF Book
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
           </TabsContent>
 
           <TabsContent value="monitor" className="space-y-6">
