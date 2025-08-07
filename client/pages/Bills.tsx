@@ -611,7 +611,7 @@ export default function Bills() {
     }
 
     console.log(
-      `Auto-select completed: ${bestMatch.items.length} items, total: ₹${bestMatch.total}, difference: ₹${closestDiff}`,
+      `Auto-select completed: ${bestMatch.items.length} items, total: ���${bestMatch.total}, difference: ₹${closestDiff}`,
     );
     return bestMatch;
   };
@@ -1862,13 +1862,13 @@ export default function Bills() {
                           placeholder="Enter customer name (use _c suffix for cash)"
                         />
 
-                        {/* Customer suggestions dropdown */}
+                        {/* Enhanced Customer suggestions dropdown */}
                         {customerSuggestions.length > 0 && (
-                          <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                          <div className="absolute z-50 w-full mt-1 bg-white border rounded-lg shadow-lg max-h-64 overflow-y-auto">
                             {customerSuggestions.map((customer) => (
                               <div
                                 key={customer.id}
-                                className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                                className="p-3 hover:bg-gray-50 cursor-pointer border-b last:border-b-0"
                                 onClick={() => {
                                   setNewBill((prev) => ({
                                     ...prev,
@@ -1878,12 +1878,41 @@ export default function Bills() {
                                   setCustomerSuggestions([]);
                                 }}
                               >
-                                <div className="font-medium">
-                                  {customer.name}
-                                </div>
-                                <div className="text-sm text-gray-500">
-                                  {customer.totalTransactions} transactions • ₹
-                                  {customer.totalAmount.toLocaleString()} total
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <div className="font-medium text-gray-900">
+                                      {customer.name}
+                                    </div>
+                                    <div className="text-sm text-gray-500 mt-1">
+                                      {customer.totalTransactions} transactions • ₹
+                                      {customer.totalAmount.toLocaleString()} total
+                                    </div>
+                                    {customer.phone && (
+                                      <div className="text-xs text-gray-400 mt-1">
+                                        📞 {customer.phone}
+                                      </div>
+                                    )}
+                                    {customer.address && (
+                                      <div className="text-xs text-gray-400">
+                                        📍 {customer.address}
+                                      </div>
+                                    )}
+                                    <div className="text-xs text-gray-400 mt-1">
+                                      Last: {customer.lastTransaction}
+                                    </div>
+                                  </div>
+                                  <div className="ml-2 flex flex-col items-end">
+                                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                      customer.preferredPayment === 'Cash'
+                                        ? 'bg-green-100 text-green-800'
+                                        : 'bg-blue-100 text-blue-800'
+                                    }`}>
+                                      {customer.preferredPayment}
+                                    </span>
+                                    <div className="text-xs text-gray-400 mt-1">
+                                      Click to select
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             ))}
