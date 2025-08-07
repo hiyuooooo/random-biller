@@ -1058,8 +1058,11 @@ export default function Bills() {
         <body>
           <div class="header">
             <h1>Bill of Supply</h1>
-            <h2>${bill.headerInfo?.agencyName || "Sadhana Agency"}</h2>
-            <p>${bill.headerInfo?.address || "Harsila (Dewalchaura), Bageshwar, Uttarakhand"}</p>
+            <h2>${invoiceSettings?.agencyName || bill.headerInfo?.agencyName || "Sadhana Agency"}</h2>
+            <p>${invoiceSettings?.agencyAddress || bill.headerInfo?.address || "Harsila (Dewalchaura), Bageshwar, Uttarakhand"}</p>
+            ${invoiceSettings?.phone ? `<p>Phone: ${invoiceSettings.phone}</p>` : ''}
+            ${invoiceSettings?.email ? `<p>Email: ${invoiceSettings.email}</p>` : ''}
+            ${invoiceSettings?.gstNumber ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ''}
           </div>
 
           <div class="bill-info">
