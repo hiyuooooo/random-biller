@@ -113,9 +113,6 @@ export function CustomerProvider({ children }: { children: React.ReactNode }) {
       try {
         const storageKey = `customers_${activeAccount.id}`;
 
-        // Force clear all customer data to reset accounts (temporary for demo)
-        localStorage.removeItem(storageKey);
-
         const saved = localStorage.getItem(storageKey);
         if (saved) {
           const parsedCustomers = JSON.parse(saved);
