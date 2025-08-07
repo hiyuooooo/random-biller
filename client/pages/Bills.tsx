@@ -419,7 +419,7 @@ export default function Bills() {
       iterationMonitor.logIteration(
         monitorId,
         0,
-        `Starting 200 iterations for auto-select with target ₹${targetTotal}`,
+        `Starting 200 iterations for auto-select with target ���${targetTotal}`,
         "info",
       );
     }
@@ -1015,20 +1015,34 @@ export default function Bills() {
               border-top: 1px solid #ddd;
               font-size: 12px;
               color: #666;
+            }
+            .declaration {
               text-align: center;
+              margin-bottom: 40px;
             }
             .signature-container {
               display: flex;
               justify-content: space-between;
-              align-items: end;
+              align-items: flex-end;
               margin-top: 40px;
+            }
+            .signature-left {
+              flex: 1;
+              text-align: center;
+            }
+            .signature-right {
+              flex: 1;
+              text-align: center;
+              display: flex;
+              flex-direction: column;
+              align-items: center;
             }
             .signature-image {
               max-width: 150px;
               max-height: 60px;
+              margin-bottom: 5px;
             }
             .authorized-signature {
-              text-align: center;
               font-size: 10px;
               margin-top: 5px;
             }
@@ -2888,7 +2902,7 @@ export default function Bills() {
                             • Avoids items from the previous bill to prevent
                             repeats
                           </li>
-                          <li>• Ensures minimum 2 items per bill</li>
+                          <li>��� Ensures minimum 2 items per bill</li>
                           <li>• Matches target total within ±₹30 tolerance</li>
                           <li>
                             • Maximum 7 items per bill, up to 2 quantity each
