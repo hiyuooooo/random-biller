@@ -24,6 +24,23 @@ import {
   Shield,
 } from "lucide-react";
 
+// Helper function to ensure invoice settings have proper defaults
+const ensureInvoiceSettingsDefaults = (settings: any, activeAccount: any) => {
+  return {
+    headerTitle: settings?.headerTitle || "Bill of Supply",
+    agencyName: settings?.agencyName || activeAccount?.name || "",
+    agencyAddress: settings?.agencyAddress || activeAccount?.address || "",
+    phone: settings?.phone || activeAccount?.phone || "+91 98765 43210",
+    email: settings?.email || activeAccount?.email || "contact@agency.com",
+    declaration: settings?.declaration || activeAccount?.footerText || "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
+    signatureText: settings?.signatureText || "Authorized Signature",
+    logoUrl: settings?.logoUrl || "",
+    signatureImageUrl: settings?.signatureImageUrl || "",
+    authorizedSignatureText: settings?.authorizedSignatureText || "",
+    gstNumber: settings?.gstNumber || "",
+  };
+};
+
 export default function Settings() {
   const { activeAccount } = useAccount();
 
