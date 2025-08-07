@@ -1278,7 +1278,7 @@ export default function Bills() {
       const reportData = generatedBills.map((bill) => ({
         Date: bill.date,
         "Bill Number": bill.billNumber,
-        "Customer Name": bill.customerName,
+        ...(megaReportOptions.hideCustomerNames ? {} : {"Customer Name": bill.customerName}),
         "Bill Total": bill.subTotal,
         "Payment Mode": bill.paymentMode,
       }));
