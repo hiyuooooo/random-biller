@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import {
   Card,
   CardContent,
@@ -29,6 +30,8 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { useBill } from "@/components/BillContext";
+import { useAccount } from "@/components/AccountManager";
+import { Switch } from "@/components/ui/switch";
 
 // Mock data for reports
 const mockBillReports = [
@@ -159,8 +162,19 @@ export default function Reports() {
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("billing");
-  const [bulkPdfDateRange, setBulkPdfDateRange] = useState({ from: "", to: "" });
+  const [bulkPdfDateRange, setBulkPdfDateRange] = useState({
+    from: "",
+    to: "",
+  });
+  const [includeGST, setIncludeGST] = useState(false);
   const { bills } = useBill();
+  const { activeAccount } = useAccount();
+  const navigate = useNavigate();
+
+  const navigateToBill = (billNumber: number) => {
+    // Navigate to bills page with a query parameter to highlight the specific bill and open edit
+    navigate(`/bills?highlight=${billNumber}&edit=true`);
+  };
 
   // Filter bill reports based on mismatch threshold
   const mismatchReports = useMemo(() => {
@@ -175,6 +189,70 @@ export default function Reports() {
       return matchesSearch;
     });
   }, [bills, searchTerm]);
+
+  const getInvoiceSettings = () => {
+    if (!activeAccount) return null;
+    try {
+      const storageKey = `settings_invoice_${activeAccount.id}`;
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : null;
+    } catch (error) {
+      console.warn("Could not load invoice settings:", error);
+      return null;
+    }
+  };
+
+  const generateMegaReportExcel = () => {
+    const invoiceSettings = getInvoiceSettings();
+    const reportData = bills.map((bill) => ({
+      Date: bill.date,
+      "Bill No": bill.billNumber,
+      "Customer Name": bill.customerName,
+      "Sub Total": bill.subTotal,
+      "Payment Mode": bill.paymentMode,
+      ...(includeGST && invoiceSettings?.gstNumber
+        ? { "GST Number": invoiceSettings.gstNumber }
+        : {}),
+    }));
+
+    // Add summary row
+    const totalSum = bills.reduce((sum, bill) => sum + bill.subTotal, 0);
+    reportData.push({
+      Date: "",
+      "Bill No": "",
+      "Customer Name": "TOTAL",
+      "Sub Total": totalSum,
+      "Payment Mode": "",
+      ...(includeGST && invoiceSettings?.gstNumber ? { "GST Number": "" } : {}),
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(reportData);
+    const workbook = XLSX.utils.book_new();
+
+    // Add account information as header
+    const headerInfo = [
+      [
+        `Mega Report - ${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}`,
+      ],
+      [invoiceSettings?.agencyAddress || activeAccount?.address || ""],
+      ...(includeGST && invoiceSettings?.gstNumber
+        ? [[`GST: ${invoiceSettings.gstNumber}`]]
+        : []),
+      [""], // Empty row
+    ];
+
+    XLSX.utils.sheet_add_aoa(worksheet, headerInfo, { origin: "A1" });
+    XLSX.utils.sheet_add_json(worksheet, reportData, {
+      origin: `A${headerInfo.length + 1}`,
+      skipHeader: false,
+    });
+
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Mega Report");
+    XLSX.writeFile(
+      workbook,
+      `Mega_Report_${new Date().toISOString().split("T")[0]}.xlsx`,
+    );
+  };
 
   const generateBillReport = () => {
     const reportData = bills.map((bill) => ({
@@ -232,6 +310,19 @@ export default function Reports() {
   };
 
   const generateMegaReportHTML = () => {
+    // Get invoice settings for account-specific header
+    let invoiceSettings = null;
+    if (activeAccount) {
+      try {
+        const storageKey = `settings_invoice_${activeAccount.id}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          invoiceSettings = JSON.parse(saved);
+        }
+      } catch (error) {
+        console.warn("Could not load invoice settings for mega report:", error);
+      }
+    }
     return `
       <!DOCTYPE html>
       <html>
@@ -258,7 +349,9 @@ export default function Reports() {
       <body>
         <div class="header">
           <h2>Mega Sale Report</h2>
-          <h3>Sadhana Agency</h3>
+          <h3>${invoiceSettings?.agencyName || activeAccount?.name || "Sadhana Agency"}</h3>
+          ${invoiceSettings?.agencyAddress || activeAccount?.address ? `<p>${invoiceSettings?.agencyAddress || activeAccount?.address}</p>` : ""}
+          ${invoiceSettings?.gstNumber && includeGST ? `<p><strong>GST: ${invoiceSettings.gstNumber}</strong></p>` : ""}
         </div>
 
         ${bills
@@ -362,12 +455,12 @@ export default function Reports() {
       tempDiv.style.position = "absolute";
       tempDiv.style.left = "-9999px";
       tempDiv.style.top = "0";
-      tempDiv.style.width = "210mm"; // A4 width
+      tempDiv.style.width = "140mm"; // Reduced width to account for 70mm left margin
       tempDiv.style.backgroundColor = "white";
       document.body.appendChild(tempDiv);
 
       // Wait for images and content to load
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
       // Convert HTML to canvas
       const canvas = await html2canvas(tempDiv, {
@@ -375,41 +468,47 @@ export default function Reports() {
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
-        width: 794, // A4 width in pixels at 96 DPI
+        width: 529, // Reduced width for content area (140mm)
         height: 1123, // A4 height in pixels at 96 DPI
       });
 
       // Remove temporary element
       document.body.removeChild(tempDiv);
 
-      // Create PDF
+      // Create PDF with 70mm left margin
       const pdf = new jsPDF("p", "mm", "a4");
       const imgData = canvas.toDataURL("image/png");
 
       const pdfWidth = 210; // A4 width in mm
       const pdfHeight = 297; // A4 height in mm
-      const imgWidth = pdfWidth;
-      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+      const leftMargin = 70; // 70mm left margin as requested
+      const contentWidth = pdfWidth - leftMargin; // Available content width
+      const imgWidth = contentWidth;
+      const imgHeight = (canvas.height * contentWidth) / canvas.width;
 
       let heightLeft = imgHeight;
       let position = 0;
 
-      // Add first page
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      // Add first page with 70mm left margin
+      pdf.addImage(imgData, "PNG", leftMargin, position, imgWidth, imgHeight);
       heightLeft -= pdfHeight;
 
       // Add additional pages if needed
       while (heightLeft >= 0) {
         position = heightLeft - imgHeight;
         pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", leftMargin, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
 
       // Download PDF
-      pdf.save(`Mega_Sale_Report_${new Date().toISOString().split("T")[0]}.pdf`);
+      pdf.save(
+        `Mega_Sale_Report_${new Date().toISOString().split("T")[0]}.pdf`,
+      );
 
-      console.log("Mega report PDF downloaded successfully!");
+      console.log(
+        "Mega report PDF downloaded successfully with 70mm left margin!",
+      );
     } catch (error) {
       console.error("Error generating PDF:", error);
       alert("Error generating PDF. Please try again.");
@@ -425,13 +524,15 @@ export default function Reports() {
 
       const { from, to } = bulkPdfDateRange;
       if (!from || !to) {
-        alert("Please select both start and end dates for bulk PDF generation.");
+        alert(
+          "Please select both start and end dates for bulk PDF generation.",
+        );
         return;
       }
 
       // Filter bills by date range
       const filteredBills = bills.filter((bill) => {
-        const billDate = new Date(bill.date.split('-').reverse().join('-')); // Convert DD-MM-YYYY to YYYY-MM-DD
+        const billDate = new Date(bill.date.split("-").reverse().join("-")); // Convert DD-MM-YYYY to YYYY-MM-DD
         const startDate = new Date(from);
         const endDate = new Date(to);
         return billDate >= startDate && billDate <= endDate;
@@ -442,7 +543,9 @@ export default function Reports() {
         return;
       }
 
-      const confirmed = confirm(`Generate ${filteredBills.length} separate PDF files for bills in the selected date range?`);
+      const confirmed = confirm(
+        `Generate ${filteredBills.length} separate PDF files for bills in the selected date range?`,
+      );
       if (!confirmed) return;
 
       // Generate PDF for each bill
@@ -450,7 +553,7 @@ export default function Reports() {
         const bill = filteredBills[i];
         await generateSingleBillPDF(bill, i, filteredBills.length);
         // Add small delay to prevent overwhelming the browser
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
       alert(`Successfully generated ${filteredBills.length} PDF files!`);
@@ -460,7 +563,11 @@ export default function Reports() {
     }
   };
 
-  const generateSingleBillPDF = async (bill: any, index: number, total: number) => {
+  const generateSingleBillPDF = async (
+    bill: any,
+    index: number,
+    total: number,
+  ) => {
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -497,7 +604,9 @@ export default function Reports() {
             </tr>
           </thead>
           <tbody>
-            ${bill.items.map((item: any, itemIndex: number) => `
+            ${bill.items
+              .map(
+                (item: any, itemIndex: number) => `
               <tr>
                 <td>${itemIndex + 1}</td>
                 <td>${item.name}</td>
@@ -505,7 +614,9 @@ export default function Reports() {
                 <td>₹${item.price}</td>
                 <td>₹${item.total}</td>
               </tr>
-            `).join("")}
+            `,
+              )
+              .join("")}
           </tbody>
           <tfoot>
             <tr class="total-row">
@@ -527,7 +638,7 @@ export default function Reports() {
     tempDiv.style.backgroundColor = "white";
     document.body.appendChild(tempDiv);
 
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await new Promise((resolve) => setTimeout(resolve, 300));
 
     // Convert to PDF
     const canvas = await html2canvas(tempDiv, {
@@ -546,7 +657,9 @@ export default function Reports() {
     const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
     pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
-    pdf.save(`Bill_${bill.billNumber}_${bill.customerName.replace(/\s+/g, '_')}.pdf`);
+    pdf.save(
+      `Bill_${bill.billNumber}_${bill.customerName.replace(/\s+/g, "_")}.pdf`,
+    );
   };
 
   return (
@@ -561,19 +674,32 @@ export default function Reports() {
               analysis
             </p>
           </div>
-          <div className="flex space-x-2">
-            <Button onClick={downloadMegaReportHTML} variant="outline">
-              <FileText className="h-4 w-4 mr-2" />
-              Download HTML
-            </Button>
-            <Button onClick={generateMegaReportPDF}>
-              <Download className="h-4 w-4 mr-2" />
-              Download PDF
-            </Button>
-            <Button variant="outline" onClick={() => setActiveTab("processor")}>
-              <Code className="h-4 w-4 mr-2" />
-              HTML Processor
-            </Button>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <Switch checked={includeGST} onCheckedChange={setIncludeGST} />
+              <label className="text-sm font-medium">Include GST</label>
+            </div>
+            <div className="flex space-x-2">
+              <Button onClick={downloadMegaReportHTML} variant="outline">
+                <FileText className="h-4 w-4 mr-2" />
+                Download HTML
+              </Button>
+              <Button onClick={generateMegaReportPDF}>
+                <Download className="h-4 w-4 mr-2" />
+                Download PDF
+              </Button>
+              <Button onClick={generateMegaReportExcel} variant="outline">
+                <Download className="h-4 w-4 mr-2" />
+                Download Excel
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab("processor")}
+              >
+                <Code className="h-4 w-4 mr-2" />
+                HTML Processor
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -745,9 +871,9 @@ export default function Reports() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredBillReports.map((bill) => (
+                      {filteredBillReports.map((bill, index) => (
                         <tr
-                          key={bill.id}
+                          key={`billing-report-${bill.id}-${index}`}
                           className={cn(
                             "border-b hover:bg-accent/50 transition-colors",
                             Math.abs(bill.difference) > 25 &&
@@ -861,12 +987,14 @@ export default function Reports() {
                         </tr>
                       </thead>
                       <tbody>
-                        {mismatchReports.map((bill) => (
+                        {mismatchReports.map((bill, index) => (
                           <tr
-                            key={bill.id}
-                            className="border-b bg-red-50 hover:bg-red-100 transition-colors"
+                            key={`mismatch-report-${bill.id}-${index}`}
+                            className="border-b bg-red-50 hover:bg-red-100 transition-colors cursor-pointer"
+                            onClick={() => navigateToBill(bill.billNumber)}
+                            title="Click to view this bill in Bills section"
                           >
-                            <td className="p-3 font-medium">
+                            <td className="p-3 font-medium text-blue-600 hover:text-blue-800">
                               {bill.billNumber}
                             </td>
                             <td className="p-3">{bill.customerName}</td>
@@ -1028,7 +1156,11 @@ export default function Reports() {
                   <div>
                     <Button
                       onClick={generateBulkPDFs}
-                      disabled={!bulkPdfDateRange.from || !bulkPdfDateRange.to || bills.length === 0}
+                      disabled={
+                        !bulkPdfDateRange.from ||
+                        !bulkPdfDateRange.to ||
+                        bills.length === 0
+                      }
                       className="w-full"
                     >
                       <Download className="h-4 w-4 mr-2" />
@@ -1038,12 +1170,17 @@ export default function Reports() {
                 </div>
                 {bulkPdfDateRange.from && bulkPdfDateRange.to && (
                   <div className="mt-3 text-sm text-muted-foreground">
-                    {bills.filter((bill) => {
-                      const billDate = new Date(bill.date.split('-').reverse().join('-'));
-                      const startDate = new Date(bulkPdfDateRange.from);
-                      const endDate = new Date(bulkPdfDateRange.to);
-                      return billDate >= startDate && billDate <= endDate;
-                    }).length} bills found in selected date range
+                    {
+                      bills.filter((bill) => {
+                        const billDate = new Date(
+                          bill.date.split("-").reverse().join("-"),
+                        );
+                        const startDate = new Date(bulkPdfDateRange.from);
+                        const endDate = new Date(bulkPdfDateRange.to);
+                        return billDate >= startDate && billDate <= endDate;
+                      }).length
+                    }{" "}
+                    bills found in selected date range
                   </div>
                 )}
               </CardContent>
@@ -1078,7 +1215,10 @@ export default function Reports() {
                   <div className="max-h-[600px] overflow-y-auto border rounded-lg p-4 bg-white">
                     <div className="space-y-6">
                       {bills.map((bill, index) => (
-                        <div key={bill.id} className="border-b pb-4">
+                        <div
+                          key={`mega-report-${bill.id}-${index}`}
+                          className="border-b pb-4"
+                        >
                           <div className="grid grid-cols-2 gap-4 mb-2">
                             <div>
                               <p className="font-medium">
@@ -1211,7 +1351,7 @@ export default function Reports() {
                             {item.availableQuantity}
                           </td>
                           <td className="p-3">
-                            ₹{item.value.toLocaleString()}
+                            ���{item.value.toLocaleString()}
                           </td>
                           <td className="p-3">
                             <Badge

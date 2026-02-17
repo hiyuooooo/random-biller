@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +42,8 @@ import { cn } from "@/lib/utils";
 import { SampleDataGenerator } from "@/components/SampleDataGenerator";
 import * as XLSX from "xlsx";
 import { useStock } from "@/components/StockContext";
+import { useBill } from "@/components/BillContext";
+import { useAccount } from "@/components/AccountManager";
 
 // Mock stock data based on your Python code structure
 const mockStockData = [
@@ -161,6 +163,19 @@ interface StockItem {
 }
 
 export default function Stock() {
+  const { activeAccount, accounts, setActiveAccount } = useAccount();
+
+  // Auto-switch to test different accounts via URL parameter
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("switch") === "himalaya" && activeAccount?.id === "1") {
+      const himalayaAccount = accounts.find((acc) => acc.id === "2");
+      if (himalayaAccount) {
+        setActiveAccount(himalayaAccount);
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+  }, [activeAccount, accounts, setActiveAccount]);
   const {
     stockItems,
     updateStockItem,
@@ -170,8 +185,68 @@ export default function Stock() {
     toggleBlockItem,
     deleteAllStock,
   } = useStock();
+  const { bills } = useBill();
+
+  // Log when account changes to help debug
+  React.useEffect(() => {
+    if (activeAccount) {
+      console.log(
+        `Stock page: Account changed to ${activeAccount.name} (ID: ${activeAccount.id})`,
+      );
+      console.log(
+        `Stock page: Current stock items count: ${stockItems.length}`,
+      );
+    }
+  }, [activeAccount?.id, stockItems.length]);
+
+  // Function to check if a stock item is used in any bills
+  const isStockUsedInBills = (
+    stockId: number,
+  ): { isUsed: boolean; billNumbers: number[] } => {
+    const billNumbers: number[] = [];
+
+    bills.forEach((bill) => {
+      const isUsedInBill = bill.items.some((item) => item.id === stockId);
+      if (isUsedInBill) {
+        billNumbers.push(bill.billNumber);
+      }
+    });
+
+    return {
+      isUsed: billNumbers.length > 0,
+      billNumbers,
+    };
+  };
 
   const handleDeleteAllStock = () => {
+    // Check if any stock items are used in bills
+    const usedItems: { itemName: string; billNumbers: number[] }[] = [];
+
+    stockItems.forEach((item) => {
+      const usage = isStockUsedInBills(item.id);
+      if (usage.isUsed) {
+        usedItems.push({
+          itemName: item.itemName,
+          billNumbers: usage.billNumbers,
+        });
+      }
+    });
+
+    if (usedItems.length > 0) {
+      const usedItemsText = usedItems
+        .map(
+          (item) =>
+            `• ${item.itemName} (Bills: ${item.billNumbers.join(", ")})`,
+        )
+        .join("\n");
+
+      alert(
+        `Cannot delete all stock items because the following items are used in bills:\n\n${usedItemsText}\n\n` +
+          "Please remove these items from all bills before bulk deletion.",
+      );
+      return;
+    }
+
     if (
       confirm(
         "Are you sure you want to delete ALL stock items? This action cannot be undone.",
@@ -196,12 +271,21 @@ export default function Stock() {
     lowStockThreshold: "",
   });
   const [adjustmentReason, setAdjustmentReason] = useState("");
+  const [isQuickAddOpen, setIsQuickAddOpen] = useState(false);
+  const [quickAddData, setQuickAddData] = useState({
+    itemPrefix: "",
+    quantity: "",
+    date: new Date().toISOString().split("T")[0],
+  });
+  const [suggestions, setSuggestions] = useState<any[]>([]);
 
   // Filter items based on search
   const filteredItems = useMemo(() => {
-    return stockItems.filter((item) =>
-      item.itemName.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+    return stockItems
+      .filter((item) =>
+        item.itemName.toLowerCase().includes(searchTerm.toLowerCase()),
+      )
+      .sort((a, b) => a.itemName.localeCompare(b.itemName));
   }, [stockItems, searchTerm]);
 
   // Calculate statistics
@@ -235,6 +319,72 @@ export default function Stock() {
       availableQuantity: item.availableQuantity.toString(),
       lowStockThreshold: item.lowStockThreshold.toString(),
     });
+  };
+
+  // Handle prefix search for items
+  const handlePrefixSearch = (prefix: string) => {
+    setQuickAddData((prev) => ({ ...prev, itemPrefix: prefix }));
+
+    if (prefix.length >= 2) {
+      const matches = stockItems
+        .filter((item) =>
+          item.itemName.toLowerCase().includes(prefix.toLowerCase()),
+        )
+        .sort((a, b) => a.itemName.localeCompare(b.itemName));
+      setSuggestions(matches);
+    } else {
+      setSuggestions([]);
+    }
+  };
+
+  // Handle quick add quantity to existing item
+  const handleQuickAdd = () => {
+    if (!quickAddData.itemPrefix || !quickAddData.quantity) {
+      alert("Please enter item name and quantity");
+      return;
+    }
+
+    const quantity = parseInt(quickAddData.quantity);
+    if (isNaN(quantity) || quantity <= 0) {
+      alert("Please enter a valid quantity");
+      return;
+    }
+
+    // Check if item exists
+    const existingItem = stockItems.find(
+      (item) =>
+        item.itemName.toLowerCase() === quickAddData.itemPrefix.toLowerCase(),
+    );
+
+    if (existingItem) {
+      // Add quantity to existing item
+      updateStockItem(existingItem.id, {
+        availableQuantity: existingItem.availableQuantity + quantity,
+      });
+      alert(`Added ${quantity} units to ${existingItem.itemName}`);
+    } else {
+      // Create new item
+      const newStockItem = {
+        id: Math.max(...stockItems.map((item) => item.id), 0) + 1,
+        itemName: quickAddData.itemPrefix,
+        price: 0, // Default price, user can edit later
+        availableQuantity: quantity,
+        lowStockThreshold: 10, // Default threshold
+      };
+      addStockItem(newStockItem);
+      alert(
+        `Created new item: ${quickAddData.itemPrefix} with ${quantity} units`,
+      );
+    }
+
+    // Reset form but keep date
+    setQuickAddData((prev) => ({
+      itemPrefix: "",
+      quantity: "",
+      date: prev.date,
+    }));
+    setSuggestions([]);
+    setIsQuickAddOpen(false);
   };
 
   const saveEdit = () => {
@@ -285,7 +435,23 @@ export default function Stock() {
   };
 
   const deleteItem = (id: number) => {
-    if (confirm("Are you sure you want to delete this item?")) {
+    const usage = isStockUsedInBills(id);
+
+    if (usage.isUsed) {
+      const stockItem = stockItems.find((item) => item.id === id);
+      alert(
+        `Cannot delete "${stockItem?.itemName}" because it is used in the following bills: ${usage.billNumbers.join(", ")}\n\n` +
+          "Please remove this item from all bills before deleting it from stock.",
+      );
+      return;
+    }
+
+    const stockItem = stockItems.find((item) => item.id === id);
+    if (
+      confirm(
+        `Are you sure you want to delete "${stockItem?.itemName}"? This action cannot be undone.`,
+      )
+    ) {
       deleteStockItem(id);
     }
   };
@@ -429,6 +595,27 @@ export default function Stock() {
             </p>
           </div>
           <div className="flex space-x-2">
+            <Button
+              onClick={() => {
+                const otherAccount = accounts.find(
+                  (acc) => acc.id !== activeAccount?.id,
+                );
+                if (otherAccount) setActiveAccount(otherAccount);
+              }}
+              variant="secondary"
+              size="sm"
+              className="bg-blue-100 hover:bg-blue-200 text-blue-800"
+            >
+              🔄 Switch to{" "}
+              {accounts.find((acc) => acc.id !== activeAccount?.id)?.name}
+            </Button>
+            <Button
+              onClick={() => setIsQuickAddOpen(true)}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <TrendingUp className="h-4 w-4 mr-2" />
+              Quick Add Stock
+            </Button>
             <Button variant="outline" onClick={exportToExcel}>
               <Download className="h-4 w-4 mr-2" />
               Export Excel
@@ -857,6 +1044,120 @@ export default function Stock() {
                 >
                   <Save className="h-4 w-4 mr-2" />
                   Add Item
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Quick Add Stock Dialog */}
+        <Dialog open={isQuickAddOpen} onOpenChange={setIsQuickAddOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Quick Add Stock</DialogTitle>
+              <DialogDescription>
+                Add quantity to existing items or create new items
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Date</Label>
+                <Input
+                  type="date"
+                  value={quickAddData.date}
+                  onChange={(e) =>
+                    setQuickAddData((prev) => ({
+                      ...prev,
+                      date: e.target.value,
+                    }))
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Date will persist until changed manually
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Item Name</Label>
+                <Input
+                  value={quickAddData.itemPrefix}
+                  onChange={(e) => handlePrefixSearch(e.target.value)}
+                  placeholder="Type item name or prefix..."
+                />
+
+                {/* Suggestions dropdown */}
+                {suggestions.length > 0 && (
+                  <div className="border rounded-lg bg-white shadow-lg max-h-48 overflow-y-auto">
+                    {suggestions.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0"
+                        onClick={() => {
+                          setQuickAddData((prev) => ({
+                            ...prev,
+                            itemPrefix: item.itemName,
+                          }));
+                          setSuggestions([]);
+                        }}
+                      >
+                        <div className="font-medium">{item.itemName}</div>
+                        <div className="text-sm text-gray-500">
+                          Current stock: {item.availableQuantity} • ₹
+                          {item.price}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-xs text-muted-foreground">
+                  {quickAddData.itemPrefix &&
+                  stockItems.find(
+                    (item) =>
+                      item.itemName.toLowerCase() ===
+                      quickAddData.itemPrefix.toLowerCase(),
+                  )
+                    ? "Will add to existing item"
+                    : quickAddData.itemPrefix
+                      ? "Will create new item"
+                      : "Type to search existing items or create new"}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Quantity to Add</Label>
+                <Input
+                  type="number"
+                  value={quickAddData.quantity}
+                  onChange={(e) =>
+                    setQuickAddData((prev) => ({
+                      ...prev,
+                      quantity: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter quantity"
+                  min="1"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsQuickAddOpen(false);
+                    setSuggestions([]);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleQuickAdd}
+                  disabled={!quickAddData.itemPrefix || !quickAddData.quantity}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Add Stock
                 </Button>
               </div>
             </div>

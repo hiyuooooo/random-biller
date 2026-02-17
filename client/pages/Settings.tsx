@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { useAccount } from "@/components/AccountManager";
 import {
   Card,
   CardContent,
@@ -9,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AccountManager } from "@/components/AccountManager";
+import { AccountManager, useAccount } from "@/components/AccountManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +22,26 @@ import {
   Database,
   Shield,
 } from "lucide-react";
+
+// Helper function to ensure invoice settings have proper defaults
+const ensureInvoiceSettingsDefaults = (settings: any, activeAccount: any) => {
+  return {
+    headerTitle: settings?.headerTitle || "Bill of Supply",
+    agencyName: settings?.agencyName || activeAccount?.name || "",
+    agencyAddress: settings?.agencyAddress || activeAccount?.address || "",
+    phone: settings?.phone || activeAccount?.phone || "+91 98765 43210",
+    email: settings?.email || activeAccount?.email || "contact@agency.com",
+    declaration:
+      settings?.declaration ||
+      activeAccount?.footerText ||
+      "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
+    signatureText: settings?.signatureText || "Authorized Signature",
+    logoUrl: settings?.logoUrl || "",
+    signatureImageUrl: settings?.signatureImageUrl || "",
+    authorizedSignatureText: settings?.authorizedSignatureText || "",
+    gstNumber: settings?.gstNumber || "",
+  };
+};
 
 export default function Settings() {
   const { activeAccount } = useAccount();
@@ -100,24 +119,16 @@ export default function Settings() {
           "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
         signatureText: "Authorized Signature",
         logoUrl: "",
+        signatureImageUrl: "",
+        authorizedSignatureText: "",
+        gstNumber: "",
       };
     try {
       const storageKey = `settings_invoice_${activeAccount.id}`;
       const saved = localStorage.getItem(storageKey);
       return saved
-        ? JSON.parse(saved)
-        : {
-            headerTitle: "Bill of Supply",
-            agencyName: activeAccount.name,
-            agencyAddress: activeAccount.address,
-            phone: activeAccount.phone || "+91 98765 43210",
-            email: activeAccount.email || "contact@agency.com",
-            declaration:
-              activeAccount.footerText ||
-              "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
-            signatureText: "Authorized Signature",
-            logoUrl: "",
-          };
+        ? ensureInvoiceSettingsDefaults(JSON.parse(saved), activeAccount)
+        : ensureInvoiceSettingsDefaults(null, activeAccount);
     } catch {
       return {
         headerTitle: "Bill of Supply",
@@ -129,6 +140,9 @@ export default function Settings() {
           "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
         signatureText: "Authorized Signature",
         logoUrl: "",
+        signatureImageUrl: "",
+        authorizedSignatureText: "",
+        gstNumber: "",
       };
     }
   });
@@ -188,36 +202,21 @@ export default function Settings() {
         }
 
         if (savedInvoice) {
-          setInvoiceSettings(JSON.parse(savedInvoice));
+          setInvoiceSettings(
+            ensureInvoiceSettingsDefaults(
+              JSON.parse(savedInvoice),
+              activeAccount,
+            ),
+          );
         } else {
           // Use account data as defaults for new accounts
-          setInvoiceSettings({
-            headerTitle: "Bill of Supply",
-            agencyName: activeAccount.name,
-            agencyAddress: activeAccount.address,
-            phone: activeAccount.phone || "+91 98765 43210",
-            email: activeAccount.email || "contact@agency.com",
-            declaration:
-              activeAccount.footerText ||
-              "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
-            signatureText: "Authorized Signature",
-            logoUrl: "",
-          });
+          setInvoiceSettings(
+            ensureInvoiceSettingsDefaults(null, activeAccount),
+          );
         }
       } catch {
         // Reset to defaults on error - using account data when available
-        setInvoiceSettings({
-          headerTitle: "Bill of Supply",
-          agencyName: activeAccount.name,
-          agencyAddress: activeAccount.address,
-          phone: activeAccount.phone || "+91 98765 43210",
-          email: activeAccount.email || "contact@agency.com",
-          declaration:
-            activeAccount.footerText ||
-            "We hereby declare that the tax on supplies has been paid by us under the composition scheme.",
-          signatureText: "Authorized Signature",
-          logoUrl: "",
-        });
+        setInvoiceSettings(ensureInvoiceSettingsDefaults(null, activeAccount));
       }
     }
   }, [activeAccount?.id]);
@@ -349,6 +348,19 @@ export default function Settings() {
                         placeholder="contact@agency.com"
                       />
                     </div>
+                    <div className="space-y-2">
+                      <Label>GST Number</Label>
+                      <Input
+                        value={invoiceSettings.gstNumber}
+                        onChange={(e) =>
+                          setInvoiceSettings((prev) => ({
+                            ...prev,
+                            gstNumber: e.target.value,
+                          }))
+                        }
+                        placeholder="GST Number (e.g., 27ABCDE1234F1Z5)"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -406,6 +418,71 @@ export default function Settings() {
                     />
                   </div>
 
+                  <div className="space-y-2">
+                    <Label>Signature Image (PNG)</Label>
+                    <Input
+                      type="file"
+                      accept="image/png"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (event) => {
+                            const dataUrl = event.target?.result as string;
+                            setInvoiceSettings((prev) => ({
+                              ...prev,
+                              signatureImageUrl: dataUrl,
+                            }));
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Upload a PNG image for signature (will appear on right
+                      side of PDF)
+                    </p>
+                    {invoiceSettings.signatureImageUrl && (
+                      <div className="mt-2">
+                        <img
+                          src={invoiceSettings.signatureImageUrl}
+                          alt="Signature Preview"
+                          className="max-w-32 max-h-16 border rounded"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-1"
+                          onClick={() =>
+                            setInvoiceSettings((prev) => ({
+                              ...prev,
+                              signatureImageUrl: "",
+                            }))
+                          }
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Authorized Signature Text</Label>
+                    <Input
+                      value={invoiceSettings.authorizedSignatureText}
+                      onChange={(e) =>
+                        setInvoiceSettings((prev) => ({
+                          ...prev,
+                          authorizedSignatureText: e.target.value,
+                        }))
+                      }
+                      placeholder="Authorized Signature (appears below signature image)"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Text that appears below the signature image
+                    </p>
+                  </div>
+
                   <div className="mt-6 p-4 border rounded-lg bg-muted/20">
                     <h4 className="font-medium mb-2">Preview</h4>
                     <div className="text-sm space-y-2 border p-4 bg-white rounded">
@@ -429,11 +506,32 @@ export default function Settings() {
                             Email: {invoiceSettings.email}
                           </p>
                         )}
+                        {invoiceSettings.gstNumber && (
+                          <p className="text-xs">
+                            GST: {invoiceSettings.gstNumber}
+                          </p>
+                        )}
                       </div>
                       <div className="mt-8 pt-4 border-t text-xs">
                         <p>{invoiceSettings.declaration}</p>
-                        <div className="mt-4 text-center">
-                          <p>{invoiceSettings.signatureText}</p>
+                        <div className="mt-4 flex justify-between items-end">
+                          <div className="text-center flex-1">
+                            <p>{invoiceSettings.signatureText}</p>
+                          </div>
+                          {invoiceSettings.signatureImageUrl && (
+                            <div className="text-center">
+                              <img
+                                src={invoiceSettings.signatureImageUrl}
+                                alt="Signature"
+                                className="max-w-24 max-h-12 mx-auto"
+                              />
+                              {invoiceSettings.authorizedSignatureText && (
+                                <p className="text-xs mt-1">
+                                  {invoiceSettings.authorizedSignatureText}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -441,7 +539,7 @@ export default function Settings() {
 
                   <div className="flex justify-end">
                     <Button>
-                      <Settings className="h-4 w-4 mr-2" />
+                      <SettingsIcon className="h-4 w-4 mr-2" />
                       Save Invoice Settings
                     </Button>
                   </div>

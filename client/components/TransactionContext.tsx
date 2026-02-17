@@ -20,7 +20,7 @@ interface TransactionContextType {
   importTransactions: (transactions: Transaction[]) => void;
   getValidTransactions: () => Transaction[];
   toggleTransactionSelection: (id: number) => void;
-  selectAllTransactions: () => void;
+  selectAllTransactions: (filteredTransactions?: Transaction[]) => void;
   deselectAllTransactions: () => void;
   getSelectedTransactions: () => Transaction[];
   markBillsGenerated: (transactionIds: number[]) => void;
@@ -118,7 +118,8 @@ export function TransactionProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { activeAccount } = useAccount();
+  const accountContext = useAccount();
+  const { activeAccount } = accountContext;
 
   // Initialize with empty array and load data in useEffect
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -140,20 +141,169 @@ export function TransactionProvider({
     if (activeAccount) {
       try {
         const storageKey = `transactions_${activeAccount.id}`;
+
         const saved = localStorage.getItem(storageKey);
+
         if (saved) {
           setTransactions(JSON.parse(saved));
         } else {
-          // Start with default transactions for new accounts
-          setTransactions(defaultTransactions);
+          // Create account-specific transaction data and save immediately
+          if (activeAccount.id === "1") {
+            // Sadhana Agency - default transactions
+            setTransactions(defaultTransactions);
+            localStorage.setItem(
+              storageKey,
+              JSON.stringify(defaultTransactions),
+            );
+          } else {
+            // Himalaya Traders - different transactions
+            const himalayaTransactions = [
+              {
+                id: 201,
+                date: "22-01-2024",
+                customerName: "Mountain Resort",
+                total: 2800,
+                paymentMode: "Bank" as const,
+                isValid: true,
+              },
+              {
+                id: 202,
+                date: "21-01-2024",
+                customerName: "Hill Station Shop",
+                total: 1650,
+                paymentMode: "GPay" as const,
+                isValid: true,
+              },
+            ];
+            setTransactions(himalayaTransactions);
+            localStorage.setItem(
+              storageKey,
+              JSON.stringify(himalayaTransactions),
+            );
+          }
         }
-      } catch {
+      } catch (error) {
         setTransactions(defaultTransactions);
       }
     } else {
       setTransactions([]);
     }
   }, [activeAccount?.id]);
+
+  // Listen for account switch events to force refresh
+  useEffect(() => {
+    const handleAccountSwitch = () => {
+      console.log(
+        "Account switch event detected in TransactionContext, forcing data refresh",
+      );
+      if (activeAccount) {
+        loadAccountData(activeAccount.id);
+      }
+    };
+
+    const handleForceSave = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId && transactions.length > 0) {
+        try {
+          const storageKey = `transactions_${accountId}`;
+          localStorage.setItem(storageKey, JSON.stringify(transactions));
+          console.log(
+            `Force saved ${transactions.length} transactions for account ${accountId}`,
+          );
+        } catch (error) {
+          console.error("Error force saving transactions:", error);
+        }
+      }
+    };
+
+    const handleLoadAccountData = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId) {
+        loadAccountData(accountId);
+      }
+    };
+
+    const loadAccountData = (accountId: string) => {
+      try {
+        const storageKey = `transactions_${accountId}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsedTransactions = JSON.parse(saved);
+          if (Array.isArray(parsedTransactions)) {
+            setTransactions([...parsedTransactions]); // Create new array reference to force re-render
+            console.log(
+              `Force reloaded ${parsedTransactions.length} transactions for account ${accountId}`,
+            );
+          }
+        } else {
+          if (accountId === "1") {
+            setTransactions([...defaultTransactions]); // Sadhana Agency defaults
+            console.log(
+              `No transactions found for account ${accountId}, loading Sadhana defaults`,
+            );
+          } else {
+            const himalayaTransactions = [
+              {
+                id: 201,
+                date: "22-01-2024",
+                customerName: "Mountain Resort",
+                total: 2800,
+                paymentMode: "Bank" as const,
+                isValid: true,
+              },
+              {
+                id: 202,
+                date: "21-01-2024",
+                customerName: "Hill Station Shop",
+                total: 1650,
+                paymentMode: "GPay" as const,
+                isValid: true,
+              },
+            ];
+            setTransactions([...himalayaTransactions]); // Himalaya Traders specific data
+            console.log(
+              `No transactions found for account ${accountId}, loading Himalaya defaults`,
+            );
+          }
+        }
+      } catch (error) {
+        console.error("Error force reloading transactions:", error);
+        if (accountId === "1") {
+          setTransactions([...defaultTransactions]); // Sadhana Agency defaults
+        } else {
+          const himalayaTransactions = [
+            {
+              id: 201,
+              date: "22-01-2024",
+              customerName: "Mountain Resort",
+              total: 2800,
+              paymentMode: "Bank" as const,
+              isValid: true,
+            },
+            {
+              id: 202,
+              date: "21-01-2024",
+              customerName: "Hill Station Shop",
+              total: 1650,
+              paymentMode: "GPay" as const,
+              isValid: true,
+            },
+          ];
+          setTransactions([...himalayaTransactions]); // Himalaya Traders specific data
+        }
+      }
+    };
+
+    window.addEventListener("account-switched", handleAccountSwitch);
+    window.addEventListener("force-save-account-data", handleForceSave);
+    window.addEventListener("load-account-data", handleLoadAccountData);
+
+    return () => {
+      window.removeEventListener("account-switched", handleAccountSwitch);
+      window.removeEventListener("force-save-account-data", handleForceSave);
+      window.removeEventListener("load-account-data", handleLoadAccountData);
+    };
+  }, [activeAccount]);
 
   const addTransaction = (transaction: Transaction) => {
     setTransactions((prev) => [...prev, transaction]);
@@ -207,11 +357,23 @@ export function TransactionProvider({
     );
   };
 
-  const selectAllTransactions = () => {
+  const selectAllTransactions = (filteredTransactions?: Transaction[]) => {
     setTransactions((prev) =>
-      prev.map((transaction) =>
-        transaction.isValid ? { ...transaction, selected: true } : transaction,
-      ),
+      prev.map((transaction) => {
+        // If filteredTransactions is provided, only select those that are in the filtered list
+        if (filteredTransactions) {
+          const isInFilteredList = filteredTransactions.some(
+            (ft) => ft.id === transaction.id,
+          );
+          return transaction.isValid && isInFilteredList
+            ? { ...transaction, selected: true }
+            : transaction;
+        }
+        // Default behavior: select all valid transactions
+        return transaction.isValid
+          ? { ...transaction, selected: true }
+          : transaction;
+      }),
     );
   };
 

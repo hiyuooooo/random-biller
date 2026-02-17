@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { useAccount } from "./AccountManager";
+import { useIterationMonitor } from "./IterationMonitor";
 
 interface BillItem {
   id: number;
@@ -34,20 +35,36 @@ interface Bill {
 interface BillContextType {
   bills: Bill[];
   addBill: (bill: Bill) => void;
-  updateBill: (id: string, bill: Partial<Bill>) => void;
-  deleteBill: (id: string) => void;
+  updateBill: (
+    id: string,
+    bill: Partial<Bill>,
+    stockCallbacks?: {
+      restoreStock: (id: number, quantity: number) => boolean;
+      reduceStock: (id: number, quantity: number) => boolean;
+      adjustStock: (id: number, quantityDifference: number) => boolean;
+    },
+  ) => void;
+  deleteBill: (
+    id: string,
+    stockCallbacks?: {
+      restoreStock: (id: number, quantity: number) => boolean;
+    },
+  ) => void;
   generateBillsFromTransactions: (
     transactions: any[],
     startingBillNumber: number,
     blockedNumbers: number[],
     availableStock?: any[],
+    reduceStockCallback?: (id: number, quantity: number) => boolean,
   ) => void;
+  deleteAllBills: () => void;
 }
 
 const BillContext = createContext<BillContextType | null>(null);
 
 export function BillProvider({ children }: { children: React.ReactNode }) {
   const { activeAccount } = useAccount();
+  const iterationMonitor = useIterationMonitor();
 
   // Initialize with empty array and load data in useEffect
   const [bills, setBills] = useState<Bill[]>([]);
@@ -71,11 +88,25 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         const storageKey = `bills_${activeAccount.id}`;
         const saved = localStorage.getItem(storageKey);
         if (saved) {
-          setBills(JSON.parse(saved));
+          const parsedBills = JSON.parse(saved);
+          // Ensure we have valid bill data
+          if (Array.isArray(parsedBills)) {
+            setBills(parsedBills);
+            console.log(
+              `Loaded ${parsedBills.length} bills for account ${activeAccount.name}`,
+            );
+          } else {
+            console.warn("Invalid bills data found, starting with empty array");
+            setBills([]);
+          }
         } else {
+          console.log(
+            `No saved bills found for account ${activeAccount.name}, starting with empty array`,
+          );
           setBills([]);
         }
-      } catch {
+      } catch (error) {
+        console.error("Error loading bills:", error);
         setBills([]);
       }
     } else {
@@ -84,25 +115,183 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     }
   }, [activeAccount?.id]);
 
+  // Listen for account switch events to force refresh
+  useEffect(() => {
+    const handleAccountSwitch = () => {
+      console.log(
+        "Account switch event detected in BillContext, forcing data refresh",
+      );
+      if (activeAccount) {
+        loadAccountData(activeAccount.id);
+      }
+    };
+
+    const handleForceSave = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId && bills.length > 0) {
+        try {
+          const storageKey = `bills_${accountId}`;
+          localStorage.setItem(storageKey, JSON.stringify(bills));
+          console.log(
+            `Force saved ${bills.length} bills for account ${accountId}`,
+          );
+        } catch (error) {
+          console.error("Error force saving bills:", error);
+        }
+      }
+    };
+
+    const handleLoadAccountData = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId) {
+        loadAccountData(accountId);
+      }
+    };
+
+    const loadAccountData = (accountId: string) => {
+      try {
+        const storageKey = `bills_${accountId}`;
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsedBills = JSON.parse(saved);
+          if (Array.isArray(parsedBills)) {
+            setBills([...parsedBills]); // Create new array reference to force re-render
+            console.log(
+              `Force reloaded ${parsedBills.length} bills for account ${accountId}`,
+            );
+          }
+        } else {
+          setBills([]);
+          console.log(
+            `No bills found for account ${accountId}, starting with empty array`,
+          );
+        }
+      } catch (error) {
+        console.error("Error force reloading bills:", error);
+        setBills([]);
+      }
+    };
+
+    window.addEventListener("account-switched", handleAccountSwitch);
+    window.addEventListener("force-save-account-data", handleForceSave);
+    window.addEventListener("load-account-data", handleLoadAccountData);
+
+    return () => {
+      window.removeEventListener("account-switched", handleAccountSwitch);
+      window.removeEventListener("force-save-account-data", handleForceSave);
+      window.removeEventListener("load-account-data", handleLoadAccountData);
+    };
+  }, [activeAccount, bills]);
+
   const addBill = (bill: Bill) => {
     setBills((prev) => [...prev, bill]);
   };
 
-  const updateBill = (id: string, billData: Partial<Bill>) => {
+  const updateBill = (
+    id: string,
+    billData: Partial<Bill>,
+    stockCallbacks?: {
+      restoreStock: (id: number, quantity: number) => boolean;
+      reduceStock: (id: number, quantity: number) => boolean;
+      adjustStock: (id: number, quantityDifference: number) => boolean;
+    },
+  ) => {
+    // Find the original bill to compare stock changes
+    const originalBill = bills.find((bill) => bill.id === id);
+
     setBills((prev) =>
       prev.map((bill) => (bill.id === id ? { ...bill, ...billData } : bill)),
     );
+
+    // If items have changed and stock callbacks are provided, adjust stock
+    if (originalBill && billData.items && stockCallbacks) {
+      const originalItems = originalBill.items;
+      const newItems = billData.items;
+
+      // Create maps for easier comparison
+      const originalItemMap = new Map();
+      originalItems.forEach((item) => {
+        originalItemMap.set(item.id, item.quantity);
+      });
+
+      const newItemMap = new Map();
+      newItems.forEach((item) => {
+        newItemMap.set(item.id, item.quantity);
+      });
+
+      // Check for quantity changes
+      originalItems.forEach((originalItem) => {
+        const newQuantity = newItemMap.get(originalItem.id) || 0;
+        const quantityDifference = originalItem.quantity - newQuantity;
+
+        if (quantityDifference !== 0) {
+          // Positive difference means we need to restore stock
+          // Negative difference means we need to reduce more stock
+          stockCallbacks.adjustStock(originalItem.id, quantityDifference);
+          console.log(
+            `Adjusted stock for ${originalItem.name}: ${quantityDifference > 0 ? "+" : ""}${quantityDifference}`,
+          );
+        }
+      });
+
+      // Check for new items added
+      newItems.forEach((newItem) => {
+        if (!originalItemMap.has(newItem.id)) {
+          // This is a new item, reduce stock
+          stockCallbacks.reduceStock(newItem.id, newItem.quantity);
+          console.log(
+            `Reduced stock for new item ${newItem.name}: -${newItem.quantity}`,
+          );
+        }
+      });
+
+      // Check for items removed
+      originalItems.forEach((originalItem) => {
+        if (!newItemMap.has(originalItem.id)) {
+          // This item was removed, restore stock
+          stockCallbacks.restoreStock(originalItem.id, originalItem.quantity);
+          console.log(
+            `Restored stock for removed item ${originalItem.name}: +${originalItem.quantity}`,
+          );
+        }
+      });
+    }
   };
 
-  const deleteBill = (id: string) => {
+  const deleteBill = (
+    id: string,
+    stockCallbacks?: {
+      restoreStock: (id: number, quantity: number) => boolean;
+    },
+  ) => {
+    // Find the bill being deleted to restore its stock
+    const billToDelete = bills.find((bill) => bill.id === id);
+
+    if (billToDelete && stockCallbacks?.restoreStock) {
+      // Restore stock for all items in the bill
+      billToDelete.items.forEach((item) => {
+        const success = stockCallbacks.restoreStock(item.id, item.quantity);
+        if (success) {
+          console.log(`Restored stock for ${item.name}: +${item.quantity}`);
+        } else {
+          console.warn(`Failed to restore stock for ${item.name}`);
+        }
+      });
+    }
+
     setBills((prev) => prev.filter((bill) => bill.id !== id));
   };
 
-  // Enhanced bill generator with intelligent combination finding
+  const deleteAllBills = () => {
+    setBills([]);
+  };
+
+  // Enhanced 200-iteration algorithm following Python bill generation rules
   const generateOptimalBillItems = (
     targetTotal: number,
     stockToUse: any[],
     previousItems: string[] = [],
+    billNumber?: number,
   ): { items: BillItem[]; total: number } => {
     console.log(
       "Generating optimal bill items for target:",
@@ -111,14 +300,18 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
       stockToUse.length,
     );
 
-    // Get available items that aren't in previous bill
+    // Get available items that aren't in previous bill to avoid repetition
     let availableItems = stockToUse.filter(
-      (item) => !previousItems.includes(item.name),
+      (item) =>
+        !previousItems.includes(item.name) && item.availableQuantity > 0,
     );
 
     if (availableItems.length < 2) {
-      // If not enough unique items available, use all available items
-      availableItems = [...stockToUse];
+      // If not enough unique items available, use all available items with stock
+      availableItems = stockToUse.filter((item) => item.availableQuantity > 0);
+      console.log(
+        `Not enough unique items (${availableItems.length}), using all available items with stock: ${availableItems.length}`,
+      );
     }
 
     if (availableItems.length === 0) {
@@ -127,10 +320,37 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
     let bestMatch: { items: BillItem[]; total: number } | null = null;
     let closestDiff = Infinity;
+    const tolerance = 30; // ±30 tolerance as per requirements
+    let iterationsPerformed = 0;
 
-    // Try multiple attempts with different strategies
-    for (let attempt = 0; attempt < 50; attempt++) {
-      // Shuffle items for variety
+    // Start iteration monitoring if bill number provided
+    let monitorId: string | null = null;
+    if (billNumber && iterationMonitor) {
+      monitorId = iterationMonitor.startIteration(billNumber, targetTotal);
+      iterationMonitor.updateIteration(monitorId, { status: "running" });
+      iterationMonitor.logIteration(
+        monitorId,
+        0,
+        `Starting 200 iterations for bill ${billNumber} with target ₹${targetTotal}`,
+        "info",
+      );
+    }
+
+    // Complete 200 iterations to find the best combination
+    for (let attempt = 0; attempt < 200; attempt++) {
+      iterationsPerformed++;
+
+      // Log iteration progress
+      if (monitorId && iterationMonitor) {
+        iterationMonitor.logIteration(
+          monitorId,
+          attempt + 1,
+          `Iteration ${attempt + 1}/200: Trying new combination...`,
+          "info",
+        );
+      }
+
+      // Shuffle items randomly each iteration (equivalent to pandas sample(frac=1))
       const shuffledItems = [...availableItems];
       for (let i = shuffledItems.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -142,37 +362,43 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
       const selectedItems: BillItem[] = [];
       let currentTotal = 0;
+      // Vary the number of items from 2 to 7 for more realistic bills
+      const maxItems = Math.floor(Math.random() * 6) + 2; // Random between 2-7 items
 
-      // Strategy: Try to build a bill close to target
-      const itemsToTry = shuffledItems.slice(0, 7); // Limit to 7 items
+      // First, ensure we get at least 2 items by being more lenient
+      let itemsAdded = 0;
+      const maxItemsToTry = Math.min(shuffledItems.length, maxItems);
 
-      // Greedy approach: select items and quantities that get us close to target
-      for (const item of itemsToTry) {
-        if (selectedItems.length >= 7) break;
+      // Try to select items in shuffled order
+      for (
+        let itemIndex = 0;
+        itemIndex < shuffledItems.length && selectedItems.length < maxItems;
+        itemIndex++
+      ) {
+        const item = shuffledItems[itemIndex];
 
-        const remaining = targetTotal - currentTotal;
-
-        // Calculate optimal quantity for this item
+        // Try different quantities (up to 2 as per requirements)
         let bestQty = 0;
         let bestQtyTotal = 0;
 
-        // Try quantities 1, 2, 3
-        for (let qty = 1; qty <= 3; qty++) {
+        for (let qty = 1; qty <= Math.min(2, item.availableQuantity); qty++) {
           const itemCost = item.price * qty;
+          const newTotal = currentTotal + itemCost;
 
-          // Check if this gets us closer to target without going too far over
-          if (currentTotal + itemCost <= targetTotal + 30) {
-            if (
-              Math.abs(currentTotal + itemCost - targetTotal) <
-              Math.abs(currentTotal + bestQtyTotal - targetTotal)
-            ) {
-              bestQty = qty;
-              bestQtyTotal = itemCost;
-            }
+          // Be more lenient for the first 2 items to ensure minimum requirement
+          const currentTolerance =
+            selectedItems.length < 2 ? tolerance * 2 : tolerance;
+
+          // Check if this addition keeps us within bounds
+          if (newTotal <= targetTotal + currentTolerance) {
+            bestQty = qty;
+            bestQtyTotal = itemCost;
+          } else {
+            break; // Don't exceed target + tolerance
           }
         }
 
-        // Add the item if we found a good quantity
+        // Add the item if we found a valid quantity
         if (bestQty > 0) {
           const billItem: BillItem = {
             id: item.id,
@@ -184,86 +410,112 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
           selectedItems.push(billItem);
           currentTotal += bestQtyTotal;
-        }
-
-        // Stop if we're close enough and have minimum items
-        if (
-          selectedItems.length >= 2 &&
-          Math.abs(currentTotal - targetTotal) <= 30
-        ) {
-          break;
+          itemsAdded++;
         }
       }
 
-      // Ensure we have at least 2 items - add cheapest if needed
-      if (selectedItems.length < 2) {
-        const unusedItems = shuffledItems
-          .filter(
-            (item) =>
-              !selectedItems.some((selected) => selected.name === item.name),
-          )
-          .sort((a, b) => a.price - b.price);
+      // If we still don't have 2 items, force add the cheapest available items
+      if (selectedItems.length < 2 && shuffledItems.length >= 2) {
+        const remainingItems = shuffledItems.filter(
+          (item) => !selectedItems.some((selected) => selected.id === item.id),
+        );
 
-        for (const item of unusedItems.slice(0, 2 - selectedItems.length)) {
-          if (currentTotal + item.price <= targetTotal + 30) {
-            const billItem: BillItem = {
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              quantity: 1,
-              total: item.price,
-            };
-            selectedItems.push(billItem);
-            currentTotal += item.price;
+        const sortedRemaining = remainingItems.sort(
+          (a, b) => a.price - b.price,
+        );
+
+        for (const item of sortedRemaining) {
+          if (selectedItems.length >= 2) break;
+
+          const billItem: BillItem = {
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            quantity: 1,
+            total: item.price,
+          };
+
+          selectedItems.push(billItem);
+          currentTotal += billItem.total;
+        }
+      }
+
+      // Enforce minimum 2 items per bill rule
+      if (selectedItems.length < 2) {
+        continue; // Skip this combination, try next iteration
+      }
+
+      // Calculate difference from target
+      const finalDiff = Math.abs(currentTotal - targetTotal);
+
+      // Check if this is our best match so far
+      if (finalDiff < closestDiff) {
+        bestMatch = { items: [...selectedItems], total: currentTotal };
+        closestDiff = finalDiff;
+
+        // Log progress to monitor
+        if (monitorId && iterationMonitor) {
+          iterationMonitor.updateIteration(monitorId, {
+            bestMatch: {
+              items: selectedItems,
+              total: currentTotal,
+              difference: finalDiff,
+            },
+          });
+        }
+
+        // Continue all 200 iterations to find the absolute best match
+        if (finalDiff === 0) {
+          console.log(
+            `Found perfect match on iteration ${attempt + 1}, continuing for optimization...`,
+          );
+          if (monitorId && iterationMonitor) {
+            iterationMonitor.logIteration(
+              monitorId,
+              attempt + 1,
+              `Perfect match found! Total: ₹${currentTotal}, difference: ₹0`,
+              "success",
+            );
+          }
+        } else if (finalDiff <= tolerance && selectedItems.length >= 2) {
+          console.log(
+            `Found good match within ±${tolerance} on iteration ${attempt + 1}, continuing for optimization...`,
+          );
+          if (monitorId && iterationMonitor) {
+            iterationMonitor.logIteration(
+              monitorId,
+              attempt + 1,
+              `Good match found! Total: ₹${currentTotal}, difference: ₹${finalDiff}`,
+              "success",
+            );
           }
         }
       }
-
-      // Check if this is our best match so far
-      const diff = Math.abs(currentTotal - targetTotal);
-      if (selectedItems.length >= 2 && diff <= 30 && diff < closestDiff) {
-        bestMatch = { items: selectedItems, total: currentTotal };
-        closestDiff = diff;
-
-        // If very close, stop searching
-        if (diff <= 10) break;
-      }
     }
 
-    // If still no match, create a proportional bill
-    if (!bestMatch) {
-      console.log("No match found, creating proportional bill");
+    // If no acceptable match found, create a fallback with minimum requirements
+    if (!bestMatch || bestMatch.items.length < 2) {
+      console.log(
+        "No suitable match found in 200 iterations, creating fallback",
+      );
 
-      // Calculate how to distribute target among available items
       const selectedItems: BillItem[] = [];
       let currentTotal = 0;
 
-      // Sort items by price and take 2-3 items
+      // Sort items by price and take cheapest items to ensure minimum 2 items
       const sortedItems = availableItems.sort((a, b) => a.price - b.price);
-      const numItems = Math.min(3, sortedItems.length);
-      const targetPerItem = targetTotal / numItems;
 
-      for (let i = 0; i < numItems; i++) {
+      for (let i = 0; i < Math.min(2, sortedItems.length); i++) {
         const item = sortedItems[i];
-        const qty = Math.max(1, Math.round(targetPerItem / item.price));
-        const clampedQty = Math.min(
-          qty,
-          Math.floor((targetTotal - currentTotal) / item.price) + 1,
-        );
-        const finalQty = Math.max(1, clampedQty);
-
         const billItem: BillItem = {
           id: item.id,
           name: item.name,
           price: item.price,
-          quantity: finalQty,
-          total: item.price * finalQty,
+          quantity: 1,
+          total: item.price,
         };
-
         selectedItems.push(billItem);
         currentTotal += billItem.total;
-
-        if (Math.abs(currentTotal - targetTotal) <= 30) break;
       }
 
       bestMatch = { items: selectedItems, total: currentTotal };
@@ -271,13 +523,32 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     }
 
     console.log(
-      "Generated bill with",
-      bestMatch.items.length,
-      "items, total:",
-      bestMatch.total,
-      "difference:",
-      closestDiff,
+      `Bill generation completed after full ${iterationsPerformed} iterations:`,
+      `${bestMatch.items.length} items, total: ₹${bestMatch.total},`,
+      `target: ₹${targetTotal}, difference: ₹${closestDiff},`,
+      `within ±${tolerance}: ${closestDiff <= tolerance}`,
     );
+
+    // Complete iteration monitoring
+    if (monitorId && iterationMonitor) {
+      iterationMonitor.completeIteration(monitorId, {
+        bestMatch: bestMatch
+          ? {
+              items: bestMatch.items,
+              total: bestMatch.total,
+              difference: closestDiff,
+            }
+          : null,
+        currentIteration: 200,
+      });
+      iterationMonitor.logIteration(
+        monitorId,
+        200,
+        `Completed all 200 iterations. Final result: ${bestMatch.items.length} items, total: ₹${bestMatch.total}, difference: ₹${closestDiff}`,
+        "success",
+      );
+    }
+
     return bestMatch;
   };
 
@@ -286,26 +557,40 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     startingBillNumber: number,
     blockedNumbers: number[],
     availableStock: any[] = [],
+    reduceStockCallback?: (id: number, quantity: number) => boolean,
   ) => {
     const generatedBills: Bill[] = [];
     let currentBillNumber = startingBillNumber;
 
-    // Use provided stock or fallback to mock data
+    // Use provided stock or fallback to mock data, ensure only items with available quantity > 0
     const stockToUse =
       availableStock.length > 0
-        ? availableStock.map((item) => ({
-            id: item.id,
-            name: item.itemName,
-            price: item.price,
-          }))
+        ? availableStock
+            .filter((item) => item.availableQuantity > 0) // Only include items with stock
+            .map((item) => ({
+              id: item.id,
+              name: item.itemName,
+              price: item.price,
+              availableQuantity: item.availableQuantity,
+            }))
         : [
-            { id: 1, name: "Rice (1kg)", price: 80 },
-            { id: 2, name: "Wheat Flour (1kg)", price: 45 },
-            { id: 3, name: "Sugar (1kg)", price: 60 },
-            { id: 4, name: "Cooking Oil (1L)", price: 120 },
-            { id: 5, name: "Pulses (1kg)", price: 95 },
-            { id: 6, name: "Tea (250g)", price: 180 },
-            { id: 7, name: "Salt (1kg)", price: 25 },
+            { id: 1, name: "Rice (1kg)", price: 80, availableQuantity: 150 },
+            {
+              id: 2,
+              name: "Wheat Flour (1kg)",
+              price: 45,
+              availableQuantity: 200,
+            },
+            { id: 3, name: "Sugar (1kg)", price: 60, availableQuantity: 100 },
+            {
+              id: 4,
+              name: "Cooking Oil (1L)",
+              price: 120,
+              availableQuantity: 80,
+            },
+            { id: 5, name: "Pulses (1kg)", price: 95, availableQuantity: 120 },
+            { id: 6, name: "Tea (250g)", price: 180, availableQuantity: 60 },
+            { id: 7, name: "Salt (1kg)", price: 25, availableQuantity: 300 },
           ];
 
     console.log(
@@ -318,10 +603,15 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
     let previousBillItems: string[] = [];
 
     transactions.forEach((transaction, index) => {
-      // Skip blocked bill numbers
+      // Skip blocked bill numbers - keep incrementing until we find an unblocked number
       while (blockedNumbers.includes(currentBillNumber)) {
+        console.log(`Skipping blocked bill number: ${currentBillNumber}`);
         currentBillNumber++;
       }
+
+      console.log(
+        `Using bill number: ${currentBillNumber} for transaction ${transaction.id}`,
+      );
 
       // Validate transaction total - must be greater than 0
       const targetTotal =
@@ -343,36 +633,63 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         targetTotal,
         stockToUse,
         previousBillItems,
+        currentBillNumber,
       );
 
       let selectedItems = result.items;
       let currentTotal = result.total;
 
-      // If no items generated, create fallback (should not happen with new algorithm)
+      // If no items generated, create fallback ensuring minimum 2 items
       if (selectedItems.length === 0) {
-        console.warn("No items generated, using fallback");
-        const fallbackItem = stockToUse[0];
-        const quantity = Math.max(
-          1,
-          Math.round(targetTotal / fallbackItem.price),
+        console.warn("No items generated, using fallback with minimum 2 items");
+        selectedItems = [];
+        currentTotal = 0;
+
+        // Get available items with stock
+        const availableForFallback = stockToUse.filter(
+          (item) => item.availableQuantity > 0,
         );
-        selectedItems = [
-          {
-            id: fallbackItem.id,
-            name: fallbackItem.name,
-            price: fallbackItem.price,
-            quantity: quantity,
-            total: fallbackItem.price * quantity,
-          },
-        ];
-        currentTotal = fallbackItem.price * quantity;
+
+        if (availableForFallback.length >= 2) {
+          // Sort by price and take 2 cheapest items
+          const sortedItems = availableForFallback.sort(
+            (a, b) => a.price - b.price,
+          );
+
+          for (let i = 0; i < Math.min(2, sortedItems.length); i++) {
+            const item = sortedItems[i];
+            const billItem = {
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: 1,
+              total: item.price,
+            };
+            selectedItems.push(billItem);
+            currentTotal += billItem.total;
+          }
+        } else if (availableForFallback.length === 1) {
+          // Only one item available, use it with quantity 2 if possible
+          const item = availableForFallback[0];
+          const maxQty = Math.min(2, item.availableQuantity);
+          selectedItems = [
+            {
+              id: item.id,
+              name: item.name,
+              price: item.price,
+              quantity: maxQty,
+              total: item.price * maxQty,
+            },
+          ];
+          currentTotal = item.price * maxQty;
+        }
       }
 
-      // Check tolerance constraint
+      // Check tolerance constraint (±30)
       const difference = Math.abs(currentTotal - targetTotal);
       if (difference > 30) {
         console.warn(
-          `Bill ${currentBillNumber} exceeds preferred tolerance: difference ${difference}`,
+          `Bill ${currentBillNumber} exceeds ±30 tolerance: difference ${difference}`,
         );
         console.log(
           "Target:",
@@ -383,14 +700,24 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
           selectedItems.length,
         );
 
-        // For now, continue with bill generation but log the issue
-        // In production, you might want to either:
-        // 1. Reject the bill (return;)
-        // 2. Or try a different algorithm
+        // Try one more time with different approach if tolerance exceeded
+        const retryResult = generateOptimalBillItems(
+          targetTotal,
+          stockToUse,
+          [], // Don't avoid previous items on retry
+        );
+
+        if (Math.abs(retryResult.total - targetTotal) < difference) {
+          selectedItems = retryResult.items;
+          currentTotal = retryResult.total;
+          console.log(
+            `Retry improved result: ${retryResult.total} (diff: ${Math.abs(retryResult.total - targetTotal)})`,
+          );
+        }
       }
 
       const bill: Bill = {
-        id: `BILL-${String(generatedBills.length + 1).padStart(3, "0")}`,
+        id: `BILL-${currentBillNumber}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         billNumber: currentBillNumber,
         date: transaction.date,
         customerName: transaction.customerName,
@@ -414,13 +741,50 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
 
       generatedBills.push(bill);
 
+      // Always reduce stock quantities when generating bills
+      if (reduceStockCallback) {
+        selectedItems.forEach((billItem) => {
+          const success = reduceStockCallback(billItem.id, billItem.quantity);
+          if (success) {
+            console.log(
+              `Reduced stock for ${billItem.name}: -${billItem.quantity}`,
+            );
+            // Update available quantity in stockToUse for subsequent bills
+            const stockItem = stockToUse.find(
+              (item) => item.id === billItem.id,
+            );
+            if (stockItem) {
+              stockItem.availableQuantity = Math.max(
+                0,
+                stockItem.availableQuantity - billItem.quantity,
+              );
+            }
+          } else {
+            console.warn(`Failed to reduce stock for ${billItem.name}`);
+          }
+        });
+      } else {
+        // Log warning if no callback provided
+        console.warn(
+          "No stock reduction callback provided - stock quantities will not be updated",
+        );
+      }
+
       // Update previous items for next bill to avoid consecutive repeats
       previousBillItems = selectedItems.map((item) => item.name);
 
       console.log(
         `Generated bill ${currentBillNumber} with ${selectedItems.length} items, total: ${currentTotal}`,
       );
+
+      // Increment to next bill number for next iteration
       currentBillNumber++;
+
+      // Skip any immediately following blocked numbers for next bill
+      while (blockedNumbers.includes(currentBillNumber)) {
+        console.log(`Pre-skipping blocked bill number: ${currentBillNumber}`);
+        currentBillNumber++;
+      }
     });
 
     console.log("Generated", generatedBills.length, "bills total");
@@ -436,6 +800,7 @@ export function BillProvider({ children }: { children: React.ReactNode }) {
         updateBill,
         deleteBill,
         generateBillsFromTransactions,
+        deleteAllBills,
       }}
     >
       {children}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +51,7 @@ import { SampleDataGenerator } from "@/components/SampleDataGenerator";
 import { useBill } from "@/components/BillContext";
 import { useTransaction } from "@/components/TransactionContext";
 import { useStock } from "@/components/StockContext";
+import { useAccount } from "@/components/AccountManager";
 
 // Mock transaction data
 const mockTransactions = [
@@ -170,8 +171,27 @@ export default function Transactions() {
     }
   };
   const { generateBillsFromTransactions } = useBill();
-  const { getUnblockedStock } = useStock();
+  const { getUnblockedStock, reduceStock } = useStock();
+  const { activeAccount, accounts, setActiveAccount } = useAccount();
+
+  // URL-based account switching for testing
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetAccountId = urlParams.get("account");
+    if (targetAccountId && targetAccountId !== activeAccount?.id) {
+      const targetAccount = accounts.find((acc) => acc.id === targetAccountId);
+      if (targetAccount) {
+        console.log(
+          `🔄 URL SWITCH: Switching to ${targetAccount.name} (${targetAccount.id})`,
+        );
+        setActiveAccount(targetAccount);
+        window.history.replaceState({}, "", window.location.pathname);
+      }
+    }
+  }, [activeAccount, accounts, setActiveAccount]);
+
   const [editingId, setEditingId] = useState<number | null>(null);
+
   const [dateFilter, setDateFilter] = useState({ from: "", to: "" });
   const [customerFilter, setCustomerFilter] = useState("");
   const [paymentModeFilter, setPaymentModeFilter] = useState("all");
@@ -184,6 +204,24 @@ export default function Transactions() {
   const [isGenerateBillsOpen, setIsGenerateBillsOpen] = useState(false);
   const [startingBillNumber, setStartingBillNumber] = useState("");
   const [billsToBlock, setBillsToBlock] = useState("");
+
+  // Load blocked bills from Bill Blocker when component mounts
+  const loadBlockedBills = () => {
+    try {
+      const storageKey = `billBlocker_blockedNumbers_${activeAccount?.id}`;
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const blockedNumbers = JSON.parse(saved);
+        if (Array.isArray(blockedNumbers) && blockedNumbers.length > 0) {
+          setBillsToBlock(blockedNumbers.join(","));
+        }
+      }
+    } catch (error) {
+      console.warn("Failed to load blocked bills:", error);
+    }
+  };
+  const [isTransactionListMinimized, setIsTransactionListMinimized] =
+    useState(false);
 
   // Validate date format (DD-MM-YYYY)
   const isValidDate = (date: string) => {
@@ -204,9 +242,9 @@ export default function Transactions() {
     return "GPay";
   };
 
-  // Filter transactions based on current filters
+  // Filter and sort transactions based on current filters
   const filteredTransactions = useMemo(() => {
-    return transactions.filter((transaction) => {
+    let filtered = transactions.filter((transaction) => {
       // Date filter
       if (dateFilter.from || dateFilter.to) {
         const transactionDate = new Date(
@@ -242,6 +280,15 @@ export default function Transactions() {
 
       return true;
     });
+
+    // Sort transactions by date (newest first)
+    filtered.sort((a, b) => {
+      const dateA = new Date(a.date.split("-").reverse().join("-"));
+      const dateB = new Date(b.date.split("-").reverse().join("-"));
+      return dateB.getTime() - dateA.getTime();
+    });
+
+    return filtered;
   }, [transactions, dateFilter, customerFilter, paymentModeFilter]);
 
   // Calculate summary statistics
@@ -553,6 +600,33 @@ export default function Transactions() {
             </p>
           </div>
           <div className="flex space-x-2">
+            <Button
+              onClick={() => {
+                const otherAccount = accounts.find(
+                  (acc) => acc.id !== activeAccount?.id,
+                );
+                console.log(
+                  `🔄 SWITCHING: From ${activeAccount?.name} (${activeAccount?.id}) to ${otherAccount?.name} (${otherAccount?.id})`,
+                );
+                console.log(
+                  `📊 BEFORE SWITCH: ${transactions.length} transactions`,
+                );
+                if (otherAccount) {
+                  setActiveAccount(otherAccount);
+                  setTimeout(() => {
+                    console.log(
+                      `📊 AFTER SWITCH: ${transactions.length} transactions`,
+                    );
+                  }, 500);
+                }
+              }}
+              variant="secondary"
+              size="sm"
+              className="bg-green-100 hover:bg-green-200 text-green-800"
+            >
+              🔄 Switch to{" "}
+              {accounts.find((acc) => acc.id !== activeAccount?.id)?.name}
+            </Button>
             <label>
               <Button variant="outline" size="sm" asChild>
                 <span>
@@ -733,271 +807,323 @@ export default function Transactions() {
         {/* Transactions Table */}
         <Card>
           <CardHeader>
-            <CardTitle>Transaction List</CardTitle>
-            <CardDescription>
-              Double-click any cell to edit. Payment mode is automatically
-              determined by customer name (_c suffix for cash).
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Transaction List</CardTitle>
+                <CardDescription>
+                  Double-click any cell to edit. Blue outlined transactions have
+                  been used for bill generation. Payment mode is automatically
+                  determined by customer name (_c suffix for cash).
+                </CardDescription>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setIsTransactionListMinimized(!isTransactionListMinimized)
+                }
+              >
+                {isTransactionListMinimized ? "Expand" : "Minimize"} List
+              </Button>
+            </div>
           </CardHeader>
-          <CardContent>
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={selectAllTransactions}
-                  disabled={transactions.filter((t) => t.isValid).length === 0}
-                >
-                  <Check className="h-4 w-4 mr-2" />
-                  Select All Valid
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={deselectAllTransactions}
-                  disabled={getSelectedTransactions().length === 0}
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Deselect All
-                </Button>
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {getSelectedTransactions().length} of {summary.validCount} valid
-                transactions selected
-              </div>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          checked={
-                            filteredTransactions.filter((t) => t.isValid)
-                              .length > 0 &&
-                            filteredTransactions
-                              .filter((t) => t.isValid)
-                              .every((t) => t.selected)
-                          }
-                          onCheckedChange={(checked) => {
-                            if (checked) {
-                              selectAllTransactions();
-                            } else {
-                              deselectAllTransactions();
-                            }
-                          }}
-                        />
-                        <span>Select</span>
-                      </div>
-                    </th>
-                    <th className="text-left p-3 font-medium">Date</th>
-                    <th className="text-left p-3 font-medium">Customer Name</th>
-                    <th className="text-left p-3 font-medium">Total</th>
-                    <th className="text-left p-3 font-medium">Payment Mode</th>
-                    <th className="text-left p-3 font-medium">Status</th>
-                    <th className="text-left p-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTransactions.map((transaction) => (
-                    <tr
-                      key={transaction.id}
-                      className={cn(
-                        "border-b hover:bg-accent/50 transition-colors",
-                        !transaction.isValid && "bg-red-50 border-red-200",
-                        transaction.billGenerated &&
-                          "bg-green-50 border-green-200",
-                      )}
+          <CardContent
+            className={cn(
+              "transition-all duration-300",
+              isTransactionListMinimized && "max-h-20 overflow-hidden",
+            )}
+          >
+            {!isTransactionListMinimized ? (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        selectAllTransactions(filteredTransactions)
+                      }
+                      disabled={
+                        filteredTransactions.filter((t) => t.isValid).length ===
+                        0
+                      }
                     >
-                      <td className="p-3">
-                        <Checkbox
-                          checked={transaction.selected || false}
-                          onCheckedChange={() =>
-                            toggleTransactionSelection(transaction.id)
-                          }
-                          disabled={!transaction.isValid}
-                        />
-                      </td>
-                      <td className="p-3">
-                        {editingId === transaction.id ? (
-                          <Input
-                            value={editValues.date}
-                            onChange={(e) =>
-                              setEditValues((prev) => ({
-                                ...prev,
-                                date: e.target.value,
-                              }))
-                            }
-                            placeholder="DD-MM-YYYY"
-                            className={cn(
-                              "w-32",
-                              !isValidDate(editValues.date) && "border-red-500",
-                            )}
-                          />
-                        ) : (
-                          <span
-                            className="cursor-pointer hover:bg-accent rounded px-1"
-                            onDoubleClick={() => startEdit(transaction)}
-                          >
-                            {transaction.date}
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        {editingId === transaction.id ? (
-                          <Input
-                            value={editValues.customerName}
-                            onChange={(e) =>
-                              setEditValues((prev) => ({
-                                ...prev,
-                                customerName: e.target.value,
-                              }))
-                            }
-                            className="w-40"
-                          />
-                        ) : (
-                          <span
-                            className="cursor-pointer hover:bg-accent rounded px-1"
-                            onDoubleClick={() => startEdit(transaction)}
-                          >
-                            {transaction.customerName}
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        {editingId === transaction.id ? (
-                          <Input
-                            value={editValues.total}
-                            onChange={(e) =>
-                              setEditValues((prev) => ({
-                                ...prev,
-                                total: e.target.value,
-                              }))
-                            }
-                            className={cn(
-                              "w-24",
-                              !isValidTotal(editValues.total) &&
-                                "border-red-500",
-                            )}
-                          />
-                        ) : (
-                          <span
-                            className={cn(
-                              "cursor-pointer hover:bg-accent rounded px-1",
-                              !isValidTotal(transaction.total) &&
-                                "text-red-600 font-medium",
-                            )}
-                            onDoubleClick={() => startEdit(transaction)}
-                          >
-                            {isValidTotal(transaction.total)
-                              ? `₹${Number(transaction.total).toLocaleString()}`
-                              : transaction.total}
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        {editingId === transaction.id ? (
-                          <Select
-                            value={editValues.paymentMode}
-                            onValueChange={(value) =>
-                              setEditValues((prev) => ({
-                                ...prev,
-                                paymentMode: value as "Cash" | "GPay" | "Bank",
-                              }))
-                            }
-                          >
-                            <SelectTrigger className="w-24">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Cash">Cash</SelectItem>
-                              <SelectItem value="GPay">GPay</SelectItem>
-                              <SelectItem value="Bank">Bank</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        ) : (
-                          <Badge
-                            variant={
-                              transaction.paymentMode === "GPay"
-                                ? "default"
-                                : transaction.paymentMode === "Bank"
-                                  ? "outline"
-                                  : "secondary"
-                            }
-                            className={
-                              transaction.paymentMode === "Bank"
-                                ? "border-blue-500 text-blue-700"
-                                : ""
-                            }
-                          >
-                            {transaction.paymentMode}
-                          </Badge>
-                        )}
-                      </td>
-                      <td className="p-3">
-                        <Badge
-                          variant={
-                            transaction.isValid ? "default" : "destructive"
-                          }
-                          className={transaction.isValid ? "bg-green-500" : ""}
+                      <Check className="h-4 w-4 mr-2" />
+                      Select All Filtered
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={deselectAllTransactions}
+                      disabled={getSelectedTransactions().length === 0}
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Deselect All
+                    </Button>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {getSelectedTransactions().length} of{" "}
+                    {filteredTransactions.filter((t) => t.isValid).length} valid
+                    transactions selected (from {filteredTransactions.length}{" "}
+                    filtered)
+                  </div>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3 font-medium">
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              checked={
+                                filteredTransactions.filter((t) => t.isValid)
+                                  .length > 0 &&
+                                filteredTransactions
+                                  .filter((t) => t.isValid)
+                                  .every((t) => t.selected)
+                              }
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  selectAllTransactions(filteredTransactions);
+                                } else {
+                                  deselectAllTransactions();
+                                }
+                              }}
+                            />
+                            <span>Select</span>
+                          </div>
+                        </th>
+                        <th className="text-left p-3 font-medium">Date</th>
+                        <th className="text-left p-3 font-medium">
+                          Customer Name
+                        </th>
+                        <th className="text-left p-3 font-medium">Total</th>
+                        <th className="text-left p-3 font-medium">
+                          Payment Mode
+                        </th>
+                        <th className="text-left p-3 font-medium">Status</th>
+                        <th className="text-left p-3 font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredTransactions.map((transaction) => (
+                        <tr
+                          key={transaction.id}
+                          className={cn(
+                            "border-b hover:bg-accent/50 transition-colors",
+                            !transaction.isValid && "bg-red-50 border-red-200",
+                            transaction.billGenerated &&
+                              "bg-blue-50 border-blue-300 ring-2 ring-blue-200",
+                          )}
                         >
-                          {transaction.isValid ? "Valid" : "Invalid"}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        {editingId === transaction.id ? (
-                          <div className="flex space-x-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={saveEdit}
-                            >
-                              <Check className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={cancelEdit}
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <div className="flex space-x-1">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => startEdit(transaction)}
-                            >
-                              <Edit2 className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                generateTransactionPDF(transaction)
+                          <td className="p-3">
+                            <Checkbox
+                              checked={transaction.selected || false}
+                              onCheckedChange={() =>
+                                toggleTransactionSelection(transaction.id)
+                              }
+                              disabled={!transaction.isValid}
+                            />
+                          </td>
+                          <td className="p-3">
+                            {editingId === transaction.id ? (
+                              <Input
+                                value={editValues.date}
+                                onChange={(e) =>
+                                  setEditValues((prev) => ({
+                                    ...prev,
+                                    date: e.target.value,
+                                  }))
+                                }
+                                placeholder="DD-MM-YYYY"
+                                className={cn(
+                                  "w-32",
+                                  !isValidDate(editValues.date) &&
+                                    "border-red-500",
+                                )}
+                              />
+                            ) : (
+                              <span
+                                className="cursor-pointer hover:bg-accent rounded px-1"
+                                onDoubleClick={() => startEdit(transaction)}
+                              >
+                                {transaction.date}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {editingId === transaction.id ? (
+                              <Input
+                                value={editValues.customerName}
+                                onChange={(e) =>
+                                  setEditValues((prev) => ({
+                                    ...prev,
+                                    customerName: e.target.value,
+                                  }))
+                                }
+                                className="w-40"
+                              />
+                            ) : (
+                              <span
+                                className="cursor-pointer hover:bg-accent rounded px-1"
+                                onDoubleClick={() => startEdit(transaction)}
+                              >
+                                {transaction.customerName}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {editingId === transaction.id ? (
+                              <Input
+                                value={editValues.total}
+                                onChange={(e) =>
+                                  setEditValues((prev) => ({
+                                    ...prev,
+                                    total: e.target.value,
+                                  }))
+                                }
+                                className={cn(
+                                  "w-24",
+                                  !isValidTotal(editValues.total) &&
+                                    "border-red-500",
+                                )}
+                              />
+                            ) : (
+                              <span
+                                className={cn(
+                                  "cursor-pointer hover:bg-accent rounded px-1",
+                                  !isValidTotal(transaction.total) &&
+                                    "text-red-600 font-medium",
+                                )}
+                                onDoubleClick={() => startEdit(transaction)}
+                              >
+                                {isValidTotal(transaction.total)
+                                  ? `₹${Number(transaction.total).toLocaleString()}`
+                                  : transaction.total}
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            {editingId === transaction.id ? (
+                              <Select
+                                value={editValues.paymentMode}
+                                onValueChange={(value) =>
+                                  setEditValues((prev) => ({
+                                    ...prev,
+                                    paymentMode: value as
+                                      | "Cash"
+                                      | "GPay"
+                                      | "Bank",
+                                  }))
+                                }
+                              >
+                                <SelectTrigger className="w-24">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Cash">Cash</SelectItem>
+                                  <SelectItem value="GPay">GPay</SelectItem>
+                                  <SelectItem value="Bank">Bank</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Badge
+                                variant={
+                                  transaction.paymentMode === "GPay"
+                                    ? "default"
+                                    : transaction.paymentMode === "Bank"
+                                      ? "outline"
+                                      : "secondary"
+                                }
+                                className={
+                                  transaction.paymentMode === "Bank"
+                                    ? "border-blue-500 text-blue-700"
+                                    : ""
+                                }
+                              >
+                                {transaction.paymentMode}
+                              </Badge>
+                            )}
+                          </td>
+                          <td className="p-3">
+                            <Badge
+                              variant={
+                                transaction.isValid ? "default" : "destructive"
+                              }
+                              className={
+                                transaction.isValid ? "bg-green-500" : ""
                               }
                             >
-                              <Download className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                deleteTransactionLocal(transaction.id)
-                              }
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                              {transaction.isValid ? "Valid" : "Invalid"}
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            {editingId === transaction.id ? (
+                              <div className="flex space-x-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={saveEdit}
+                                >
+                                  <Check className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={cancelEdit}
+                                >
+                                  <X className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex space-x-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => startEdit(transaction)}
+                                >
+                                  <Edit2 className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    generateTransactionPDF(transaction)
+                                  }
+                                >
+                                  <Download className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    deleteTransactionLocal(transaction.id)
+                                  }
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                <p>
+                  Transaction list minimized. Click "Expand List" to show all
+                  transactions.
+                </p>
+                <p className="text-sm">
+                  Total: {filteredTransactions.length} transactions (
+                  {filteredTransactions.filter((t) => t.billGenerated).length}{" "}
+                  used for bills)
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -1014,7 +1140,10 @@ export default function Transactions() {
               summary.invalidCount > 0 || getSelectedTransactions().length === 0
             }
             className="bg-green-600 hover:bg-green-700"
-            onClick={() => setIsGenerateBillsOpen(true)}
+            onClick={() => {
+              setIsGenerateBillsOpen(true);
+              loadBlockedBills();
+            }}
           >
             <FileText className="h-4 w-4 mr-2" />
             Generate Bills ({getSelectedTransactions().length} selected)
@@ -1112,6 +1241,7 @@ export default function Transactions() {
                       startBillNum,
                       blockedNumbers,
                       getUnblockedStock(),
+                      reduceStock,
                     );
 
                     // Mark selected transactions as having bills generated

@@ -1,6 +1,13 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Layout } from "@/components/Layout";
-import { useCustomer, type Customer, type CustomerTransaction } from "@/components/CustomerContext";
+import {
+  useCustomer,
+  type Customer,
+  type CustomerTransaction,
+} from "@/components/CustomerContext";
+import { useTransaction } from "@/components/TransactionContext";
+import { useBill } from "@/components/BillContext";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -30,16 +37,44 @@ import {
   Mail,
   MapPin,
   Receipt,
+  RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function Customers() {
-  const { customers } = useCustomer();
+  const { customers, syncCustomersFromTransactions } = useCustomer();
+  const { transactions } = useTransaction();
+  const { bills } = useBill();
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
     null,
   );
   const [paymentFilter, setPaymentFilter] = useState("all");
+
+  // Function to get bills for a specific customer
+  const getCustomerBills = (customerName: string) => {
+    return bills.filter(
+      (bill) => bill.customerName.toLowerCase() === customerName.toLowerCase(),
+    );
+  };
+
+  // Function to navigate to bills page with customer filter
+  const navigateToBills = (customerName: string) => {
+    navigate(`/bills?customer=${encodeURIComponent(customerName)}`);
+  };
+
+  // Function to navigate to specific bill
+  const navigateToBill = (billNumber: number) => {
+    navigate(`/bills?highlight=${billNumber}`);
+  };
+
+  // Sync customers from transactions on component mount
+  useEffect(() => {
+    if (transactions.length > 0) {
+      syncCustomersFromTransactions(transactions);
+    }
+  }, [transactions]); // Remove syncCustomersFromTransactions from dependencies to prevent multiple calls
 
   // Filter customers
   const filteredCustomers = useMemo(() => {
@@ -70,7 +105,8 @@ export default function Customers() {
       (c) => c.preferredPayment === "GPay",
     ).length;
     const avgTransactionValue =
-      totalRevenue / customers.reduce((sum, c) => sum + c.totalTransactions, 0) || 0;
+      totalRevenue /
+        customers.reduce((sum, c) => sum + c.totalTransactions, 0) || 0;
 
     return {
       totalCustomers,
@@ -92,6 +128,15 @@ export default function Customers() {
               View and manage customer information, transaction history, and
               payment preferences
             </p>
+          </div>
+          <div className="flex space-x-2">
+            <Button
+              onClick={() => syncCustomersFromTransactions(transactions)}
+              variant="outline"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Sync from Transactions
+            </Button>
           </div>
         </div>
 
@@ -234,23 +279,95 @@ export default function Customers() {
                       <span className="truncate">{customer.address}</span>
                     </div>
                   )}
-                  <div className="pt-2 border-t">
+                  <div className="pt-2 border-t space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Transactions:</span>
+                      <span className="text-muted-foreground">
+                        Transactions:
+                      </span>
                       <span className="font-medium">
                         {customer.totalTransactions}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Total Amount:</span>
+                      <span className="text-muted-foreground">
+                        Total Amount:
+                      </span>
                       <span className="font-medium">
                         ₹{customer.totalAmount.toLocaleString()}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Last Transaction:</span>
-                      <span className="font-medium">{customer.lastTransaction}</span>
+                      <span className="text-muted-foreground">
+                        Last Transaction:
+                      </span>
+                      <span className="font-medium">
+                        {customer.lastTransaction}
+                      </span>
                     </div>
+
+                    {(() => {
+                      const customerBills = getCustomerBills(customer.name);
+                      return customerBills.length > 0 ? (
+                        <div className="pt-2 border-t">
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-muted-foreground">
+                              Bills Generated:
+                            </span>
+                            <span className="font-medium">
+                              {customerBills.length}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="text-muted-foreground">
+                              Bills Total:
+                            </span>
+                            <span className="font-medium">
+                              ₹
+                              {customerBills
+                                .reduce((sum, bill) => sum + bill.subTotal, 0)
+                                .toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">
+                              Latest Bill:
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const latestBill = customerBills.sort(
+                                  (a, b) => b.billNumber - a.billNumber,
+                                )[0];
+                                navigateToBill(latestBill.billNumber);
+                              }}
+                              className="font-medium text-blue-600 hover:text-blue-800 underline"
+                            >
+                              #
+                              {
+                                customerBills.sort(
+                                  (a, b) => b.billNumber - a.billNumber,
+                                )[0]?.billNumber
+                              }
+                            </button>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigateToBills(customer.name);
+                            }}
+                            className="w-full mt-2 text-xs bg-blue-50 text-blue-700 hover:bg-blue-100 px-2 py-1 rounded transition-colors"
+                          >
+                            View All Bills ({customerBills.length})
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="pt-2 border-t">
+                          <div className="text-xs text-muted-foreground text-center py-1">
+                            No bills generated yet
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
               </CardContent>

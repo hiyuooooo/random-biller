@@ -71,27 +71,79 @@ export default function BillBlocker() {
     }
   }, [blockedNumbers, activeAccount]);
 
+  // Function to load account-specific data
+  const loadAccountData = (accountId: string) => {
+    try {
+      const numberKey = `billBlocker_startingNumber_${accountId}`;
+      const numbersKey = `billBlocker_blockedNumbers_${accountId}`;
+
+      const savedNumber = localStorage.getItem(numberKey);
+      const savedNumbers = localStorage.getItem(numbersKey);
+
+      if (savedNumber) setStartingBillNumber(savedNumber);
+      else setStartingBillNumber("1001");
+
+      if (savedNumbers) setBlockedNumbers(JSON.parse(savedNumbers));
+      else setBlockedNumbers([1005, 1010, 1015, 1020, 1025]);
+
+      console.log(`Force reloaded BillBlocker data for account ${accountId}`);
+    } catch (error) {
+      console.error("Error force reloading BillBlocker data:", error);
+      setStartingBillNumber("1001");
+      setBlockedNumbers([1005, 1010, 1015, 1020, 1025]);
+    }
+  };
+
   // Load data when switching accounts
   useEffect(() => {
     if (activeAccount) {
-      try {
-        const numberKey = `billBlocker_startingNumber_${activeAccount.id}`;
-        const numbersKey = `billBlocker_blockedNumbers_${activeAccount.id}`;
-
-        const savedNumber = localStorage.getItem(numberKey);
-        const savedNumbers = localStorage.getItem(numbersKey);
-
-        if (savedNumber) setStartingBillNumber(savedNumber);
-        else setStartingBillNumber("1001");
-
-        if (savedNumbers) setBlockedNumbers(JSON.parse(savedNumbers));
-        else setBlockedNumbers([1005, 1010, 1015, 1020, 1025]);
-      } catch {
-        setStartingBillNumber("1001");
-        setBlockedNumbers([1005, 1010, 1015, 1020, 1025]);
-      }
+      loadAccountData(activeAccount.id);
     }
   }, [activeAccount?.id]);
+
+  // Listen for account switch events to force refresh
+  useEffect(() => {
+    const handleAccountSwitch = () => {
+      console.log(
+        "Account switch event detected in BillBlocker, forcing data refresh",
+      );
+      if (activeAccount) {
+        loadAccountData(activeAccount.id);
+      }
+    };
+
+    const handleForceSave = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId) {
+        try {
+          const numberKey = `billBlocker_startingNumber_${accountId}`;
+          const numbersKey = `billBlocker_blockedNumbers_${accountId}`;
+          localStorage.setItem(numberKey, startingBillNumber);
+          localStorage.setItem(numbersKey, JSON.stringify(blockedNumbers));
+          console.log(`Force saved BillBlocker data for account ${accountId}`);
+        } catch (error) {
+          console.error("Error force saving BillBlocker data:", error);
+        }
+      }
+    };
+
+    const handleLoadAccountData = (event: any) => {
+      const accountId = event.detail?.accountId;
+      if (accountId) {
+        loadAccountData(accountId);
+      }
+    };
+
+    window.addEventListener("account-switched", handleAccountSwitch);
+    window.addEventListener("force-save-account-data", handleForceSave);
+    window.addEventListener("load-account-data", handleLoadAccountData);
+
+    return () => {
+      window.removeEventListener("account-switched", handleAccountSwitch);
+      window.removeEventListener("force-save-account-data", handleForceSave);
+      window.removeEventListener("load-account-data", handleLoadAccountData);
+    };
+  }, [activeAccount, startingBillNumber, blockedNumbers]);
   const [consumedNumbers, setConsumedNumbers] = useState<number[]>([
     1001, 1002, 1003, 1004,
   ]);

@@ -87,6 +87,8 @@ const defaultAccounts: Account[] = [
 const AccountContext = createContext<AccountContextType | null>(null);
 
 export function AccountProvider({ children }: { children: React.ReactNode }) {
+  const [isInitialized, setIsInitialized] = useState(false);
+
   // Initialize from localStorage or use defaults
   const [accounts, setAccounts] = useState<Account[]>(() => {
     try {
@@ -118,6 +120,11 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     },
   );
 
+  // Mark as initialized after first render
+  React.useEffect(() => {
+    setIsInitialized(true);
+  }, []);
+
   // Save to localStorage whenever data changes
   React.useEffect(() => {
     try {
@@ -136,10 +143,34 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
   }, [activeAccount]);
 
   const setActiveAccount = (account: Account) => {
+    // Force save current account data before switching
+    try {
+      if (activeAccount) {
+        // Force all contexts to save their current data
+        window.dispatchEvent(
+          new CustomEvent("force-save-account-data", {
+            detail: { accountId: activeAccount.id },
+          }),
+        );
+      }
+    } catch (error) {}
+
+    // Update account states
     setAccounts((prev) =>
       prev.map((acc) => ({ ...acc, isActive: acc.id === account.id })),
     );
     setActiveAccountState(account);
+
+    // Force immediate data refresh for new account with Promise-based approach
+    Promise.resolve().then(() => {
+      // Dispatch multiple events to ensure all contexts refresh
+      window.dispatchEvent(new Event("account-switched"));
+      window.dispatchEvent(
+        new CustomEvent("load-account-data", {
+          detail: { accountId: account.id },
+        }),
+      );
+    });
   };
 
   const addAccount = (accountData: Omit<Account, "id" | "isActive">) => {
@@ -171,6 +202,25 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    // Clear all data associated with this account
+    try {
+      const keysToRemove = [
+        `bills_${id}`,
+        `transactions_${id}`,
+        `stockItems_${id}`,
+        `billBlocker_startingNumber_${id}`,
+        `billBlocker_blockedNumbers_${id}`,
+      ];
+
+      keysToRemove.forEach((key) => {
+        localStorage.removeItem(key);
+      });
+
+      console.log(`Cleared all data for account ${id}`);
+    } catch (error) {
+      console.warn("Failed to clear account data:", error);
+    }
+
     // If deleting the active account, switch to another one first
     if (activeAccount?.id === id) {
       const otherAccount = accounts.find((acc) => acc.id !== id);
@@ -193,7 +243,7 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
         deleteAccount,
       }}
     >
-      {children}
+      {isInitialized ? children : <div>Loading accounts...</div>}
     </AccountContext.Provider>
   );
 }
@@ -219,10 +269,10 @@ export function AccountSelector() {
           if (account) setActiveAccount(account);
         }}
       >
-        <SelectTrigger className="w-48">
+        <SelectTrigger className="w-48" aria-label="Select account">
           <SelectValue placeholder="Select account" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent position="popper" sideOffset={4}>
           {accounts.map((account) => (
             <SelectItem key={account.id} value={account.id}>
               {account.name}
